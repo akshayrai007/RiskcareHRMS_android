@@ -78,7 +78,7 @@ class SplashActivity : AppCompatActivity() {
 
             minShowJob.join() // ensure minimum display time
 
-            setStatus(tvStatus, if (connected) "Loading your workspace..." else "Starting up…")
+            setStatus(tvStatus, if (connected) AndroidMain.SPLASH_MSG_LOADING else AndroidMain.SPLASH_MSG_STARTING)
             ivWheel.animate().alpha(0f).setDuration(200).start()
             delay(300L)
 
@@ -156,11 +156,11 @@ class SplashActivity : AppCompatActivity() {
                 when {
                     !shownWaking && attempts >= 1 -> {
                         shownWaking = true
-                        setStatus(tvStatus, "Waking up server…")
+                        setStatus(tvStatus, AndroidMain.SPLASH_MSG_WAKING)
                     }
                     !shownStarting && attempts >= 3 -> {
                         shownStarting = true
-                        setStatus(tvStatus, "Almost ready…")
+                        setStatus(tvStatus, AndroidMain.SPLASH_MSG_ALMOST)
                     }
                 }
 

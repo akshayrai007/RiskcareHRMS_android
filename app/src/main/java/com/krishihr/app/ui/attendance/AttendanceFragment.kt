@@ -732,7 +732,7 @@ class AttendanceTodayFragment : Fragment(), OnMapReadyCallback {
 
     fun loadToday() {
         lifecycleScope.launch {
-            val todayIST = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).also { it.timeZone = TimeZone.getTimeZone("Asia/Kolkata") }.format(Date())
+            val todayIST = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).also { it.timeZone = TimeZone.getTimeZone(AndroidMain.TIMEZONE) }.format(Date())
             val prefs = requireContext().getSharedPreferences(AndroidMain.PREFS_ATT_CACHE, android.content.Context.MODE_PRIVATE)
             val cachedDate    = prefs.getString("today_date", null)
             val cachedPunchIn = prefs.getString("punch_in", "").takeIf { !it.isNullOrBlank() }
@@ -754,7 +754,7 @@ class AttendanceTodayFragment : Fragment(), OnMapReadyCallback {
             }
             var foundFromAttendance = false
             try {
-                val istCal = Calendar.getInstance(java.util.TimeZone.getTimeZone("Asia/Kolkata"))
+                val istCal = Calendar.getInstance(java.util.TimeZone.getTimeZone(AndroidMain.TIMEZONE))
                 val attRes = RetrofitClient.instance.getAttendance(month = istCal.get(Calendar.MONTH) + 1, year = istCal.get(Calendar.YEAR))
                 if (attRes.isSuccessful) {
                     val att = attRes.body()?.data?.firstOrNull { it.dateStr == todayIST || it.date == todayIST || it.date?.startsWith(todayIST) == true }
@@ -777,7 +777,7 @@ class AttendanceTodayFragment : Fragment(), OnMapReadyCallback {
             hasPunchedIn  = att.punchIn  != null; hasPunchedOut = att.punchOut != null
             binding.tvPunchInTime.text  = att.displayPunchIn  ?: "--:--"
             binding.tvPunchOutTime.text = att.displayPunchOut ?: "--:--"
-            val todayIST = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).also { it.timeZone = TimeZone.getTimeZone("Asia/Kolkata") }.format(Date())
+            val todayIST = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).also { it.timeZone = TimeZone.getTimeZone(AndroidMain.TIMEZONE) }.format(Date())
             requireContext().getSharedPreferences(AndroidMain.PREFS_ATT_CACHE, android.content.Context.MODE_PRIVATE).edit().apply {
                 putString("today_date", todayIST); putString("punch_in", att.punchIn ?: ""); putString("punch_out", att.punchOut ?: "")
                 putFloat("working_hours", att.workingHours?.toFloat() ?: -1f); putString("status", att.status); apply()
@@ -875,8 +875,8 @@ class AttendanceTodayFragment : Fragment(), OnMapReadyCallback {
                 } catch (_: Exception) { geofenceValid = null }
             }
             binding.btnPunchIn.text = "Please wait..."
-            val istTimeSdf = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault()).also { it.timeZone = java.util.TimeZone.getTimeZone("Asia/Kolkata") }
-            val istDateSdf = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).also { it.timeZone = java.util.TimeZone.getTimeZone("Asia/Kolkata") }
+            val istTimeSdf = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault()).also { it.timeZone = java.util.TimeZone.getTimeZone(AndroidMain.TIMEZONE) }
+            val istDateSdf = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).also { it.timeZone = java.util.TimeZone.getTimeZone(AndroidMain.TIMEZONE) }
             val now = java.util.Date(); val punchTime = istTimeSdf.format(now); val punchDate = istDateSdf.format(now)
             var lastError = "Failed"
             repeat(3) { attempt ->

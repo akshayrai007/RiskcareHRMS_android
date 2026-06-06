@@ -138,6 +138,8 @@
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyDp21tx1U1OVaXIGv8E8Y94RmfnQl1pNbo" />
+        <!-- ⚠️  To change Maps API key: update GOOGLE_MAPS_API_KEY in Android_main.kt
+                  AND update the android:value above (XML cannot reference Kotlin constants) -->
 
         <!-- ══ UCrop — image cropping activity (profile photo) ══════════════ -->
         <activity

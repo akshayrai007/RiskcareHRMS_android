@@ -95,7 +95,7 @@ class DashboardFragment : Fragment() {
             loadHeaderAvatar(empWithPhoto)
         }
         val sdf = SimpleDateFormat("EEEE, dd MMM yyyy", Locale.getDefault()).also {
-            it.timeZone = TimeZone.getTimeZone("Asia/Kolkata")
+            it.timeZone = TimeZone.getTimeZone(AndroidMain.TIMEZONE)
         }
         binding.tvTodayDate.text = sdf.format(Date())
 
@@ -263,7 +263,7 @@ class DashboardFragment : Fragment() {
         clockJob?.cancel()
         clockJob = lifecycleScope.launch {
             val sdf = SimpleDateFormat("hh:mm:ss a", Locale.getDefault()).also {
-                it.timeZone = TimeZone.getTimeZone("Asia/Kolkata")
+                it.timeZone = TimeZone.getTimeZone(AndroidMain.TIMEZONE)
             }
             while (isActive) {
                 binding.tvTimer.text = sdf.format(Date())
@@ -278,7 +278,7 @@ class DashboardFragment : Fragment() {
         timerJob = lifecycleScope.launch {
             val cleanStr = punchInStr.replace(" ", "T").substringBefore(".")
             val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault()).apply {
-                timeZone = TimeZone.getTimeZone("Asia/Kolkata")
+                timeZone = TimeZone.getTimeZone(AndroidMain.TIMEZONE)
             }
             val punchTime = try { sdf.parse(cleanStr)?.time ?: 0L } catch (e: Exception) { 0L }
             if (punchTime == 0L) return@launch
@@ -720,8 +720,8 @@ class DashboardFragment : Fragment() {
             }
 
             // 3. Execute punch-in or punch-out
-            val istTimeSdf = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).also { it.timeZone = TimeZone.getTimeZone("Asia/Kolkata") }
-            val istDateSdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).also { it.timeZone = TimeZone.getTimeZone("Asia/Kolkata") }
+            val istTimeSdf = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).also { it.timeZone = TimeZone.getTimeZone(AndroidMain.TIMEZONE) }
+            val istDateSdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).also { it.timeZone = TimeZone.getTimeZone(AndroidMain.TIMEZONE) }
             val now = Date(); val punchTime = istTimeSdf.format(now); val punchDate = istDateSdf.format(now)
             var lastError = "Failed"
 

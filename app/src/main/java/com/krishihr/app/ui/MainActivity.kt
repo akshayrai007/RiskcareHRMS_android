@@ -44,7 +44,7 @@ class MainActivity : AppCompatActivity() {
                 intent?.action == Intent.ACTION_TIMEZONE_CHANGED) {
                 clearAttendanceCache()
                 lastKnownDate = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
-                    .also { it.timeZone = java.util.TimeZone.getTimeZone("Asia/Kolkata") }
+                    .also { it.timeZone = java.util.TimeZone.getTimeZone(AndroidMain.TIMEZONE) }
                     .format(java.util.Date())
                 // Reload to dashboard so punch-in shows fresh for the new day
                 loadTab(DashboardFragment())
@@ -106,8 +106,8 @@ class MainActivity : AppCompatActivity() {
     // ── Schedule midnight cache-clear (no logout — just wipe yesterday's data) ─
     private fun scheduleMidnightLogout() {
         midnightHandler.removeCallbacks(midnightRunnable)
-        val now = Calendar.getInstance(java.util.TimeZone.getTimeZone("Asia/Kolkata"))
-        val midnight = Calendar.getInstance(java.util.TimeZone.getTimeZone("Asia/Kolkata")).apply {
+        val now = Calendar.getInstance(java.util.TimeZone.getTimeZone(AndroidMain.TIMEZONE))
+        val midnight = Calendar.getInstance(java.util.TimeZone.getTimeZone(AndroidMain.TIMEZONE)).apply {
             set(Calendar.HOUR_OF_DAY, 0)
             set(Calendar.MINUTE, 0)
             set(Calendar.SECOND, 5)   // 5 sec past midnight
@@ -122,7 +122,7 @@ class MainActivity : AppCompatActivity() {
     private fun onMidnight() {
         clearAttendanceCache()
         lastKnownDate = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
-            .also { it.timeZone = java.util.TimeZone.getTimeZone("Asia/Kolkata") }
+            .also { it.timeZone = java.util.TimeZone.getTimeZone(AndroidMain.TIMEZONE) }
             .format(java.util.Date())
         // Refresh to dashboard so the new day's punch state is correct
         loadTab(DashboardFragment())
@@ -148,7 +148,7 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         val todayIST = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
-            .also { it.timeZone = java.util.TimeZone.getTimeZone("Asia/Kolkata") }
+            .also { it.timeZone = java.util.TimeZone.getTimeZone(AndroidMain.TIMEZONE) }
             .format(java.util.Date())
 
         if (lastKnownDate.isNotEmpty() && lastKnownDate != todayIST) {

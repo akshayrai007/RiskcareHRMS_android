@@ -261,8 +261,8 @@ class PayrollFragment : Fragment() {
     </td>
     <td style="padding:16px 20px;text-align:center;vertical-align:middle;background:#F1F8E9 !important;">
       <div style="font-size:19px;font-weight:800;color:#000;letter-spacing:0.2px;text-align:center;">${AndroidMain.COMPANY_NAME}</div>
-      <div style="font-size:13px;margin-top:6px;color:#222;text-align:center;">Office Address: 617, 6th Floor, Viva Hubtown, Western Express Highway,</div>
-      <div style="font-size:13px;color:#222;text-align:center;">Shankarwadi Jogeshwari(East), Mumbai - 400060.</div>
+      <div style="font-size:13px;margin-top:6px;color:#222;text-align:center;">${AndroidMain.PAYSLIP_ADDR_LINE1.removePrefix("Office Address: ")}</div>
+      <div style="font-size:13px;color:#222;text-align:center;">${AndroidMain.PAYSLIP_ADDR_LINE2}</div>
     </td>
   </tr>
 </table>
@@ -604,8 +604,8 @@ class PayrollFragment : Fragment() {
         val addr1P    = txt(7.5f, cGrey)
         val addr2P    = txt(7.5f, cGrey)
         val companyStr = "Krishi Care & Management Services Pvt. Ltd."
-        val addr1Str   = "Office Address: 617, 6th Floor, Viva Hubtown, Western Express Highway,"
-        val addr2Str   = "Shankarwadi Jogeshwari(East), Mumbai - 400060."
+        val addr1Str   = AndroidMain.PAYSLIP_ADDR_LINE1
+        val addr2Str   = AndroidMain.PAYSLIP_ADDR_LINE2
         // Center each line within the text area
         val companyX = textX + (textAreaW - companyP.measureText(companyStr)) / 2f
         val addr1X   = textX + (textAreaW - addr1P.measureText(addr1Str)) / 2f
@@ -772,7 +772,7 @@ class PayrollFragment : Fragment() {
             arrayOf("Name",       name,  "Designation",   desig),
             arrayOf("EMP ID",     empId, "Department",    dept),
             arrayOf("U.A.N",      uan,   "EMP D.O.J",    doj),
-            arrayOf("PF No.",     pfNo,  "Location",     "Mumbai"),
+            arrayOf("PF No.",     pfNo,  "Location",     AndroidMain.PAYSLIP_LOCATION_CITY),
             arrayOf("EMP Pan",    pan,   "Day's Worked", pd),
             arrayOf("EMP D.O.B",  dob,   "Days in Month",wd),
             arrayOf("A/C Number", acct,  "LWP",          lwp),
@@ -827,7 +827,7 @@ class PayrollFragment : Fragment() {
         val values = ContentValues().apply {
             put(MediaStore.Images.Media.DISPLAY_NAME, "$filename.png")
             put(MediaStore.Images.Media.MIME_TYPE, "image/png")
-            put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/KrishiHR")
+            put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/${AndroidMain.DOWNLOADS_FOLDER}")
             put(MediaStore.Images.Media.IS_PENDING, 1)
         }
         val uri = ctx.contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)

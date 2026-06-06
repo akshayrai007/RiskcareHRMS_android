@@ -247,7 +247,7 @@ class BeatPlanFragment : Fragment(), OnMapReadyCallback {
     }
 
     private fun pickDate() {
-        val cal = Calendar.getInstance(TimeZone.getTimeZone("Asia/Kolkata"))
+        val cal = Calendar.getInstance(TimeZone.getTimeZone(AndroidMain.TIMEZONE))
         DatePickerDialog(requireContext(), { _, y, m, d ->
             selectedDate = "%04d-%02d-%02d".format(y, m+1, d)
             btnDate.text = "📅  $selectedDate"
@@ -445,7 +445,7 @@ class BeatPlanFragment : Fragment(), OnMapReadyCallback {
                 val url = "https://maps.googleapis.com/maps/api/directions/json" +
                         "?origin=${from.lat},${from.lng}" +
                         "&destination=${to.lat},${to.lng}" +
-                        "&mode=driving&key=AIzaSyDp21tx1U1OVaXIGv8E8Y94RmfnQl1pNbo"
+                        "&mode=driving&key=${AndroidMain.GOOGLE_MAPS_API_KEY}"
                 val json = JSONObject(URL(url).readText())
                 val routes = json.getJSONArray("routes")
                 if (routes.length() == 0) return@withContext listOf(LatLng(from.lat, from.lng), LatLng(to.lat, to.lng))
@@ -483,7 +483,7 @@ class BeatPlanFragment : Fragment(), OnMapReadyCallback {
         layoutParams = llp(MATCH, WRAP).also { it.bottomMargin = px(12,dp) } }
     private fun toast(msg: String) = Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
     private fun todayIST() = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-        .also { it.timeZone = TimeZone.getTimeZone("Asia/Kolkata") }.format(Date())
+        .also { it.timeZone = TimeZone.getTimeZone(AndroidMain.TIMEZONE) }.format(Date())
 
     companion object {
         private const val MATCH = ViewGroup.LayoutParams.MATCH_PARENT
