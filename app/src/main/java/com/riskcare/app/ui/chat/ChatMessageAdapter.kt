@@ -1,5 +1,7 @@
 package com.riskcare.app.ui.chat
 
+import com.riskcare.app.AndroidMain
+
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
