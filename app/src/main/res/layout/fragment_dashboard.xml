@@ -484,17 +484,12 @@
 
     </LinearLayout>
 
-    <!-- Chat / notification button — overlaid top-right via FrameLayout -->
-    <ImageView
+    <!-- menuChat: hidden anchor for chat click binding — chat entry is via bottom nav -->
+    <View
         android:id="@+id/menuChat"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:src="@drawable/ic_notification"
-        android:padding="8dp"
-        android:layout_gravity="top|end"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="4dp"
-        android:contentDescription="Chat"/>
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:visibility="gone"/>
 
     </FrameLayout>
 
