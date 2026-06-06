@@ -460,6 +460,12 @@
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Geofence" android:textSize="9sp" android:gravity="center" android:layout_marginTop="4dp" android:textColor="@color/text_primary"/>
             </LinearLayout>
 
+            <!-- Chat -->
+            <LinearLayout android:id="@+id/menuChat" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:orientation="vertical" android:gravity="center" android:padding="6dp" android:background="?attr/selectableItemBackgroundBorderless" android:clickable="true" android:focusable="true">
+                <androidx.cardview.widget.CardView android:layout_width="52dp" android:layout_height="52dp" app:cardCornerRadius="14dp" app:cardElevation="2dp" app:cardBackgroundColor="#E0F2F1"><ImageView android:layout_width="28dp" android:layout_height="28dp" android:layout_gravity="center" android:src="@drawable/ic_announcement" android:tint="#00695C"/></androidx.cardview.widget.CardView>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Chat" android:textSize="9sp" android:gravity="center" android:layout_marginTop="4dp" android:textColor="@color/text_primary"/>
+            </LinearLayout>
+
         </GridLayout>
 
         <!-- BIRTHDAY CARD -->
@@ -483,13 +489,6 @@
         <LinearLayout android:id="@+id/llAnnouncementsContainer" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:paddingHorizontal="16dp"/>
 
     </LinearLayout>
-
-    <!-- menuChat: hidden anchor for chat click binding — chat entry is via bottom nav -->
-    <View
-        android:id="@+id/menuChat"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:visibility="gone"/>
 
     </FrameLayout>
 
