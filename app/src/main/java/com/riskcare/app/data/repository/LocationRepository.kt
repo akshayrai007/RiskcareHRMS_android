@@ -116,7 +116,7 @@ class LocationRepository(context: Context) {
      * Batch sync all pending records — called by SyncWorker every 15 min.
      */
     suspend fun syncPending(): SyncResult = withContext(Dispatchers.IO) {
-        val pending = dao.getPendingRecords()
+        val pending = dao.getUnsynced()
         if (pending.isEmpty()) return@withContext SyncResult(0, 0)
 
         var uploaded = 0
@@ -129,7 +129,7 @@ class LocationRepository(context: Context) {
             if (success) uploaded++ else failed++
         }
 
-        dao.cleanup()
+        dao.deleteSynced()
         Log.d(tag, "Sync complete: uploaded=$uploaded, failed=$failed")
         SyncResult(uploaded, failed)
     }
