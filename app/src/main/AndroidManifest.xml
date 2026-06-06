@@ -119,7 +119,7 @@
             android:name=".service.OdStopReceiver"
             android:exported="false">
             <intent-filter>
-                <action android:name="com.krishihr.app.OD_STOP" />
+                <action android:name="com.riskcare.app.OD_STOP" />
             </intent-filter>
         </receiver>
 
