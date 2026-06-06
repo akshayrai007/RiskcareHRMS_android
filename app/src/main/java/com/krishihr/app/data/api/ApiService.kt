@@ -2,6 +2,7 @@ package com.krishihr.app.data.api
 
 import com.krishihr.app.data.models.*
 import okhttp3.MultipartBody
+import okhttp3.RequestBody
 import retrofit2.Response
 import retrofit2.http.*
 
@@ -75,7 +76,7 @@ interface ApiService {
     @GET("geofence/my-locations")
     suspend fun getMyGeofenceLocations(): Response<ApiResponse<List<MyGeofenceLocation>>>
 
-    // ── Buffer Rules (new boundary system) ───────────────────────────────────
+    // ── Buffer Rules ──────────────────────────────────────────────────────────
     @GET("geofence/buffer-rules/{employeeId}")
     suspend fun getBufferRule(@Path("employeeId") employeeId: Int): Response<ApiResponse<BufferRuleResponse>>
 
@@ -359,6 +360,45 @@ interface ApiService {
         @Query("date")        date: String
     ): Response<ApiResponse<List<MovementPoint>>>
 
+    // ── Movement Alerts (#10) ────────────────────────────────────────────────
+    @GET("attendance/movement/alerts")
+    suspend fun getMovementAlerts(
+        @Query("date")        date: String? = null,
+        @Query("employee_id") employeeId: Int? = null,
+        @Query("type")        type: String? = null,
+        @Query("status")      status: String? = null
+    ): Response<ApiResponse<List<MovementAlert>>>
+
+    @POST("attendance/movement/alerts/{id}/resolve")
+    suspend fun resolveMovementAlert(
+        @Path("id") id: Int,
+        @Body body: Map<String, @JvmSuppressWildcards Any?>
+    ): Response<ApiResponse<Unit>>
+
+    // ── Beat Plan / PJP (#7) ──────────────────────────────────────────────────
+    @GET("attendance/beat-plan")
+    suspend fun getBeatPlans(
+        @Query("employee_id") employeeId: Int? = null,
+        @Query("date")        date: String? = null,
+        @Query("from_date")   fromDate: String? = null,
+        @Query("to_date")     toDate: String? = null
+    ): Response<ApiResponse<List<BeatPlan>>>
+
+    @GET("attendance/beat-plan/compare")
+    suspend fun getBeatPlanCompare(
+        @Query("employee_id") employeeId: Int,
+        @Query("date")        date: String
+    ): Response<ApiResponse<BeatPlanCompare>>
+
+    @GET("attendance/beat-plan/{id}")
+    suspend fun getBeatPlan(@Path("id") id: Int): Response<ApiResponse<BeatPlan>>
+
+    @POST("attendance/beat-plan")
+    suspend fun createBeatPlan(@Body body: Map<String, @JvmSuppressWildcards Any?>): Response<ApiResponse<Unit>>
+
+    @DELETE("attendance/beat-plan/{id}")
+    suspend fun deleteBeatPlan(@Path("id") id: Int): Response<ApiResponse<Unit>>
+
     // ── Form 16 ───────────────────────────────────────────────────────────────
     @GET("payroll/form16/years")
     suspend fun getForm16Years(
@@ -386,9 +426,9 @@ interface ApiService {
     @POST("it-declaration/proof")
     suspend fun uploadITProof(
         @Part file: MultipartBody.Part,
-        @Part("declaration_id") declarationId: okhttp3.RequestBody,
-        @Part("section") section: okhttp3.RequestBody,
-        @Part("section_label") sectionLabel: okhttp3.RequestBody
+        @Part("declaration_id") declarationId: RequestBody,
+        @Part("section") section: RequestBody,
+        @Part("section_label") sectionLabel: RequestBody
     ): Response<ApiResponse<Unit>>
 
     @GET("it-declaration/tax-preview")
@@ -396,27 +436,22 @@ interface ApiService {
         @Query("fy") fy: String? = null
     ): Response<TaxPreviewResponse>
 
-    // HR/Accounts: get all employees' declarations
     @GET("it-declaration/all")
     suspend fun getAllITDeclarations(
         @Query("fy") fy: String? = null,
         @Query("status") status: String? = null
     ): Response<ApiResponse<List<ITDeclarationSummary>>>
 
-    // HR/Accounts: get full proof list for a specific declaration (used in HR Review modal)
-    // FIX: This endpoint exists on the backend but was missing from ApiService
     @GET("it-declaration/proofs")
     suspend fun getProofsByDeclaration(
         @Query("declaration_id") declarationId: Int
     ): Response<ApiResponse<List<ITProofDoc>>>
 
-    // HR/Accounts/Admin: get a specific employee's declaration by id
     @GET("it-declaration/{id}")
     suspend fun getITDeclarationById(
         @Path("id") id: Int
     ): Response<ITDeclarationResponse>
 
-    // HR/Accounts/Admin: approve or reject a declaration
     @POST("it-declaration/{id}/review")
     suspend fun reviewITDeclaration(
         @Path("id") id: Int,
@@ -449,7 +484,7 @@ interface ApiService {
     @PUT("reimbursement/{id}/edit")
     suspend fun editReimbursement(
         @Path("id") id: Int,
-        @Body body: okhttp3.RequestBody
+        @Body body: RequestBody
     ): Response<ApiResponse<Unit>>
 
     @POST("reimbursement/{id}/disburse")
@@ -466,4 +501,133 @@ interface ApiService {
 
     @GET("projects/summary")
     suspend fun getProjectSummary(): Response<ApiResponse<ProjectSummary>>
+
+    // ═════════════════════════════════════════════════════════════════════════
+    // ── Chat & Messaging ──────────────────────────────────────────────────────
+    // ═════════════════════════════════════════════════════════════════════════
+
+    // Groups
+    @GET("chat/groups")
+    suspend fun getChatGroups(): Response<ApiResponse<List<ChatGroup>>>
+
+    @POST("chat/groups")
+    suspend fun createChatGroup(@Body request: CreateGroupRequest): Response<ApiResponse<ChatGroup>>
+
+    // Delete chat for me only (WhatsApp-style)
+    @DELETE("chat/groups/{id}")
+    suspend fun deleteChatGroup(@Path("id") id: Int): Response<ApiResponse<Unit>>
+
+    // Update group name / avatar
+    @PATCH("chat/groups/{id}")
+    suspend fun updateChatGroup(
+        @Path("id") id: Int,
+        @Body body: Map<String, String>
+    ): Response<ApiResponse<ChatGroup>>
+
+    // Messages
+    @GET("chat/groups/{groupId}/messages")
+    suspend fun getChatMessages(
+        @Path("groupId") groupId: Int,
+        @Query("before_id") beforeId: Int? = null,
+        @Query("limit") limit: Int = 50
+    ): Response<ApiResponse<List<ChatMessage>>>
+
+    @POST("chat/groups/{groupId}/messages")
+    suspend fun sendChatMessage(
+        @Path("groupId") groupId: Int,
+        @Body request: SendMessageRequest
+    ): Response<ApiResponse<ChatMessage>>
+
+    // Edit message
+    @PATCH("chat/messages/{id}")
+    suspend fun editChatMessage(
+        @Path("id") id: Int,
+        @Body request: SendMessageRequest
+    ): Response<ApiResponse<ChatMessage>>
+
+    // Delete for me
+    @DELETE("chat/groups/{groupId}/messages/{messageId}")
+    suspend fun deleteChatMessage(
+        @Path("groupId") groupId: Int,
+        @Path("messageId") messageId: Int
+    ): Response<ApiResponse<Unit>>
+
+    // Delete for everyone
+    @DELETE("chat/messages/{id}/everyone")
+    suspend fun deleteChatMessageEveryone(
+        @Path("id") id: Int
+    ): Response<ApiResponse<Unit>>
+
+    // File upload (actual multipart — not just text)
+    @Multipart
+    @POST("chat/groups/{groupId}/files")
+    suspend fun uploadChatFile(
+        @Path("groupId") groupId: Int,
+        @Part file: MultipartBody.Part
+    ): Response<ApiResponse<ChatMessage>>
+
+    // Members
+    @GET("chat/groups/{groupId}/members")
+    suspend fun getGroupMembers(@Path("groupId") groupId: Int): Response<ApiResponse<List<GroupMember>>>
+
+    @POST("chat/groups/{groupId}/members")
+    suspend fun addGroupMembers(
+        @Path("groupId") groupId: Int,
+        @Body body: Map<String, @JvmSuppressWildcards Any>
+    ): Response<ApiResponse<Unit>>
+
+    @DELETE("chat/groups/{groupId}/members/{memberId}")
+    suspend fun removeGroupMember(
+        @Path("groupId") groupId: Int,
+        @Path("memberId") memberId: Int
+    ): Response<ApiResponse<Unit>>
+
+    // Scheduled meetings
+    @GET("chat/scheduled-meetings")
+    suspend fun getScheduledMeetings(): Response<ApiResponse<List<ScheduledMeeting>>>
+
+    @POST("chat/scheduled-meetings")
+    suspend fun createScheduledMeeting(@Body request: ScheduleMeetingRequest): Response<ApiResponse<ScheduledMeeting>>
+
+    @DELETE("chat/scheduled-meetings/{id}")
+    suspend fun deleteScheduledMeeting(@Path("id") id: Int): Response<ApiResponse<Unit>>
+
+    // Start a scheduled meeting (marks it started on backend, returns room info)
+    @POST("chat/scheduled-meetings/{id}/start")
+    suspend fun startScheduledMeeting(@Path("id") id: Int): Response<ApiResponse<ScheduledMeeting>>
+
+    // Live meeting records (join / leave tracking)
+    @GET("chat/meetings/{roomId}")
+    suspend fun getMeeting(@Path("roomId") roomId: String): Response<ApiResponse<ScheduledMeeting>>
+
+    @POST("chat/meetings")
+    suspend fun createMeeting(@Body body: Map<String, @JvmSuppressWildcards Any?>): Response<ApiResponse<ScheduledMeeting>>
+
+    @PATCH("chat/meetings/{roomId}/end")
+    suspend fun endMeeting(@Path("roomId") roomId: String): Response<ApiResponse<Unit>>
+
+    @POST("chat/meetings/{roomId}/join")
+    suspend fun joinMeetingRecord(@Path("roomId") roomId: String): Response<ApiResponse<Unit>>
+
+    @POST("chat/meetings/{roomId}/leave")
+    suspend fun leaveMeetingRecord(@Path("roomId") roomId: String): Response<ApiResponse<Unit>>
+
+    // Call History
+    @GET("chat/call-log")
+    suspend fun getCallLog(): Response<ApiResponse<List<CallLogEntry>>>
+
+    @POST("chat/call-log/event")
+    suspend fun saveCallEvent(@Body request: CallLogEventRequest): Response<ApiResponse<Unit>>
+
+    // Presence
+    @GET("chat/presence")
+    suspend fun getChatPresence(@Query("employee_ids") employeeIds: String): Response<ApiResponse<List<PresenceRecord>>>
+
+    @POST("chat/presence")
+    suspend fun updateChatPresence(@Body request: UpdatePresenceRequest): Response<ApiResponse<Unit>>
+
+    // Mark offline instantly (called on app background/destroy via sendBeacon equivalent)
+    @POST("chat/presence/offline")
+    suspend fun markOffline(): Response<ApiResponse<Unit>>
+
 }

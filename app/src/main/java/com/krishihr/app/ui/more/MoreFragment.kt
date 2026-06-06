@@ -61,6 +61,7 @@ class MoreFragment : Fragment() {
             R.id.rowPayrollMgmt to "📊  Payroll Management",
             R.id.rowProvision to "📝  Probation & Confirmation",
             R.id.rowProjectMgmt to "🗂️  Project Management",
+            R.id.rowBeatPlan to "📋  Beat Plan / PJP",
             R.id.rowBirthdays to "🎂  Birthdays",
             R.id.rowAnniversaries to "🎉  Work Anniversaries",
             R.id.rowHolidays to "🏖️  Holidays",
@@ -146,6 +147,13 @@ class MoreFragment : Fragment() {
             row.visibility = if (role in adminRoles) View.VISIBLE else View.GONE
             row.setOnClickListener { nav(ProjectManagementFragment()) }
         }
+        // Beat Plan — HR, Admin, Manager, TL only
+        view.findViewById<View>(R.id.rowBeatPlan)?.let { row ->
+            val managerRoles = listOf(Roles.HR, Roles.SUPER_ADMIN, Roles.ADMIN, Roles.MANAGER, Roles.TL)
+            row.visibility = if (role in managerRoles) View.VISIBLE else View.GONE
+            row.setOnClickListener { nav(com.krishihr.app.ui.attendance.BeatPlanFragment()) }
+        }
+
         view.findViewById<View>(R.id.rowAdvanceApprovals)?.let { row ->
             row.visibility = if (Roles.canApproveAdvance(role)) View.VISIBLE else View.GONE
             row.setOnClickListener { nav(AdvanceApprovalsFragment()) }
@@ -1496,11 +1504,15 @@ class AdvanceFragment : Fragment() {
 
     private fun loadAdvances(root: LinearLayout, dp: Float) {
         val ctx = requireContext()
+        // Get the logged-in employee's ID so we only show THEIR OWN requests
+        val myId = SessionManager(ctx).getEmployee()?.id
         lifecycleScope.launch {
             try {
                 val res = RetrofitClient.instance.getAdvances()
-                // Show only pending/approved - hide rejected/old history
+                // Filter strictly to only this employee's own requests
+                // (server may return all visible advances for manager-role users)
                 val items = (res.body()?.data ?: emptyList())
+                    .filter { it.employeeId == myId }
                     .filter { it.status.lowercase() != "rejected" }
                     .sortedByDescending { it.appliedOn ?: it.appliedAt ?: "" }
                 // Remove old rv if exists
@@ -1510,7 +1522,8 @@ class AdvanceFragment : Fragment() {
                     tag = "adv_rv"; layoutManager = LinearLayoutManager(ctx)
                 }
                 root.addView(rv)
-                rv.adapter = AdvanceAdapter(items) { loadAdvances(root, dp) }
+                // Pass myId so adapter only shows Edit/Revoke on own requests
+                rv.adapter = AdvanceAdapter(items, myId) { loadAdvances(root, dp) }
             } catch (_: Exception) {}
         }
     }
@@ -1518,6 +1531,7 @@ class AdvanceFragment : Fragment() {
 
 class AdvanceAdapter(
     private val items: List<AdvanceApplication>,
+    private val myId: Int?,                  // logged-in employee id — guards Edit/Revoke
     private val onRefresh: () -> Unit = {}
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     override fun getItemCount() = items.size
@@ -1551,6 +1565,17 @@ class AdvanceAdapter(
         })
         ll.addView(topRow)
 
+        // ── Requester name (shown when viewing someone else's request) ───────
+        val empName = it.employeeName ?: it.employeeCode
+        if (!empName.isNullOrBlank() && it.employeeId != myId) {
+            ll.addView(TextView(ctx).apply {
+                text = empName; textSize = 13f
+                setTypeface(null, android.graphics.Typeface.BOLD)
+                setTextColor(ctx.getColor(R.color.text_primary))
+                setPadding(0,(4*dp).toInt(),0,0)
+            })
+        }
+
         // ── Reason ──────────────────────────────────────────────────────────
         if (!it.reason.isNullOrBlank()) ll.addView(TextView(ctx).apply {
             text = "Reason: ${it.reason}"; textSize = 12f
@@ -1558,7 +1583,7 @@ class AdvanceAdapter(
             setPadding(0,(4*dp).toInt(),0,0)
         })
 
-        // ── Date + Level ─────────────────────────────────────────────────────
+        // ── Date ─────────────────────────────────────────────────────────────
         val dateStr = it.requestedAt?.take(10) ?: it.appliedOn?.take(10) ?: it.appliedAt?.take(10)
         ll.addView(TextView(ctx).apply {
             text = "Requested: ${dateStr?.toDisplayDate() ?: "—"}"
@@ -1566,9 +1591,10 @@ class AdvanceAdapter(
             setPadding(0,(2*dp).toInt(),0,0)
         })
 
-        // ── Edit & Revoke buttons (only for own pending requests) ────────────
+        // ── Edit & Revoke buttons — ONLY for THIS employee's OWN pending requests ──
         val isPending = it.status.lowercase() == "pending"
-        if (isPending) {
+        val isOwn = it.employeeId == myId
+        if (isPending && isOwn) {
             val btnRow = LinearLayout(ctx).apply {
                 orientation = LinearLayout.HORIZONTAL
                 layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)

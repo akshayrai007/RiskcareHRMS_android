@@ -20,10 +20,13 @@
         <item name="shapeAppearanceLargeComponent">@style/ShapeAppearance.RiskcareHRMS.LargeComponent</item>
     </style>
 
+    <!-- Pre-API-31: plain white window, no green, no circle -->
     <style name="Theme.RiskcareHRMS.Splash" parent="Theme.MaterialComponents.Light.NoActionBar">
-        <item name="android:statusBarColor">@color/primary</item>
-        <item name="android:navigationBarColor">@color/primary</item>
-        <item name="android:windowBackground">@drawable/splash_background</item>
+        <item name="android:statusBarColor">#FFFFFF</item>
+        <item name="android:navigationBarColor">#FFFFFF</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="m">true</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">true</item>
+        <item name="android:windowBackground">#FFFFFF</item>
     </style>
 
     <style name="RiskcareHRMS.CardView" parent="Widget.MaterialComponents.CardView">

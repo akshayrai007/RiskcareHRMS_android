@@ -1,29 +1,48 @@
 package com.krishihr.app.ui.dashboard
 import com.krishihr.app.AndroidMain
 
+import android.location.Location
 import android.os.Bundle
+import android.util.Log
 import android.view.*
 import android.widget.*
+import androidx.activity.result.IntentSenderRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import com.google.android.gms.common.api.ResolvableApiException
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.LocationSettingsRequest
+import com.google.android.gms.location.Priority
+import com.google.android.gms.location.SettingsClient
+import com.google.android.gms.tasks.CancellationTokenSource
 import com.krishihr.app.R
 import com.krishihr.app.data.api.RetrofitClient
+import com.krishihr.app.data.models.*
 import com.krishihr.app.databinding.FragmentDashboardBinding
+import com.krishihr.app.domain.model.StopReason
+import com.krishihr.app.domain.model.TrackingPrefs
+import com.krishihr.app.permission.PermissionManager
+import com.krishihr.app.service.LocationTrackingService
 import com.krishihr.app.ui.MainActivity
 import com.krishihr.app.ui.attendance.AttendanceFragment
 import com.krishihr.app.ui.attendance.MovementFragment
 import com.krishihr.app.ui.more.GeofenceAdminFragment
 import com.krishihr.app.ui.leave.LeaveFragment
 import com.krishihr.app.ui.more.*
+import com.krishihr.app.ui.chat.ChatFragment
 import com.krishihr.app.ui.payroll.PayrollFragment
 import com.krishihr.app.utils.*
-import com.krishihr.app.data.models.AttendanceRecord
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withTimeoutOrNull
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.coroutines.resume
 
 class DashboardFragment : Fragment() {
 
@@ -32,6 +51,16 @@ class DashboardFragment : Fragment() {
     private var timerJob: Job? = null
     private var clockJob: Job? = null
 
+    // ── Quick-punch from dashboard ───────────────────────────────────────────
+    private var hasPunchedIn  = false
+    private var hasPunchedOut = false
+    private var isPunching    = false
+    private lateinit var permissionManager: PermissionManager
+
+    private val gpsSettingsLauncher = registerForActivityResult(
+        ActivityResultContracts.StartIntentSenderForResult()
+    ) { lifecycleScope.launch { executeDashboardPunch() } }
+
     override fun onCreateView(i: LayoutInflater, c: ViewGroup?, s: Bundle?): View {
         _b = FragmentDashboardBinding.inflate(i, c, false)
         return binding.root
@@ -39,6 +68,7 @@ class DashboardFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        permissionManager = PermissionManager(this)
         startLiveClock() // Start system clock immediately
         setupProfile()
         setupRoleBasedUI()
@@ -101,15 +131,15 @@ class DashboardFragment : Fragment() {
         binding.menuProfile.setOnClickListener       { nav(ProfileFragment()) }
         binding.menuQuiz.setOnClickListener          { nav(GkQuizFragment()) }
 
-        binding.cardPunch.setOnClickListener { nav(AttendanceFragment()) }
+        binding.cardPunch.setOnClickListener { startDashboardPunch() }
         binding.cardPunch.setOnLongClickListener {
             it.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
-            nav(AttendanceFragment())
+            startDashboardPunch()
             true
         }
         binding.btnMarkAttendance.setOnClickListener {
             it.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
-            nav(AttendanceFragment())
+            startDashboardPunch()
         }
 
         binding.headerAvatar.setOnClickListener      { nav(ProfileFragment()) }
@@ -117,6 +147,7 @@ class DashboardFragment : Fragment() {
         binding.cardBirthday.setOnClickListener      { nav(BirthdaysFragment()) }
         binding.tvViewAllAnnouncements.setOnClickListener { nav(AnnouncementsFragment()) }
         binding.menuBirthdays.setOnClickListener     { nav(BirthdaysFragment()) }
+        try { binding.menuChat.setOnClickListener     { nav(ChatFragment()) } } catch (_: Exception) {}
 
         val hasTeam = role == Roles.MANAGER || role == Roles.TL || role == Roles.ADMIN || role == Roles.HR || role == Roles.SUPER_ADMIN
         if (hasTeam) {
@@ -163,6 +194,8 @@ class DashboardFragment : Fragment() {
                     val att = d.todayAttendance
                     val hasPunchIn  = att?.punchIn  != null
                     val hasPunchOut = att?.punchOut != null
+                    hasPunchedIn  = hasPunchIn
+                    hasPunchedOut = hasPunchOut
 
                     binding.tvPunchInTime.text = att?.displayPunchIn ?: att?.punchIn?.let { AttendanceRecord.parseTime(it) } ?: "--:--"
                     binding.tvPunchOutTime.text = att?.displayPunchOut ?: att?.punchOut?.let { AttendanceRecord.parseTime(it) } ?: "--:--"
@@ -621,6 +654,168 @@ class DashboardFragment : Fragment() {
                 container.post { container.requestLayout() }
             } catch (_: Exception) {}
         }
+    }
+
+    // ── Dashboard quick-punch ──────────────────────────────────────────────────
+
+    private fun startDashboardPunch() {
+        if (isPunching) { Toast.makeText(requireContext(), "⏳ Already processing, please wait...", Toast.LENGTH_SHORT).show(); return }
+        permissionManager.checkAndRequestAll { granted ->
+            if (granted) checkGpsAndDashboardPunch()
+        }
+    }
+
+    private fun checkGpsAndDashboardPunch() {
+        val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, AndroidMain.GEOFENCE_LOCATION_REQUEST_MS).build()
+        val settingsRequest = LocationSettingsRequest.Builder().addLocationRequest(locationRequest).setAlwaysShow(true).build()
+        val settingsClient: SettingsClient = LocationServices.getSettingsClient(requireActivity())
+        settingsClient.checkLocationSettings(settingsRequest)
+            .addOnSuccessListener { lifecycleScope.launch { executeDashboardPunch() } }
+            .addOnFailureListener { exception ->
+                if (exception is ResolvableApiException) {
+                    try { gpsSettingsLauncher.launch(IntentSenderRequest.Builder(exception.resolution).build()) }
+                    catch (_: Exception) { lifecycleScope.launch { executeDashboardPunch() } }
+                } else lifecycleScope.launch { executeDashboardPunch() }
+            }
+    }
+
+    private suspend fun executeDashboardPunch() {
+        if (isPunching) return
+        isPunching = true
+        val ctx = requireContext()
+        try {
+            // Dim the button to show loading
+            if (_b != null) {
+                binding.btnMarkAttendance.isEnabled = false
+                binding.btnMarkAttendance.alpha = 0.5f
+            }
+
+            // 1. Get current GPS location
+            var lat: Double? = null; var lng: Double? = null; var locLabel = "Manual"
+            try {
+                val loc = getDashboardLocation()
+                lat = loc?.latitude; lng = loc?.longitude
+                if (lat != null) locLabel = "GPS: ${String.format("%.4f", lat)},${String.format("%.4f", lng)}"
+            } catch (_: Exception) {}
+
+            // 2. Validate geofence buffer (only if we got a location)
+            var geofenceValid: Boolean? = null
+            if (lat != null && lng != null) {
+                try {
+                    val bufRes  = RetrofitClient.instance.validateBuffer(ValidateBufferRequest(latitude = lat, longitude = lng))
+                    val bufData = bufRes.body(); geofenceValid = bufData?.valid
+                    if (geofenceValid == false) {
+                        val msg = bufData?.message ?: "You are outside your assigned boundary"
+                        // Show outside-geofence popup
+                        if (_b != null) {
+                            androidx.appcompat.app.AlertDialog.Builder(ctx)
+                                .setTitle("📍 Outside Boundary")
+                                .setMessage("$msg\n\nPlease move inside the designated area to mark attendance.")
+                                .setPositiveButton("OK", null)
+                                .show()
+                        }
+                        return
+                    }
+                } catch (_: Exception) { geofenceValid = null }
+            }
+
+            // 3. Execute punch-in or punch-out
+            val istTimeSdf = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).also { it.timeZone = TimeZone.getTimeZone("Asia/Kolkata") }
+            val istDateSdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).also { it.timeZone = TimeZone.getTimeZone("Asia/Kolkata") }
+            val now = Date(); val punchTime = istTimeSdf.format(now); val punchDate = istDateSdf.format(now)
+            var lastError = "Failed"
+
+            repeat(3) { attempt ->
+                try {
+                    val req = if (!hasPunchedIn)
+                        PunchRequest(lat = lat, lng = lng, punchInLocation = locLabel, punchOutLocation = null, punchTime = punchTime, punchDate = punchDate, source = "mobile", geofenceValid = geofenceValid)
+                    else
+                        PunchRequest(lat = lat, lng = lng, punchInLocation = null, punchOutLocation = locLabel, punchTime = punchTime, punchDate = punchDate, source = "mobile", geofenceValid = geofenceValid)
+                    val res = if (!hasPunchedIn) RetrofitClient.instance.punchIn(req) else RetrofitClient.instance.punchOut(req)
+
+                    if (res.isSuccessful && res.body()?.success == true) {
+                        val msg = res.body()?.message ?: if (!hasPunchedIn) "Punched In ✅" else "Punched Out ✅"
+                        Toast.makeText(ctx, msg, Toast.LENGTH_SHORT).show()
+
+                        if (!hasPunchedIn) {
+                            // Post-punch-in: log movement + start tracking
+                            val todayStr = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+                            val isOnOD = try {
+                                val odRes = RetrofitClient.instance.getMyODRequests(status = "approved")
+                                (odRes.body()?.data ?: emptyList()).any { od -> (od.fromDate?.take(10) ?: "") <= todayStr && (od.toDate?.take(10) ?: "") >= todayStr }
+                            } catch (_: Exception) { false }
+                            ctx.getSharedPreferences(TrackingPrefs.PREFS_NAME, android.content.Context.MODE_PRIVATE)
+                                .edit().putBoolean(TrackingPrefs.KEY_IS_OD, isOnOD).apply()
+                            if (lat != null && lng != null) {
+                                try {
+                                    RetrofitClient.instance.logMovement(
+                                        MovementLogRequest(lat = lat, lng = lng, accuracy = 0f, isOd = isOnOD)
+                                    )
+                                } catch (e: Exception) {
+                                    Log.w("DashboardFragment", "First movement log failed: ${e.message}")
+                                }
+                            }
+                            val session = SessionManager(ctx)
+                            val satPolicy = session.getEmployee()?.saturdayPolicy ?: ""
+                            val isOffsiteEmp = satPolicy == "all_working"
+                            if (isOffsiteEmp || isOnOD) {
+                                LocationTrackingService.start(ctx, isOd = isOnOD)
+                                LocationTrackingService.requestBatteryExemption(ctx)
+                            }
+                            hasPunchedIn = true
+                        } else {
+                            // Post-punch-out: stop tracking
+                            LocationTrackingService.stop(ctx, StopReason.PUNCH_OUT)
+                            ctx.getSharedPreferences(AndroidMain.PREFS_LEAVE_CACHE, android.content.Context.MODE_PRIVATE)
+                                .edit().putBoolean("balance_stale", true).apply()
+                            hasPunchedOut = true
+                        }
+                        // Refresh dashboard data
+                        loadDashboard()
+                        return
+                    } else {
+                        lastError = res.body()?.message ?: res.errorBody()?.string()?.take(120) ?: "Server error ${res.code()}"
+                        if (attempt < 2) delay(AndroidMain.PUNCH_RETRY_DELAY_MS)
+                    }
+                } catch (e: Exception) {
+                    lastError = "Network error: ${e.message}"
+                    if (attempt < 2) delay(AndroidMain.PUNCH_RETRY_DELAY_MS)
+                }
+            }
+            Toast.makeText(ctx, "❌ $lastError", Toast.LENGTH_LONG).show()
+        } finally {
+            isPunching = false
+            if (_b != null) {
+                binding.btnMarkAttendance.isEnabled = true
+                binding.btnMarkAttendance.alpha = 1.0f
+            }
+        }
+    }
+
+    private suspend fun getDashboardLocation(): Location? {
+        val client = LocationServices.getFusedLocationProviderClient(requireActivity())
+        return try {
+            val last = suspendCancellableCoroutine<Location?> { cont ->
+                try { client.lastLocation.addOnSuccessListener { cont.resume(it, null) }.addOnFailureListener { cont.resume(null, null) } }
+                catch (_: SecurityException) { cont.resume(null, null) }
+            }
+            if (last != null) return last
+            val balanced = withTimeoutOrNull(8_000L) {
+                suspendCancellableCoroutine<Location?> { cont ->
+                    val cts = CancellationTokenSource(); cont.invokeOnCancellation { cts.cancel() }
+                    try { client.getCurrentLocation(Priority.PRIORITY_BALANCED_POWER_ACCURACY, cts.token).addOnSuccessListener { cont.resume(it, null) }.addOnFailureListener { cont.resume(null, null) } }
+                    catch (_: SecurityException) { cont.resume(null, null) }
+                }
+            }
+            if (balanced != null) return balanced
+            withTimeoutOrNull(12_000L) {
+                suspendCancellableCoroutine { cont ->
+                    val cts = CancellationTokenSource(); cont.invokeOnCancellation { cts.cancel() }
+                    try { client.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, cts.token).addOnSuccessListener { cont.resume(it, null) }.addOnFailureListener { cont.resume(null, null) } }
+                    catch (_: SecurityException) { cont.resume(null, null) }
+                }
+            }
+        } catch (_: Exception) { null }
     }
 
     override fun onDestroyView() {

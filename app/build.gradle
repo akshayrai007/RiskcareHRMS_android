@@ -2,9 +2,9 @@ plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
     id 'kotlin-parcelize'
-    id 'kotlin-kapt'          // ← ADD THIS (required for Room)
+    id 'kotlin-kapt'
 }
-// KrishiHR Android v2.0
+// RiskCareHR Android
 
 android {
     namespace 'com.krishihr.app'
@@ -14,8 +14,8 @@ android {
         applicationId "com.krishihr.app"
         minSdk 24
         targetSdk 34
-        versionCode 3           // ← bump versionCode
-        versionName "7.6"       // ← bump versionName
+        versionCode 3
+        versionName "7.6"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -36,6 +36,19 @@ android {
         viewBinding true
         buildConfig true
     }
+
+    // Avoid duplicate class conflicts from Socket.IO vs Android's built-in org.json
+    configurations.all {
+        exclude group: 'org.json', module: 'json'
+    }
+
+    // Avoid duplicate native lib conflicts from WebRTC
+    packagingOptions {
+        pickFirst 'lib/x86/libc++_shared.so'
+        pickFirst 'lib/x86_64/libc++_shared.so'
+        pickFirst 'lib/armeabi-v7a/libc++_shared.so'
+        pickFirst 'lib/arm64-v8a/libc++_shared.so'
+    }
 }
 
 dependencies {
@@ -46,6 +59,9 @@ dependencies {
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation 'androidx.activity:activity-ktx:1.8.2'
     implementation 'androidx.fragment:fragment-ktx:1.6.2'
+
+    // Splash screen
+    implementation 'androidx.core:core-splashscreen:1.0.1'
 
     // Lifecycle & ViewModel
     implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0'
@@ -80,20 +96,20 @@ dependencies {
     // ViewPager2
     implementation 'androidx.viewpager2:viewpager2:1.0.0'
 
-    // Location
-    implementation 'com.google.android.gms:play-services-location:21.1.0'
+    // Location (latest)
+    implementation 'com.google.android.gms:play-services-location:21.2.0'
 
-    // Maps (OSMDroid — free, no API key needed)
-    implementation 'org.osmdroid:osmdroid-android:6.1.18'
+    // Google Maps SDK (replaces OSMDroid — full road-snap, heatmap, replay)
+    implementation 'com.google.android.gms:play-services-maps:18.2.0'
 
     // UCrop
     implementation 'com.github.yalantis:ucrop:2.2.8'
 
-    // ── NEW: Room (offline location queue) ───────────────────────────────────
+    // Room (offline location queue)
     def room_version = "2.6.1"
     implementation "androidx.room:room-runtime:$room_version"
     implementation "androidx.room:room-ktx:$room_version"
-    kapt "androidx.room:room-compiler:$room_version"     // ← needs kotlin-kapt plugin
+    kapt "androidx.room:room-compiler:$room_version"
 
     // Testing
     testImplementation 'junit:junit:4.13.2'

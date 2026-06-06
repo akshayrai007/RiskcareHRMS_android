@@ -1089,3 +1089,197 @@ data class ProjectSummary(
     @SerializedName("total_advance") val totalAdvance: Double = 0.0,
     @SerializedName("total_reimbursement") val totalReimbursement: Double = 0.0
 )
+
+// ── Chat ──────────────────────────────────────────────────────────────────────
+@Parcelize
+data class ChatGroup(
+    val id: Int,
+    val name: String? = null,
+    val type: String = "group",
+    @SerializedName("avatar_url")    val avatarUrl: String? = null,
+    @SerializedName("dm_peer_id")    val dmPeerId: Int? = null,
+    @SerializedName("dm_peer_name")  val dmPeerName: String? = null,
+    @SerializedName("dm_peer_photo") val dmPeerPhoto: String? = null,
+    @SerializedName("last_message_type") val lastMessageType: String? = null,
+    @SerializedName("unread_count")  val unreadCount: Int = 0,
+    @SerializedName("last_message")  val lastMessage: String? = null,
+    @SerializedName("last_message_at") val lastMessageAt: String? = null,
+    @SerializedName("member_count")  val memberCount: Int = 0,
+    @SerializedName("created_by")    val createdBy: Int? = null,
+    @SerializedName("is_online")     val isOnline: Boolean = false,
+    @SerializedName("last_seen")     val lastSeen: String? = null
+) : Parcelable {
+    val displayName get() = if (type == "dm") (dmPeerName ?: "DM") else (name ?: "Group")
+    val isDM get() = type == "dm"
+}
+
+@Parcelize
+data class ChatMessage(
+    val id: Int,
+    @SerializedName("group_id")      val groupId: Int,
+    @SerializedName("sender_id")     val senderId: Int,
+    @SerializedName("sender_name")   val senderName: String? = null,
+    @SerializedName("sender_photo")  val senderPhoto: String? = null,
+    val content: String? = null,
+    @SerializedName("message_type")  val messageType: String = "text",
+    @SerializedName("file_url")      val fileUrl: String? = null,
+    @SerializedName("file_name")     val fileName: String? = null,
+    @SerializedName("file_mime")     val fileMime: String? = null,
+    @SerializedName("file_size")     val fileSize: Long? = null,
+    @SerializedName("created_at")    val createdAt: String? = null,
+    @SerializedName("updated_at")    val updatedAt: String? = null,
+    val status: String? = null,
+    @SerializedName("is_deleted")    val isDeleted: Boolean = false,
+    @SerializedName("reply_to_id")   val replyToId: Int? = null,
+    @SerializedName("reply_preview") val replyPreview: String? = null
+) : Parcelable
+
+@Parcelize
+data class ScheduledMeeting(
+    val id: Int,
+    val title: String,
+    val agenda: String? = null,
+    @SerializedName("scheduled_at") val scheduledAt: String? = null,
+    @SerializedName("group_id")     val groupId: Int? = null,
+    @SerializedName("group_name")   val groupName: String? = null,
+    @SerializedName("created_by")   val createdBy: Int? = null,
+    @SerializedName("creator_name") val creatorName: String? = null,
+    @SerializedName("created_at")   val createdAt: String? = null
+) : Parcelable
+
+@Parcelize
+data class GroupMember(
+    val id: Int,
+    @SerializedName("employee_id")   val employeeId: Int,
+    @SerializedName("employee_name") val employeeName: String? = null,
+    @SerializedName("employee_code") val employeeCode: String? = null,
+    val role: String? = null,
+    @SerializedName("is_online")     val isOnline: Boolean = false
+) : Parcelable
+
+data class PresenceRecord(
+    @SerializedName("employee_id") val employeeId: Int,
+    @SerializedName("is_online")   val isOnline: Boolean = false,
+    @SerializedName("last_seen")   val lastSeen: String? = null
+)
+
+data class SendMessageRequest(
+    val content: String,
+    @SerializedName("message_type") val messageType: String = "text",
+    @SerializedName("reply_to_id")  val replyToId: Int? = null
+)
+
+data class CreateGroupRequest(
+    val name: String? = null,
+    val type: String = "group",
+    @SerializedName("member_ids") val memberIds: List<Int>
+)
+
+data class ScheduleMeetingRequest(
+    val title: String,
+    val agenda: String? = null,
+    @SerializedName("scheduled_at") val scheduledAt: String,
+    @SerializedName("group_id")     val groupId: Int? = null
+)
+
+data class UpdatePresenceRequest(
+    @SerializedName("is_online") val isOnline: Boolean
+)
+data class CallLogEntry(
+    val id: Int,
+    @SerializedName("room_id")          val roomId: String,
+    @SerializedName("call_type")        val callType: String,
+    @SerializedName("caller_id")        val callerId: Int?,
+    @SerializedName("callee_id")        val calleeId: Int?,
+    @SerializedName("caller_name")      val callerName: String?,
+    @SerializedName("callee_name")      val calleeName: String?,
+    @SerializedName("caller_avatar")    val callerAvatar: String?,
+    @SerializedName("callee_avatar")    val calleeAvatar: String?,
+    @SerializedName("started_at")       val startedAt: String?,
+    @SerializedName("ended_at")         val endedAt: String?,
+    @SerializedName("duration_seconds") val durationSeconds: Int?,
+    val status: String?
+)
+
+data class CallLogEventRequest(
+    @SerializedName("room_id")   val roomId: String,
+    @SerializedName("call_type") val callType: String = "audio",
+    @SerializedName("caller_id") val callerId: Int?,
+    @SerializedName("callee_id") val calleeId: Int?,
+    @SerializedName("group_id")  val groupId: Int? = null,
+    val status: String = "missed"
+)
+
+// ── Movement Alerts (#10) ─────────────────────────────────────────────────────
+data class MovementAlert(
+    val id: Int,
+    @SerializedName("employee_id")   val employeeId: Int,
+    @SerializedName("emp_name")      val empName: String? = null,
+    @SerializedName("employee_code") val employeeCode: String? = null,
+    @SerializedName("alert_date")    val alertDate: String,
+    @SerializedName("alert_type")    val alertType: String,  // silence|low_battery|gps_off|net_off
+    val message: String,
+    val status: String,  // open|resolved|auto_resolved
+    @SerializedName("mins_since_last_ping") val minsSinceLastPing: Int? = null,
+    @SerializedName("last_ping_time")       val lastPingTime: String? = null,
+    @SerializedName("notified_at")          val notifiedAt: String? = null
+) {
+    val alertEmoji get() = when(alertType) {
+        "silence"     -> "📵"
+        "low_battery" -> "🔋"
+        "gps_off"     -> "📍"
+        "net_off"     -> "📶"
+        else          -> "⚠️"
+    }
+    val alertLabel get() = when(alertType) {
+        "silence"     -> "Tracking Silent"
+        "low_battery" -> "Low Battery"
+        "gps_off"     -> "GPS Off"
+        "net_off"     -> "No Internet"
+        else          -> "Alert"
+    }
+}
+
+// ── Beat Plan / PJP (#7) ──────────────────────────────────────────────────────
+data class BeatPlanStop(
+    val id: Int = 0,
+    val sequence: Int,
+    @SerializedName("location_name")    val locationName: String,
+    val address: String? = null,
+    val lat: Double? = null,
+    val lng: Double? = null,
+    val notes: String? = null,
+    @SerializedName("expected_arrival") val expectedArrival: String? = null,
+    @SerializedName("visit_status")     val visitStatus: String? = null,  // pending|visited|missed
+    val visited: Boolean? = null,
+    @SerializedName("nearest_dist_m")   val nearestDistM: Int? = null,
+    @SerializedName("nearest_time")     val nearestTime: String? = null
+)
+
+data class BeatPlan(
+    val id: Int,
+    @SerializedName("employee_id")   val employeeId: Int,
+    @SerializedName("emp_name")      val empName: String? = null,
+    @SerializedName("employee_code") val employeeCode: String? = null,
+    @SerializedName("plan_date")     val planDate: String,
+    val title: String? = null,
+    val notes: String? = null,
+    @SerializedName("stop_count")    val stopCount: Int? = null,
+    @SerializedName("has_actual_data") val hasActualData: Boolean? = null,
+    val stops: List<BeatPlanStop>? = null
+)
+
+data class BeatPlanCompare(
+    val plan: BeatPlan?,
+    val stops: List<BeatPlanStop>,
+    @SerializedName("actual_points") val actualPoints: List<MovementPoint>,
+    val summary: BeatPlanSummary?
+)
+
+data class BeatPlanSummary(
+    @SerializedName("planned_stops")  val plannedStops: Int,
+    @SerializedName("visited_stops")  val visitedStops: Int,
+    @SerializedName("missed_stops")   val missedStops: Int,
+    @SerializedName("coverage_pct")   val coveragePct: Int?,
+    @SerializedName("actual_points")  val actualPoints: Int
+)

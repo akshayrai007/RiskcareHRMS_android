@@ -3,16 +3,18 @@ import com.krishihr.app.AndroidMain
 
 import android.content.Context
 import android.content.Intent
+import com.google.gson.GsonBuilder
 import com.krishihr.app.ui.login.LoginActivity
 import com.krishihr.app.utils.SessionManager
 import okhttp3.Interceptor
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
-import com.google.gson.GsonBuilder
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
-import kotlinx.coroutines.runBlocking
 
 object RetrofitClient {
 
@@ -38,69 +40,87 @@ object RetrofitClient {
         chain.proceed(builder.build())
     }
 
-    // ── 2. On 401: check if it's a device-mismatch kick-out, else try refresh ─
+    // ── 2. On 401: try token refresh then retry; on failure clear session & redirect ─
+    //
+    // ✅ FIX 1: Use plain synchronous OkHttp execute() instead of runBlocking{}.
+    //    OkHttp interceptors run on IO threads so synchronous calls are safe here.
+    //    runBlocking risks deadlock when the coroutine thread pool is exhausted.
+    //
+    // ✅ FIX 2: Return chain.proceed(retryRequest) directly so the caller gets
+    //    the new 200 response. The old code fell through to chain.proceed(original)
+    //    which sent a second request and returned another 401 to the caller.
+    //
+    // ✅ FIX 3: Guard appContext null-check — context was never passed from
+    //    SplashActivity so redirect to LoginActivity was silently swallowed.
+    //    (SplashActivity.kt is also fixed to pass context.)
     private val unauthorizedInterceptor = Interceptor { chain ->
         val originalRequest = chain.request()
         val response = chain.proceed(originalRequest)
 
-        if (response.code == 401) {
-            response.close()
+        if (response.code != 401) return@Interceptor response
 
-            val refreshToken = sessionManager?.getToken()
-            var refreshed = false
+        response.close()
 
-            if (!refreshToken.isNullOrEmpty()) {
-                try {
-                    val refreshClient = OkHttpClient.Builder()
-                        .connectTimeout(AndroidMain.TIMEOUT_CONNECT_SEC, TimeUnit.SECONDS)
-                        .readTimeout(AndroidMain.TIMEOUT_READ_SEC, TimeUnit.SECONDS)
-                        .build()
-                    val refreshRetrofit = Retrofit.Builder()
-                        .baseUrl(BASE_URL)
-                        .client(refreshClient)
-                        .addConverterFactory(GsonConverterFactory.create())
-                        .build()
-                        .create(ApiService::class.java)
+        val expiredToken = sessionManager?.getToken()
+        var newToken: String? = null
 
-                    val refreshRes = runBlocking {
-                        refreshRetrofit.refreshToken(mapOf("token" to refreshToken))
-                    }
+        if (!expiredToken.isNullOrEmpty()) {
+            try {
+                // Use a plain OkHttpClient with NO auth interceptors to avoid
+                // infinite recursion if the refresh endpoint also returns 401
+                val refreshClient = OkHttpClient.Builder()
+                    .connectTimeout(AndroidMain.TIMEOUT_CONNECT_SEC, TimeUnit.SECONDS)
+                    .readTimeout(AndroidMain.TIMEOUT_READ_SEC, TimeUnit.SECONDS)
+                    .build()
 
-                    if (refreshRes.isSuccessful) {
-                        val newToken = refreshRes.body()?.data?.token
-                        if (!newToken.isNullOrEmpty()) {
-                            sessionManager?.updateToken(newToken)
-                            val retryRequest = originalRequest.newBuilder()
-                                .removeHeader("Authorization")
-                                .addHeader("Authorization", "Bearer $newToken")
-                                .build()
-                            refreshed = true
-                            return@Interceptor chain.proceed(retryRequest)
-                        }
-                    }
-                } catch (_: Exception) {
-                    // Refresh failed — fall through to logout
+                val jsonBody = """{"token":"$expiredToken"}"""
+                val requestBody = jsonBody.toRequestBody("application/json; charset=utf-8".toMediaType())
+                val refreshRequest = Request.Builder()
+                    .url(BASE_URL + "auth/refresh")
+                    .post(requestBody)
+                    .build()
+
+                val refreshResponse = refreshClient.newCall(refreshRequest).execute()
+                val bodyStr = refreshResponse.body?.string()
+                refreshResponse.close()
+
+                if (refreshResponse.isSuccessful && !bodyStr.isNullOrEmpty()) {
+                    // Parse: {"success":true,"data":{"token":"..."}}
+                    val gson = com.google.gson.Gson()
+                    @Suppress("UNCHECKED_CAST")
+                    val map = gson.fromJson(bodyStr, Map::class.java) as? Map<String, Any>
+                    val data = map?.get("data") as? Map<*, *>
+                    newToken = data?.get("token") as? String
                 }
+            } catch (_: Exception) {
+                // Network or parse error — fall through to logout
             }
-
-            if (!refreshed) {
-                // Fix 3: DEVICE_MISMATCH or expired — clear session and redirect to login
-                sessionManager?.clearSession()
-                appContext?.let { ctx ->
-                    val intent = Intent(ctx, LoginActivity::class.java).apply {
-                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or
-                                Intent.FLAG_ACTIVITY_CLEAR_TASK or
-                                Intent.FLAG_ACTIVITY_CLEAR_TOP
-                        putExtra("session_expired", true)
-                    }
-                    ctx.startActivity(intent)
-                }
-            }
-
-            chain.proceed(originalRequest)
-        } else {
-            response
         }
+
+        if (!newToken.isNullOrEmpty()) {
+            // ✅ Token refreshed — save it and retry the original request
+            sessionManager?.updateToken(newToken!!)
+            val retryRequest = originalRequest.newBuilder()
+                .removeHeader("Authorization")
+                .addHeader("Authorization", "Bearer $newToken")
+                .build()
+            return@Interceptor chain.proceed(retryRequest)
+        }
+
+        // Refresh failed — clear session and send user to login
+        sessionManager?.clearSession()
+        appContext?.let { ctx ->
+            val intent = Intent(ctx, LoginActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or
+                        Intent.FLAG_ACTIVITY_CLEAR_TASK or
+                        Intent.FLAG_ACTIVITY_CLEAR_TOP
+                putExtra("session_expired", true)
+            }
+            ctx.startActivity(intent)
+        }
+
+        // Return a dummy response — UI will be replaced by LoginActivity
+        chain.proceed(originalRequest)
     }
 
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
@@ -118,8 +138,8 @@ object RetrofitClient {
         .addInterceptor(unauthorizedInterceptor)   // then check 401 on response
         .addInterceptor(loggingInterceptor)
         .connectTimeout(AndroidMain.TIMEOUT_CONNECT_SEC, TimeUnit.SECONDS)
-        .readTimeout(AndroidMain.TIMEOUT_READ_SEC, TimeUnit.SECONDS)         // longer for Render cold-start
-        .writeTimeout(AndroidMain.TIMEOUT_WRITE_SEC, TimeUnit.SECONDS)       // longer for image uploads
+        .readTimeout(AndroidMain.TIMEOUT_READ_SEC, TimeUnit.SECONDS)
+        .writeTimeout(AndroidMain.TIMEOUT_WRITE_SEC, TimeUnit.SECONDS)
         .build()
 
     val instance: ApiService

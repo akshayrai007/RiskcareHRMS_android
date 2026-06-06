@@ -1,4 +1,3 @@
-import com.krishihr.app.AndroidMain
 package com.krishihr.app.ui.chat
 
 import android.content.Context
@@ -461,7 +460,7 @@ class ChatMessageAdapter(
     }
 
     /**
-     * Downloads file to Downloads/RiskcareHRMS/Attachments/.
+     * Downloads file to Downloads/KrishiHR/Attachments/.
      * Uses MediaStore on Android 10+ (API 29+), File API on older devices.
      * No BroadcastReceiver — pure coroutine, no crash.
      */
@@ -497,7 +496,7 @@ class ChatMessageAdapter(
                 withContext(Dispatchers.Main) {
                     if (savedUri != null) {
                         Toast.makeText(ctx,
-                            "✅ Saved: Downloads/${AndroidMain.DOWNLOADS_FOLDER}/Attachments/$safeFileName",
+                            "✅ Saved: Downloads/KrishiHR/Attachments/$safeFileName",
                             Toast.LENGTH_LONG).show()
                         // Try to open — silently ignore if no app handles it
                         try {
@@ -519,12 +518,12 @@ class ChatMessageAdapter(
         }
     }
 
-    /** Android 10+ (API 29+): save to Downloads/RiskcareHRMS/Attachments via MediaStore */
+    /** Android 10+ (API 29+): save to Downloads/KrishiHR/Attachments via MediaStore */
     private fun saveViaMediaStore(ctx: Context, fileName: String, bytes: ByteArray, mime: String?): android.net.Uri? {
         val resolver = ctx.contentResolver
         val effectiveMime = mime ?: "application/octet-stream"
         // Try paths in order; some OEMs (MIUI, ColorOS) reject nested subfolders
-        val paths = listOf("Download/${AndroidMain.DOWNLOADS_FOLDER}/Attachments", "Download/${AndroidMain.DOWNLOADS_FOLDER}", "Download")
+        val paths = listOf("Download/KrishiHR/Attachments", "Download/KrishiHR", "Download")
         for (subPath in paths) {
             val uri = tryInsertMediaStore(resolver, fileName, effectiveMime, subPath, bytes)
             if (uri != null) return uri
@@ -562,12 +561,12 @@ class ChatMessageAdapter(
         } catch (_: Exception) { null }
     }
 
-    /** Android 9 and below: save to Downloads/RiskcareHRMS/Attachments via File API */
+    /** Android 9 and below: save to Downloads/KrishiHR/Attachments via File API */
     private fun saveViaFileApi(ctx: Context, fileName: String, bytes: ByteArray): android.net.Uri? {
         return try {
             val saveDir = File(
                 Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
-                "${AndroidMain.DOWNLOADS_FOLDER}/Attachments"
+                "KrishiHR/Attachments"
             )
             saveDir.mkdirs()
             var dest = File(saveDir, fileName)

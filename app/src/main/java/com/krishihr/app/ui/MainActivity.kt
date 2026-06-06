@@ -64,34 +64,19 @@ class MainActivity : AppCompatActivity() {
         // Schedule daily OD check — detects approved OD for today and auto-starts tracking
         if (sessionManager.isLoggedIn()) {
             com.krishihr.app.ui.attendance.OdTrackingWorker.scheduleDailyCheck(this)
-        }
 
-        // ✅ FIX: Resume tracking on every app open / re-login.
-        // After logout → login, AttendanceTodayFragment may not be created yet (user lands on Dashboard).
-        // We check punch state here in MainActivity so tracking resumes immediately regardless of which tab is open.
-        if (sessionManager.isLoggedIn()) {
-            lifecycleScope.launch(Dispatchers.IO) {
-                try {
-                    val trackingManager = com.krishihr.app.domain.usecase.TrackingManager(this@MainActivity)
-                    val res = RetrofitClient.instance.getDashboard()
-                    val att = res.body()?.data?.todayAttendance
-                    val punchedIn  = att?.punchIn  != null
-                    val punchedOut = att?.punchOut != null
-                    if (punchedIn && !punchedOut) {
-                        // Check OD status
-                        val todayStr = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(java.util.Date())
-                        val isOd = try {
-                            val odRes = RetrofitClient.instance.getMyODRequests(status = "approved")
-                            (odRes.body()?.data ?: emptyList()).any { od ->
-                                od.date?.take(10) == todayStr ||
-                                        ((od.fromDate?.take(10) ?: "") <= todayStr && (od.toDate?.take(10) ?: "") >= todayStr)
-                            }
-                        } catch (_: Exception) { false }
-                        trackingManager.setPunchInCache(att?.punchIn ?: "")
-                        com.krishihr.app.service.LocationTrackingService.start(this@MainActivity, isOd = isOd)
-                        android.util.Log.d("MainActivity", "✅ Tracking resumed on login (isOd=$isOd)")
-                    }
-                } catch (_: Exception) {}
+            // ── Auto-restart tracking on login ──────────────────────────────
+            // If employee was punched in before logout, restart tracking automatically.
+            // No need to ask permissions again — they were already granted.
+            val trackingMgr = com.krishihr.app.domain.usecase.TrackingManager(this)
+            val alreadyRunning = com.krishihr.app.service.LocationTrackingService.isRunning(this)
+            val hasPerm        = com.krishihr.app.permission.PermissionManager.hasForegroundPermission(this)
+            val isPunchedIn    = trackingMgr.isPunchedIn()
+
+            if (isPunchedIn && !alreadyRunning && hasPerm) {
+                val session = trackingMgr.getSession()
+                com.krishihr.app.service.LocationTrackingService.start(this, isOd = session.isOd)
+                android.util.Log.d("MainActivity", "✅ Auto-restarted tracking on login (isOd=${session.isOd})")
             }
         }
 
@@ -279,6 +264,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun logout() {
+        // Mark offline before clearing session
+        lifecycleScope.launch(Dispatchers.IO) {
+            try { RetrofitClient.instance.markOffline() } catch (_: Exception) {}
+        }
         sessionManager.clearSession()
         startActivity(Intent(this, LoginActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK

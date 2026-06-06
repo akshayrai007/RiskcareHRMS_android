@@ -83,9 +83,9 @@
                         android:textStyle="bold"
                         android:textColor="@color/text_secondary"/>
                 </LinearLayout>
-                <!-- View -->
-                <org.osmdroid.views.MapView
-                    android:id="@+id/geofenceMapView"
+                <!-- Google Maps container (SupportMapFragment injected here) -->
+                <FrameLayout
+                    android:id="@+id/map_container"
                     android:layout_width="match_parent"
                     android:layout_height="300dp"/>
                 <!-- Distance label -->

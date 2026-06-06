@@ -249,7 +249,7 @@ table.mo td:first-child{text-align:left}table.mo tr.tot td{background:#e8f5e9;fo
     <div class="cn">${A.employerName}</div>
     <div class="ct">TAN: <strong style="color:#2E7D32">${A.employerTan}</strong></div>
     <div class="cad">Office No. 617, 6th Floor, Hubtown Viva, Western Express Highway, Shankarwadi, Jogeshwari (East), Mumbai – 400060</div>
-    <div class="cw">${AndroidMain.COMPANY_EMAIL} | ${AndroidMain.COMPANY_WEBSITE}</div>
+    <div class="cw">hr@krishicare.in | www.krishicare.in</div>
   </div>
   <div class="fb"><div class="ft">FORM<br>16</div><div class="fyp"><span>FY ${fy}</span></div></div>
 </div>

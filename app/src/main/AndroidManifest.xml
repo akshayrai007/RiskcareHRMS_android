@@ -1,43 +1,66 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <!-- ═══════════════════════════════════════════════════════════════════════
-         PERMISSIONS — Location Tracking (Production)
+         PERMISSIONS — Location Tracking
          ═══════════════════════════════════════════════════════════════════════ -->
 
-    <!-- Basic -->
+    <!-- Basic network -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
-    <!-- Location — foreground (always required) -->
+    <!-- Location — foreground -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
-    <!-- Location — background (Android 10+, requested separately at runtime) -->
-    <!-- Google Play requires a separate permission declaration AND runtime explanation -->
+    <!-- Location — background (Android 10+) -->
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
 
-    <!-- Foreground service with location type (Android 9+, required for targetSdk 34) -->
+    <!-- Foreground service (Android 9+ / targetSdk 34) -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
 
-    <!-- WakeLock — keep CPU alive during location upload -->
+    <!-- Screen share foreground service (Android 14+ / targetSdk 34) -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
+
+    <!-- WakeLock — keep CPU alive during location upload & calls -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
-    <!-- Battery optimization exemption dialog -->
+    <!-- Battery optimization exemption -->
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
     <!-- Boot receiver — resume tracking after restart -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
-    <!-- Exact alarm — OD auto-stop at configured time (Android 12+) -->
+    <!-- Exact alarm — OD auto-stop (Android 12+) -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
 
-    <!-- Camera / storage for profile photo -->
+    <!-- Camera / storage for profile photo & chat file sharing -->
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32"/>
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         PERMISSIONS — Voice / Video Calls (WebRTC)
+         ═══════════════════════════════════════════════════════════════════════ -->
+
+    <!-- Microphone — required for all voice & video calls -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
+    <!-- Audio routing (speaker / earpiece / Bluetooth headset) -->
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+
+    <!-- Vibrate on incoming call notification -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+
+    <!-- Push notifications (Android 13+) -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
         android:allowBackup="false"
@@ -79,46 +102,7 @@
             </intent-filter>
         </activity>
 
-        <activity
-            android:name="com.yalantis.ucrop.UCropActivity"
-            android:screenOrientation="portrait"
-            android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>
-
-        <!-- ══ FileProvider ════════════════════════════════════════════════════
-             REQUIRED for opening downloaded proof documents (PDF / images)
-             in external viewer apps (Acrobat, Google Drive, Mi File Manager…).
-             openProofDocument() in ITDeclarationFragment calls getUriForFile()
-             which needs this provider to generate a valid content:// URI.
-
-             Rules:
-               • android:exported MUST be false
-               • android:grantUriPermissions MUST be true
-               • android:authorities MUST match the string passed to
-                 FileProvider.getUriForFile() → "${applicationId}.fileprovider"
-               • The meta-data points to res/xml/file_paths.xml which declares
-                 <cache-path name="cache" path="." /> so cache files are served.
-        ══════════════════════════════════════════════════════════════════════ -->
-        <provider
-            android:name="androidx.core.content.FileProvider"
-            android:authorities="${applicationId}.fileprovider"
-            android:exported="false"
-            android:grantUriPermissions="true">
-            <meta-data
-                android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/file_paths" />
-        </provider>
-
-        <!-- ══ Foreground Service (Layer 2) ═══════════════════════════════════
-             android:foregroundServiceType="location" is REQUIRED for targetSdk 34
-             Without this: SecurityException on startForeground()
-        ══════════════════════════════════════════════════════════════════════ -->
-        <service
-            android:name=".service.LocationTrackingService"
-            android:foregroundServiceType="location"
-            android:exported="false"
-            android:stopWithTask="false" />
-
-        <!-- ══ Layer 1: Background location receiver (PendingIntent) ══════════
+        <!-- ══ Layer 1: Background location receiver ══════════════════════════
              Must be exported="true" — OS delivers location directly here
              even when app is killed.
         ══════════════════════════════════════════════════════════════════════ -->
@@ -139,6 +123,28 @@
             </intent-filter>
         </receiver>
 
+        <!-- ══ FileProvider — exposes cached files to viewer apps ══════════ -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
+        <!-- ══ Google Maps API key ════════════════════════════════════════════ -->
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyDp21tx1U1OVaXIGv8E8Y94RmfnQl1pNbo" />
+
+        <!-- ══ UCrop — image cropping activity (profile photo) ══════════════ -->
+        <activity
+            android:name="com.yalantis.ucrop.UCropActivity"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
+
         <!-- ══ Boot receiver — resume tracking after reboot ══════════════════ -->
         <receiver
             android:name=".service.BootReceiver"
@@ -149,6 +155,19 @@
                 <action android:name="android.intent.action.QUICKBOOT_POWERON" />
             </intent-filter>
         </receiver>
+
+        <!-- ══ LocationTrackingService — foreground GPS service ══════════════ -->
+        <service
+            android:name=".service.LocationTrackingService"
+            android:exported="false"
+            android:foregroundServiceType="location"
+            android:stopWithTask="false" />
+
+        <!-- ══ WorkManager — offline sync + OD check workers ════════════════ -->
+        <service
+            android:name="androidx.work.impl.foreground.SystemForegroundService"
+            android:foregroundServiceType="location"
+            tools:node="merge" />
 
     </application>
 

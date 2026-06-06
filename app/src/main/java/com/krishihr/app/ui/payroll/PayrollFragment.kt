@@ -439,7 +439,7 @@ class PayrollFragment : Fragment() {
                         }
                         bmp.recycle()
 
-                        // Step 4: save PDF to Downloads/${AndroidMain.DOWNLOADS_FOLDER}
+                        // Step 4: save PDF to Downloads/KrishiHR
                         val ctx = requireContext()
                         val values = ContentValues().apply {
                             put(MediaStore.Downloads.DISPLAY_NAME, "$filename.pdf")
@@ -603,7 +603,7 @@ class PayrollFragment : Fragment() {
         val companyP  = txt(13f, cDarkGreen, true)
         val addr1P    = txt(7.5f, cGrey)
         val addr2P    = txt(7.5f, cGrey)
-        val companyStr = AndroidMain.COMPANY_NAME
+        val companyStr = "Krishi Care & Management Services Pvt. Ltd."
         val addr1Str   = "Office Address: 617, 6th Floor, Viva Hubtown, Western Express Highway,"
         val addr2Str   = "Shankarwadi Jogeshwari(East), Mumbai - 400060."
         // Center each line within the text area
@@ -827,7 +827,7 @@ class PayrollFragment : Fragment() {
         val values = ContentValues().apply {
             put(MediaStore.Images.Media.DISPLAY_NAME, "$filename.png")
             put(MediaStore.Images.Media.MIME_TYPE, "image/png")
-            put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/" + AndroidMain.DOWNLOADS_FOLDER)
+            put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/KrishiHR")
             put(MediaStore.Images.Media.IS_PENDING, 1)
         }
         val uri = ctx.contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
