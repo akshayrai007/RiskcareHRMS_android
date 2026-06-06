@@ -63,11 +63,10 @@ class PermissionManager(private val fragment: Fragment) {
                 return@registerForActivityResult
             }
 
-            // Step 2: Request background (Android 10+) — must be separate request
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                requestBackgroundPermission()
-            } else {
-                onComplete?.invoke(true)
+            // Background location NOT requested — only foreground needed for punch-in
+            onComplete?.invoke(true)
+            @Suppress("UNUSED_EXPRESSION")
+            if (false) {
             }
         }
 
