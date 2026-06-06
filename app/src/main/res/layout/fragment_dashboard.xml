@@ -13,15 +13,15 @@
     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:paddingBottom="80dp">
 
         <!-- HEADER -->
-        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:background="@color/primary" android:padding="16dp" android:paddingTop="20dp">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:background="@color/accent_navy" android:padding="16dp" android:paddingTop="20dp">
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
                 <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
-                    <TextView android:id="@+id/tvGreeting" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Good Morning" android:textColor="@color/primary_ultra_light" android:textSize="12sp"/>
+                    <TextView android:id="@+id/tvGreeting" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Good Morning" android:textColor="@color/accent_cyan_light" android:textSize="12sp"/>
                     <TextView android:id="@+id/tvName" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Employee" android:textColor="@color/white" android:textSize="20sp" android:textStyle="bold"/>
-                    <TextView android:id="@+id/tvDesignation" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="@color/primary_ultra_light" android:textSize="12sp"/>
+                    <TextView android:id="@+id/tvDesignation" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="@color/accent_cyan_light" android:textSize="12sp"/>
                 </LinearLayout>
                 <!-- Profile avatar -->
-                <androidx.cardview.widget.CardView android:id="@+id/headerAvatar" android:layout_width="40dp" android:layout_height="40dp" app:cardCornerRadius="20dp" app:cardElevation="2dp" app:cardBackgroundColor="@color/primary_dark" android:clickable="true" android:focusable="true" android:layout_marginEnd="8dp">
+                <androidx.cardview.widget.CardView android:id="@+id/headerAvatar" android:layout_width="40dp" android:layout_height="40dp" app:cardCornerRadius="20dp" app:cardElevation="2dp" app:cardBackgroundColor="@color/accent_navy" android:clickable="true" android:focusable="true" android:layout_marginEnd="8dp">
                     <FrameLayout android:layout_width="match_parent" android:layout_height="match_parent">
                         <ImageView android:id="@+id/headerAvatarImg" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="centerCrop"/>
                         <TextView android:id="@+id/headerAvatarInitials" android:layout_width="match_parent" android:layout_height="match_parent" android:gravity="center" android:textColor="@color/white" android:textSize="14sp" android:textStyle="bold"/>
@@ -33,7 +33,7 @@
                     <TextView android:id="@+id/tvPendingBadge" android:layout_width="18dp" android:layout_height="18dp" android:layout_alignTop="@id/notifBtn" android:layout_alignEnd="@id/notifBtn" android:gravity="center" android:textColor="@color/white" android:textSize="9sp" android:textStyle="bold" android:background="@drawable/bg_badge" android:visibility="gone"/>
                 </RelativeLayout>
             </LinearLayout>
-            <TextView android:id="@+id/tvTodayDate" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:textColor="@color/primary_ultra_light" android:textSize="11sp"/>
+            <TextView android:id="@+id/tvTodayDate" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:textColor="@color/accent_cyan_light" android:textSize="11sp"/>
         </LinearLayout>
 
         <!-- ATTENDANCE CARD — Style B: Split Dark Panel -->
