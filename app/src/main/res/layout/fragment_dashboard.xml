@@ -479,4 +479,15 @@
         <LinearLayout android:id="@+id/llAnnouncementsContainer" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:paddingHorizontal="16dp"/>
 
     </LinearLayout>
+
+    <!-- Chat menu button -->
+    <ImageView
+        android:id="@+id/menuChat"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:src="@drawable/ic_notification"
+        android:padding="8dp"
+        android:layout_gravity="end"
+        android:contentDescription="Chat"/>
+
 </androidx.core.widget.NestedScrollView>
