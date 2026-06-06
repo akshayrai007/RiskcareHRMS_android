@@ -27,7 +27,6 @@ import com.riskcare.app.permission.PermissionManager
 import com.riskcare.app.service.LocationTrackingService
 import com.riskcare.app.ui.MainActivity
 import com.riskcare.app.ui.attendance.AttendanceFragment
-import com.riskcare.app.ui.attendance.MovementFragment
 import com.riskcare.app.ui.more.GeofenceAdminFragment
 import com.riskcare.app.ui.leave.LeaveFragment
 import com.riskcare.app.ui.more.*
@@ -168,13 +167,6 @@ class DashboardFragment : Fragment() {
             binding.menuApprovals.visibility = if (role != Roles.EMPLOYEE) View.VISIBLE else View.GONE
         }
 
-        val emp = SessionManager(requireContext()).getEmployee()
-        val isKC718 = emp?.employeeCode == AndroidMain.SEE_ALL_MOVEMENT_CODE
-        val canSeeMovement = !isAccounts && (isKC718 || role == Roles.SUPER_ADMIN || role == Roles.HR || role == Roles.ADMIN || role == Roles.MANAGER || role == Roles.TL)
-        if (canSeeMovement) {
-            binding.menuMovement.visibility = View.VISIBLE
-            binding.menuMovement.setOnClickListener { nav(MovementFragment()) }
-        }
 
         val canSeeGeofence = Roles.canSeeGeofence(role)
         if (canSeeGeofence) {
