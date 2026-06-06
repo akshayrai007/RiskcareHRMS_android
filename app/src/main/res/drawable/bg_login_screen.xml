@@ -1,7 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
-<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
-    <gradient android:angle="180"
-        android:startColor="#F2F8F4"
-        android:endColor="#FFFFFF"
-        android:type="linear"/>
-</shape>
+<!-- Login screen background: light steel-blue gradient matching design reference -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Base gradient: soft blue-grey like the reference -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:angle="135"
+                android:startColor="#EBF0F8"
+                android:endColor="#D8E4F0"
+                android:type="linear"/>
+        </shape>
+    </item>
+
+    <!-- Subtle grid overlay: thin lines to create the dot-grid feel -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#08C5D8F0"/>
+        </shape>
+    </item>
+
+</layer-list>
