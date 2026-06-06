@@ -84,6 +84,33 @@
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginBottom="60dp"/>
 
+
+    <!-- Tagline -->
+    <TextView
+        android:id="@+id/tvTagline"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/app_tagline"
+        android:textColor="#CCFFFFFF"
+        android:textSize="14sp"
+        android:alpha="0"
+        app:layout_constraintTop_toBottomOf="@id/logoLayout"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="12dp"/>
+
+    <!-- Spinning wheel icon -->
+    <ImageView
+        android:id="@+id/ivWheel"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:src="@drawable/ic_wheel"
+        android:alpha="0"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginBottom="110dp"/>
+
     <!-- Status message -->
     <TextView
         android:id="@+id/tvStatus"
