@@ -18,40 +18,36 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <!-- Logo card -->
-        <androidx.cardview.widget.CardView
-            android:layout_width="110dp"
-            android:layout_height="110dp"
-            app:cardCornerRadius="26dp"
-            app:cardElevation="8dp"
-            app:cardBackgroundColor="@color/white">
-            <com.riskcare.app.ui.widget.WheelRevealImageView
-                android:id="@+id/ivLogo"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:src="@drawable/ic_logo"
-                android:scaleType="fitCenter"
-                android:padding="8dp"/>
-        </androidx.cardview.widget.CardView>
+        <!-- Logo image: Logo.png (Risk|Care box, same as login & web) -->
+        <com.riskcare.app.ui.widget.WheelRevealImageView
+            android:id="@+id/ivLogo"
+            android:layout_width="150dp"
+            android:layout_height="wrap_content"
+            android:adjustViewBounds="true"
+            android:src="@drawable/ic_logo_brand"
+            android:scaleType="fitCenter"/>
 
+        <!-- Logo name: Risk[Care]HR — "Care" styled cyan in Activity -->
         <TextView
+            android:id="@+id/tvLogoName"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/app_name"
-            android:textColor="#1A1A1A"
-            android:textSize="36sp"
+            android:text="RiskCareHR"
+            android:textColor="#1A2B5A"
+            android:textSize="32sp"
             android:textStyle="bold"
-            android:layout_marginTop="20dp"
-            android:letterSpacing="0.04"/>
+            android:layout_marginTop="12dp"
+            android:letterSpacing="0.01"/>
 
+        <!-- Tagline: Servicing All Risks -->
         <TextView
             android:id="@+id/tvTagline"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/app_tagline"
-            android:textColor="#888888"
+            android:textColor="#7A9E80"
             android:textSize="13sp"
-            android:layout_marginTop="6dp"
+            android:layout_marginTop="4dp"
             android:gravity="center"
             android:alpha="0"/>
     </LinearLayout>
