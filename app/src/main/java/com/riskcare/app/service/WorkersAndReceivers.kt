@@ -103,30 +103,8 @@ class OdStopReceiver : BroadcastReceiver() {
 class BootReceiver : BroadcastReceiver() {
 
     override fun onReceive(ctx: Context, intent: Intent) {
-        val validActions = setOf(
-            Intent.ACTION_BOOT_COMPLETED,
-            Intent.ACTION_MY_PACKAGE_REPLACED,
-            "android.intent.action.QUICKBOOT_POWERON"  // Huawei/HTC
-        )
-        if (intent.action !in validActions) return
-
-        Log.d("BootReceiver", "Boot/update detected")
-
-        val manager = TrackingManager(ctx)
-        val session = SessionManager(ctx)
-
-        val wasTracking = manager.isTracking()
-        val isLoggedIn  = session.isLoggedIn()
-        val isPunchedIn = manager.isPunchedIn()
-
-        Log.d("BootReceiver", "wasTracking=$wasTracking, loggedIn=$isLoggedIn, punchedIn=$isPunchedIn")
-
-        if (wasTracking && isLoggedIn && isPunchedIn) {
-            // Resume with the same OD flag that was set before reboot
-            LocationTrackingService.start(ctx, isOd = manager.isOd())
-            Log.d("BootReceiver", "✅ Tracking resumed after boot")
-        } else {
-            Log.d("BootReceiver", "Conditions not met — skip resume")
-        }
+        // Background tracking disabled — location only requested on punch-in.
+        // BootReceiver kept as no-op to avoid build errors.
+        Log.d("BootReceiver", "Boot received — background tracking disabled")
     }
 }
