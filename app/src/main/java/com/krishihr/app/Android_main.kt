@@ -160,7 +160,7 @@ object AndroidMain {
     const val NOTIF_TEXT         = "Location recorded every 30 seconds"
 
     const val ACTION_LOCATION_UPDATE = "com.riskcare.app.LOCATION_UPDATE"
-    const val ACTION_STOP_TRACKING   = "com.krishihr.app.STOP_TRACKING"
+    const val ACTION_STOP_TRACKING   = "com.riskcare.app.STOP_TRACKING"
 
 
     // ══════════════════════════════════════════════════════════════════
