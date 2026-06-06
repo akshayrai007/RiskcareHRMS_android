@@ -2,8 +2,12 @@ package com.riskcare.app.ui.login
 
 import android.content.Intent
 import android.os.Bundle
+import android.text.SpannableString
+import android.text.Spanned
+import android.text.style.ForegroundColorSpan
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.riskcare.app.BuildConfig
 import com.riskcare.app.data.api.RetrofitClient
@@ -27,6 +31,14 @@ class LoginActivity : AppCompatActivity() {
 
         sessionManager = SessionManager(this)
         RetrofitClient.init(sessionManager, this)
+
+        // Style logo name: Risk[Care]HR — "Care" in cyan #00AEEF matching web
+        val logoText = SpannableString("RiskCareHR")
+        logoText.setSpan(
+            ForegroundColorSpan(android.graphics.Color.parseColor("#00AEEF")),
+            4, 8, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE  // "Care" is chars 4–8
+        )
+        binding.tvLogoName.text = logoText
 
         // Show "Session expired" message if redirected from token expiry or device mismatch
         if (intent.getBooleanExtra("session_expired", false)) {
