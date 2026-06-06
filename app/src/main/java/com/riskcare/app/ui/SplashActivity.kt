@@ -3,6 +3,9 @@ package com.riskcare.app.ui
 import com.riskcare.app.AndroidMain
 import android.content.Intent
 import android.os.Bundle
+import android.text.SpannableString
+import android.text.Spanned
+import android.text.style.ForegroundColorSpan
 import android.view.WindowManager
 import android.view.animation.AnimationUtils
 import android.widget.ImageView
@@ -37,10 +40,19 @@ class SplashActivity : AppCompatActivity() {
         RetrofitClient.init(session, this)
 
         val ivLogo      = findViewById<WheelRevealImageView>(R.id.ivLogo)
+        val tvLogoName  = findViewById<TextView>(R.id.tvLogoName)
         val tvTagline   = findViewById<TextView>(R.id.tvTagline)
         val tvStatus    = findViewById<TextView>(R.id.tvStatus)
         val ivWheel     = findViewById<ImageView>(R.id.ivWheel)
         val tvVersion   = findViewById<TextView>(R.id.tvVersion)
+
+        // Style logo name: Risk[Care]HR — "Care" in cyan #00AEEF matching web & login
+        val logoSpan = SpannableString("RiskCareHR")
+        logoSpan.setSpan(
+            ForegroundColorSpan(android.graphics.Color.parseColor("#00AEEF")),
+            4, 8, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+        )
+        tvLogoName.text = logoSpan
 
         try {
             val versionName = packageManager.getPackageInfo(packageName, 0).versionName
