@@ -38,6 +38,12 @@ object AndroidMain {
     /** Toast message shown after PDF is saved */
     const val PDF_SAVED_TOAST = "✅ PDF saved to Downloads/RiskcareHRMS"
 
+    /** Company contact email shown on Form16 and official PDFs */
+    const val COMPANY_EMAIL  = "hr@riskcare.in"
+
+    /** Company website shown on Form16 and official PDFs */
+    const val COMPANY_WEBSITE = "www.riskcare.in"
+
     // ── Logo ──────────────────────────────────────────────────────────
     // Replace ic_logo.png in res/drawable/ with your logo file.
     // Reference it in XML as @drawable/ic_logo

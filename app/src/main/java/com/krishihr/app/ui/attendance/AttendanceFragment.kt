@@ -551,7 +551,7 @@ class AttendanceTodayFragment : Fragment() {
         return sorted.joinToString("  •  ") { loc ->
             val r = FloatArray(1); Location.distanceBetween(empLat, empLng, loc.latitude, loc.longitude, r)
             val dist = r[0].toInt()
-            val shortName = loc.name.replace("Corporate Office – ", "").replace("Krishi Care HQ – ", "").trim()
+            val shortName = loc.name.replace("Corporate Office – ", "").trim()
             if (dist <= loc.radiusMeters) "✅ $shortName (${dist}m)" else "⛔ $shortName (${dist}m away, need ${loc.radiusMeters}m)"
         }
     }
@@ -895,13 +895,13 @@ class AttendanceTodayFragment : Fragment() {
         val brand = android.os.Build.MANUFACTURER.lowercase()
         val title: String; val steps: String
         when {
-            brand.contains("xiaomi") || brand.contains("redmi") || brand.contains("poco") -> { title = "📍 Enable AutoStart for Tracking"; steps = """To ensure location tracking works when app is closed:\n\n1. Open Phone Settings\n2. Go to Apps → KrishiHR → Battery Saver\n3. Select No restrictions\n4. Go back → AutoStart → Enable ✅\n\nWithout this, tracking stops after closing the app.""" }
-            brand.contains("oppo") || brand.contains("realme") -> { title = "📍 Allow Background Activity"; steps = """To ensure location tracking works when app is closed:\n\n1. Open Phone Settings\n2. Go to Battery → App Battery Management\n3. Find KrishiHR → Allow background activity ✅\n\nWithout this, tracking stops after closing the app.""" }
-            brand.contains("oneplus") -> { title = "📍 Disable Deep Optimization"; steps = """To ensure location tracking works when app is closed:\n\n1. Open Phone Settings\n2. Go to Battery → Battery Optimization\n3. Find KrishiHR → Don't optimize ✅\n\nWithout this, tracking stops after closing the app.""" }
-            brand.contains("vivo") -> { title = "📍 Enable Background Location"; steps = """To ensure location tracking works when app is closed:\n\n1. Open iManager app\n2. Go to App Manager → KrishiHR\n3. Enable Background Power Consumption ✅\n\nWithout this, tracking stops after closing the app.""" }
-            brand.contains("huawei") || brand.contains("honor") -> { title = "📍 Enable AutoLaunch"; steps = """To ensure location tracking works when app is closed:\n\n1. Open Phone Settings\n2. Go to Apps → KrishiHR → Battery\n3. Enable Auto Launch & Run in background ✅\n\nWithout this, tracking stops after closing the app.""" }
-            brand.contains("samsung") -> { title = "📍 Remove Battery Restriction"; steps = """To ensure location tracking works when app is closed:\n\n1. Open Phone Settings\n2. Go to Apps → KrishiHR → Battery\n3. Select Unrestricted ✅\n\nWithout this, Samsung stops tracking after ~10 minutes.""" }
-            else -> { title = "📍 Allow Background Location"; steps = """To ensure location tracking works when app is closed:\n\n1. Open Phone Settings\n2. Go to Apps → KrishiHR → Battery\n3. Select Unrestricted or No restrictions ✅\n\nThis ensures your attendance is tracked correctly.""" }
+            brand.contains("xiaomi") || brand.contains("redmi") || brand.contains("poco") -> { title = "📍 Enable AutoStart for Tracking"; steps = """To ensure location tracking works when app is closed:\n\n1. Open Phone Settings\n2. Go to Apps → ${AndroidMain.APP_NAME} → Battery Saver\n3. Select No restrictions\n4. Go back → AutoStart → Enable ✅\n\nWithout this, tracking stops after closing the app.""" }
+            brand.contains("oppo") || brand.contains("realme") -> { title = "📍 Allow Background Activity"; steps = """To ensure location tracking works when app is closed:\n\n1. Open Phone Settings\n2. Go to Battery → App Battery Management\n3. Find ${AndroidMain.APP_NAME} → Allow background activity ✅\n\nWithout this, tracking stops after closing the app.""" }
+            brand.contains("oneplus") -> { title = "📍 Disable Deep Optimization"; steps = """To ensure location tracking works when app is closed:\n\n1. Open Phone Settings\n2. Go to Battery → Battery Optimization\n3. Find ${AndroidMain.APP_NAME} → Don't optimize ✅\n\nWithout this, tracking stops after closing the app.""" }
+            brand.contains("vivo") -> { title = "📍 Enable Background Location"; steps = """To ensure location tracking works when app is closed:\n\n1. Open iManager app\n2. Go to App Manager → ${AndroidMain.APP_NAME}\n3. Enable Background Power Consumption ✅\n\nWithout this, tracking stops after closing the app.""" }
+            brand.contains("huawei") || brand.contains("honor") -> { title = "📍 Enable AutoLaunch"; steps = """To ensure location tracking works when app is closed:\n\n1. Open Phone Settings\n2. Go to Apps → ${AndroidMain.APP_NAME} → Battery\n3. Enable Auto Launch & Run in background ✅\n\nWithout this, tracking stops after closing the app.""" }
+            brand.contains("samsung") -> { title = "📍 Remove Battery Restriction"; steps = """To ensure location tracking works when app is closed:\n\n1. Open Phone Settings\n2. Go to Apps → ${AndroidMain.APP_NAME} → Battery\n3. Select Unrestricted ✅\n\nWithout this, Samsung stops tracking after ~10 minutes.""" }
+            else -> { title = "📍 Allow Background Location"; steps = """To ensure location tracking works when app is closed:\n\n1. Open Phone Settings\n2. Go to Apps → ${AndroidMain.APP_NAME} → Battery\n3. Select Unrestricted or No restrictions ✅\n\nThis ensures your attendance is tracked correctly.""" }
         }
         val brandIntent = LocationTrackingService.getBrandBatteryIntent()
         android.app.AlertDialog.Builder(requireContext()).setTitle(title).setMessage(steps).setPositiveButton(if (brandIntent != null) "Open Settings" else "Got it") { _, _ ->

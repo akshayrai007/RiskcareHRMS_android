@@ -216,7 +216,7 @@ class PermissionManager(private val fragment: Fragment) {
             .setTitle("⚠️ Permission Required")
             .setMessage(
                 "Background location is mandatory for field employees.\n\n" +
-                        "Please go to Settings → Apps → KrishiHR → Permissions → Location " +
+                        AndroidMain.PERMISSION_BACKGROUND_SETTINGS_HINT + " " +
                         "and select 'Allow all the time'.\n\n" +
                         "You cannot punch in without this permission."
             )

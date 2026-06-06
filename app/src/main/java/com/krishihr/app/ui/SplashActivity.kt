@@ -47,7 +47,7 @@ class SplashActivity : AppCompatActivity() {
                 delay(AndroidMain.SPLASH_CONNECTED_DELAY_MS)
                 Intent(this@SplashActivity, MainActivity::class.java).apply {
                     // Forward the original notification deep-link so MainActivity
-                    // can navigate to the correct screen (e.g. krishihr://approvals?tab=1)
+                    // can navigate to the correct screen (e.g. ${AndroidMain.DEEP_LINK_SCHEME}://approvals?tab=1)
                     this@SplashActivity.intent?.data?.let { deepLink ->
                         data = deepLink
                         action = Intent.ACTION_VIEW

@@ -124,4 +124,10 @@
     <string name="gk_quiz">GK Quiz</string>
     <string name="leaderboard">Leaderboard</string>
     <string name="separation">Separation</string>
+
+
+    <!-- ── Brand strings (pulled from Android_main.kt for XML layouts) ── -->
+    <string name="company_full_name">Risk Care Insurance Broking Pvt. Ltd.</string>
+    <string name="email_hint">you@riskcare.in</string>
+    <string name="copyright_text">© 2026 RiskcareHRMS</string>
 </resources>

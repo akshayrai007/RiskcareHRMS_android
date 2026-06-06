@@ -52,7 +52,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Krishi Care And Management Services Pvt. Ltd."
+                    android:text="@string/company_full_name"
                     android:textColor="#2E7D32"
                     android:textSize="12sp"
                     android:gravity="center"
@@ -109,7 +109,7 @@
                         android:layout_height="52dp"
                         android:inputType="textEmailAddress"
                         android:imeOptions="actionNext"
-                        android:hint="you@krishicare.in"
+                        android:hint="@string/email_hint"
                         android:textColor="@color/text_primary"
                         android:textColorHint="#BDBDBD"
                         android:textSize="14sp"/>
@@ -208,7 +208,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="© 2026 KrishiHR"
+                    android:text="@string/copyright_text"
                     android:textSize="12sp"
                     android:textColor="#BDBDBD"
                     android:layout_marginTop="22dp"/>

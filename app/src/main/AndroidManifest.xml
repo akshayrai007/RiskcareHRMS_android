@@ -45,7 +45,7 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.KrishiHR"
+        android:theme="@style/Theme.RiskcareHRMS"
         android:usesCleartextTraffic="true"
         android:enableOnBackInvokedCallback="true">
 
@@ -54,7 +54,7 @@
         <activity
             android:name=".ui.SplashActivity"
             android:exported="true"
-            android:theme="@style/Theme.KrishiHR.Splash">
+            android:theme="@style/Theme.RiskcareHRMS.Splash">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
