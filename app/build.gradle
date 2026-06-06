@@ -7,7 +7,7 @@ plugins {
 // RiskCareHR Android
 
 android {
-    namespace 'com.krishihr.app'
+    namespace 'com.riskcare.app'
     compileSdk 34
 
     defaultConfig {
