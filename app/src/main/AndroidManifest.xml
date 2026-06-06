@@ -14,14 +14,8 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
-    <!-- Location — background (Android 10+) -->
-    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
-
     <!-- Foreground service (Android 9+ / targetSdk 34) -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
 
     <!-- Screen share foreground service (Android 14+ / targetSdk 34) -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
@@ -30,14 +24,6 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <!-- Battery optimization exemption -->
-    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
-
-    <!-- Boot receiver — resume tracking after restart -->
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-
-    <!-- Exact alarm — OD auto-stop (Android 12+) -->
-    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
-
     <!-- Camera / storage for profile photo & chat file sharing -->
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
@@ -102,18 +88,6 @@
             </intent-filter>
         </activity>
 
-        <!-- ══ Layer 1: Background location receiver ══════════════════════════
-             Must be exported="true" — OS delivers location directly here
-             even when app is killed.
-        ══════════════════════════════════════════════════════════════════════ -->
-        <receiver
-            android:name=".service.LocationUpdateReceiver"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="com.riskcare.app.LOCATION_UPDATE" />
-            </intent-filter>
-        </receiver>
-
         <!-- ══ OD auto-stop alarm receiver ════════════════════════════════════ -->
         <receiver
             android:name=".service.OdStopReceiver"
@@ -147,28 +121,15 @@
             android:screenOrientation="portrait"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
 
-        <!-- ══ Boot receiver — resume tracking after reboot ══════════════════ -->
-        <receiver
-            android:name=".service.BootReceiver"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED" />
-                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
-                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
-            </intent-filter>
-        </receiver>
-
         <!-- ══ LocationTrackingService — foreground GPS service ══════════════ -->
         <service
             android:name=".service.LocationTrackingService"
             android:exported="false"
-            android:foregroundServiceType="location"
-            android:stopWithTask="false" />
+            android:stopWithTask="true" />
 
         <!-- ══ WorkManager — offline sync + OD check workers ════════════════ -->
         <service
             android:name="androidx.work.impl.foreground.SystemForegroundService"
-            android:foregroundServiceType="location"
             tools:node="merge" />
 
     </application>
