@@ -63,7 +63,7 @@
         android:layout_height="32dp"
         android:src="@drawable/ic_wheel"
         android:alpha="0"
-        android:colorFilter="#E8303A"
+        app:tint="#E8303A"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
