@@ -27,16 +27,10 @@ import kotlinx.coroutines.*
  * LocationTrackingService — Production Foreground Service
  * ─────────────────────────────────────────────────────────────────────────────
  *
- * Architecture:
- *   LAYER 1 (PRIMARY):   FusedLocationProviderClient + PendingIntent
- *                        → LocationUpdateReceiver (BroadcastReceiver)
- *                        Works even when app is COMPLETELY KILLED
- *                        30-second OS-managed updates
- *
- *   LAYER 2 (SECONDARY): This ForegroundService + coroutine loop
- *                        Shows persistent notification
- *                        Immediate ping on punch-in
- *                        Fallback when PendingIntent layer is delayed
+ * Architecture (punch-in only mode):
+ *   Single location fetch triggered on punch-in.
+ *   No background service, no boot resume, no persistent notification.
+ *   Geofence tracking is unaffected — it uses its own flow.
  *
  *   LAYER 3 (SAFETY NET): SyncWorker (WorkManager, 15-min periodic)
  *                        Uploads any records stuck in offline queue
