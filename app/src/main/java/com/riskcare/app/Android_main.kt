@@ -14,6 +14,7 @@ package com.riskcare.app
  * ╚══════════════════════════════════════════════════════════════════════╝
  */
 object AndroidMain {
+    const val COMPANY_NAME = "Risk Care Insurance Broking Pvt. Ltd."
 
     // ══════════════════════════════════════════════════════════════════
     // 1. BRAND & IDENTITY
