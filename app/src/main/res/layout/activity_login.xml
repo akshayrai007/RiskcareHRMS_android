@@ -28,36 +28,35 @@
                 android:paddingBottom="28dp"
                 android:gravity="center">
 
-                <!-- LOGO -->
+                <!-- LOGO — Risk|Care image (contains logo + Servicing All Risks) -->
                 <ImageView
-                    android:layout_width="320dp"
-                    android:layout_height="140dp"
-                    android:layout_marginBottom="14dp"
+                    android:layout_width="240dp"
+                    android:layout_height="120dp"
                     android:scaleType="fitCenter"
-                    android:src="@drawable/ic_logo" />
+                    android:adjustViewBounds="true"
+                    android:src="@drawable/ic_logo"
+                    android:layout_marginBottom="4dp"/>
 
-                <!-- App name -->
-
-                <!-- RiskCareHR Brand Text -->
+                <!-- RiskCareHR bold text — matches reference -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="RiskCareHR"
                     android:textColor="#1A1A1A"
-                    android:textSize="22sp"
+                    android:textSize="26sp"
                     android:textStyle="bold"
-                    android:fontFamily="sans-serif-medium"
-                    android:layout_marginTop="8dp"
-                    android:layout_marginBottom="4dp"/>
+                    android:layout_marginTop="4dp"
+                    android:layout_marginBottom="2dp"/>
 
+                <!-- SERVICING ALL RISKS small caps -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="SERVICING ALL RISKS"
                     android:textColor="#888888"
                     android:textSize="10sp"
-                    android:letterSpacing="0.15"
-                    android:layout_marginBottom="16dp"/>
+                    android:letterSpacing="0.2"
+                    android:layout_marginBottom="20dp"/>
 
                 <!-- Company pill -->
                 <TextView
