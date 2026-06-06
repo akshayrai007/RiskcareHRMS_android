@@ -59,4 +59,12 @@
             <include layout="@layout/item_more_row" android:id="@+id/rowLogout"/>
         </LinearLayout>
     </ScrollView>
+
+    <!-- Beat Plan row -->
+    <include
+        android:id="@+id/rowBeatPlan"
+        layout="@layout/item_more_row"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
 </LinearLayout>
