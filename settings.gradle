@@ -14,5 +14,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "KrishiHR"
+rootProject.name = "RiskcareHRMS"
 include ':app'
