@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         PERMISSIONS — Location Tracking (Production)
+         ═══════════════════════════════════════════════════════════════════════ -->
+
+    <!-- Basic -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!-- Location — foreground (always required) -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
+    <!-- Location — background (Android 10+, requested separately at runtime) -->
+    <!-- Google Play requires a separate permission declaration AND runtime explanation -->
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+
+    <!-- Foreground service with location type (Android 9+, required for targetSdk 34) -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+
+    <!-- WakeLock — keep CPU alive during location upload -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+
+    <!-- Battery optimization exemption dialog -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+
+    <!-- Boot receiver — resume tracking after restart -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+    <!-- Exact alarm — OD auto-stop at configured time (Android 12+) -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+
+    <!-- Camera / storage for profile photo -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+
+    <application
+        android:allowBackup="false"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.KrishiHR"
+        android:usesCleartextTraffic="true"
+        android:enableOnBackInvokedCallback="true">
+
+        <!-- ══ Activities ══════════════════════════════════════════════════════ -->
+
+        <activity
+            android:name=".ui.SplashActivity"
+            android:exported="true"
+            android:theme="@style/Theme.KrishiHR.Splash">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".ui.login.LoginActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
+        <activity
+            android:name=".ui.MainActivity"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="krishihr" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name="com.yalantis.ucrop.UCropActivity"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>
+
+        <!-- ══ FileProvider ════════════════════════════════════════════════════
+             REQUIRED for opening downloaded proof documents (PDF / images)
+             in external viewer apps (Acrobat, Google Drive, Mi File Manager…).
+             openProofDocument() in ITDeclarationFragment calls getUriForFile()
+             which needs this provider to generate a valid content:// URI.
+
+             Rules:
+               • android:exported MUST be false
+               • android:grantUriPermissions MUST be true
+               • android:authorities MUST match the string passed to
+                 FileProvider.getUriForFile() → "${applicationId}.fileprovider"
+               • The meta-data points to res/xml/file_paths.xml which declares
+                 <cache-path name="cache" path="." /> so cache files are served.
+        ══════════════════════════════════════════════════════════════════════ -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
+        <!-- ══ Foreground Service (Layer 2) ═══════════════════════════════════
+             android:foregroundServiceType="location" is REQUIRED for targetSdk 34
+             Without this: SecurityException on startForeground()
+        ══════════════════════════════════════════════════════════════════════ -->
+        <service
+            android:name=".service.LocationTrackingService"
+            android:foregroundServiceType="location"
+            android:exported="false"
+            android:stopWithTask="false" />
+
+        <!-- ══ Layer 1: Background location receiver (PendingIntent) ══════════
+             Must be exported="true" — OS delivers location directly here
+             even when app is killed.
+        ══════════════════════════════════════════════════════════════════════ -->
+        <receiver
+            android:name=".service.LocationUpdateReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.krishihr.app.LOCATION_UPDATE" />
+            </intent-filter>
+        </receiver>
+
+        <!-- ══ OD auto-stop alarm receiver ════════════════════════════════════ -->
+        <receiver
+            android:name=".service.OdStopReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.krishihr.app.OD_STOP" />
+            </intent-filter>
+        </receiver>
+
+        <!-- ══ Boot receiver — resume tracking after reboot ══════════════════ -->
+        <receiver
+            android:name=".service.BootReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+            </intent-filter>
+        </receiver>
+
+    </application>
+
+</manifest>

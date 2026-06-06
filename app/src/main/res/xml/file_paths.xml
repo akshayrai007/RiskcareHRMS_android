@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Required by FileProvider to expose cache files to viewer apps.
+     Place this file at: app/src/main/res/xml/file_paths.xml -->
+<paths>
+    <cache-path name="cache" path="." />
+</paths>
