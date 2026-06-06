@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">KrishiHR</string>
-    <string name="app_tagline">Smart HR for Agriculture</string>
+    <string name="app_name">RiskcareHRMS</string>
+    <string name="app_tagline">Smart HR for Insurance</string>
 
     <!-- Auth -->
     <string name="login">Login</string>

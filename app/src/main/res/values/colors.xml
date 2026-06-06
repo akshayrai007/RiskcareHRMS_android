@@ -1,10 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- ── Brand Primary ── -->
-    <color name="primary">#2E7D45</color>
-    <color name="primary_dark">#1B5E32</color>
-    <color name="primary_light">#43A862</color>
-    <color name="primary_ultra_light">#E8F5E9</color>
+    <!-- ══════════════════════════════════════════════════════════════
+         BRAND COLORS — RiskcareHRMS
+         To rebrand: change primary, primary_dark, primary_light only.
+         ══════════════════════════════════════════════════════════════ -->
+
+    <!-- ── Brand Primary (Navy Blue — Risk Care Insurance) ── -->
+    <color name="primary">#1A3C6E</color>
+    <color name="primary_dark">#0F2548</color>
+    <color name="primary_light">#2E5FA3</color>
+    <color name="primary_ultra_light">#E8EEF8</color>
 
     <!-- ── Accents ── -->
     <color name="accent_orange">#E65100</color>
@@ -25,36 +30,36 @@
     <color name="accent_pink">#AD1457</color>
     <color name="accent_pink_light">#FCE4EC</color>
 
-    <!-- ── Status chips — solid deep colors, white text on top ── -->
-    <color name="status_present">#2E7D45</color>
+    <!-- ── Status chips ── -->
+    <color name="status_present">#1A3C6E</color>
     <color name="status_absent">#C62828</color>
     <color name="status_late">#E65100</color>
     <color name="status_halfday">#1565C0</color>
     <color name="status_pending">#E65100</color>
-    <color name="status_approved">#2E7D45</color>
+    <color name="status_approved">#1A3C6E</color>
     <color name="status_rejected">#C62828</color>
     <color name="status_wfh">#6A1B9A</color>
 
     <!-- ── Neutrals ── -->
     <color name="white">#FFFFFF</color>
     <color name="black">#1A1A1A</color>
-    <color name="background">#F5F7F6</color>
+    <color name="background">#F4F6FB</color>
     <color name="surface">#FFFFFF</color>
     <color name="divider">#EEEEEE</color>
-    <color name="text_primary">#1C2B22</color>
-    <color name="text_secondary">#4A635A</color>
+    <color name="text_primary">#1C2340</color>
+    <color name="text_secondary">#4A5568</color>
     <color name="text_hint">#90A4AE</color>
     <color name="text_on_primary">#FFFFFF</color>
 
     <!-- ── Navigation ── -->
-    <color name="nav_selected">#2E7D45</color>
+    <color name="nav_selected">#1A3C6E</color>
     <color name="nav_unselected">#90A4AE</color>
 
-    <!-- ── Legacy stat card aliases (kept for XML refs) ── -->
+    <!-- ── Card aliases ── -->
     <color name="card_green_start">#E8F5E9</color>
     <color name="card_green_end">#C8E6C9</color>
-    <color name="card_blue_start">#E3F2FD</color>
-    <color name="card_blue_end">#BBDEFB</color>
+    <color name="card_blue_start">#E8EEF8</color>
+    <color name="card_blue_end">#C5D5EE</color>
     <color name="card_orange_start">#FFF3E0</color>
     <color name="card_orange_end">#FFE0B2</color>
     <color name="card_purple_start">#F3E5F5</color>
@@ -63,8 +68,8 @@
     <color name="card_teal_end">#B2DFDB</color>
     <color name="card_red_start">#FFEBEE</color>
     <color name="card_red_end">#FFCDD2</color>
-    <color name="shimmer_base">#E8EEEA</color>
-    <color name="shimmer_highlight">#F4F7F5</color>
+    <color name="shimmer_base">#E8EDF5</color>
+    <color name="shimmer_highlight">#F4F6FB</color>
     <color name="gradient_overlay">#40000000</color>
     <color name="card_shadow">#08000000</color>
 </resources>

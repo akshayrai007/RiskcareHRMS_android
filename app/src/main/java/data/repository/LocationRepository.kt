@@ -16,7 +16,16 @@ import kotlinx.coroutines.withContext
  *  1. Always save to local Room DB first (offline-safe)
  *  2. Attempt immediate upload to backend
  *  3. If upload fails → leave in DB (unsynced)
- *  4. SyncWorker picks up unsynced records periodically
+ *  4. SyncWorker picks up unsynced records every 15 minutes
+ *
+ * Gate rules (applied ONLY for regular pings, NOT for punch-in):
+ *  1. Dedup    : at least 25 seconds since last saved point
+ *  2. Accuracy : GPS reading must be <= 50m
+ *  3. Distance gate REMOVED — ping every 30s regardless of movement.
+ *     Stationary employees must also be tracked (office, meetings etc.)
+ *
+ * Punch-in point (isPunchIn = true) bypasses ALL gates — it must
+ * always be saved as the anchor point for the day's route.
  */
 class LocationRepository(context: Context) {
 
@@ -25,31 +34,53 @@ class LocationRepository(context: Context) {
 
     /**
      * Save a location point locally and immediately attempt upload.
-     * Returns true if uploaded successfully, false if queued for retry.
+     *
+     * @param isPunchIn  Set true for the punch-in first point — bypasses all
+     *                   gates so the anchor is always recorded even indoors.
      */
     suspend fun saveAndSync(
         lat: Double,
         lng: Double,
         accuracy: Float,
-        isOd: Boolean = false
+        isOd: Boolean = false,
+        isPunchIn: Boolean = false
     ): Boolean = withContext(Dispatchers.IO) {
-        // FIX: Deduplicate — reject points within 50 seconds of the last saved one.
-        // Layer 1 (PendingIntent) and Layer 2 (ForegroundService) both fire independently.
-        // Without this guard they produce duplicate points at identical timestamps.
-        val lastRecord = dao.getLastRecord()
-        if (lastRecord != null) {
-            val secondsSinceLast = (System.currentTimeMillis() - lastRecord.timestamp) / 1000
-            if (secondsSinceLast < 50) {
-                Log.d(tag, "Dedup: skipping point — last was ${secondsSinceLast}s ago")
+
+        if (!isPunchIn) {
+            val lastRecord = dao.getLastRecord()
+
+            // Gate 1: Time dedup — reject if pinged < 25s ago
+            if (lastRecord != null) {
+                val secondsSinceLast = (System.currentTimeMillis() - lastRecord.timestamp) / 1000
+                if (secondsSinceLast < 25) {
+                    Log.d(tag, "Dedup: skipping — last was ${secondsSinceLast}s ago")
+                    return@withContext false
+                }
+            }
+
+            // Gate 2: Accuracy — reject readings worse than 50m (skip if accuracy=0 from service)
+            if (accuracy > 0f && accuracy > 50f) {
+                Log.d(tag, "Accuracy gate: skipping ${accuracy.toInt()}m > 50m")
                 return@withContext false
             }
+
+            // Gate 3: Distance gate REMOVED — always log every 30s even if stationary
+            // Stationary employees (office workers, meetings) must still be tracked
+            if (lastRecord != null) {
+                val results = FloatArray(1)
+                android.location.Location.distanceBetween(
+                    lastRecord.lat, lastRecord.lng, lat, lng, results
+                )
+                Log.d(tag, "Distance from last point: ${results[0].toInt()}m (no gate — saving regardless)")
+            }
+        } else {
+            Log.d(tag, "Punch-in point — bypassing all gates")
         }
 
-        // Step 1: Always persist locally first
+        // All gates passed (or bypassed for punch-in) — persist locally first
         val id = dao.insert(LocationRecord(lat = lat, lng = lng, accuracy = accuracy, isOd = isOd))
-        Log.d(tag, "Saved to queue: id=$id, isOd=$isOd")
+        Log.d(tag, "Saved to queue: id=$id, isPunchIn=$isPunchIn, isOd=$isOd")
 
-        // Step 2: Try immediate upload
         return@withContext tryUploadSingle(id, lat, lng, accuracy, isOd)
     }
 
@@ -82,8 +113,7 @@ class LocationRepository(context: Context) {
     }
 
     /**
-     * Batch sync all pending records — called by SyncWorker periodically.
-     * Groups records into batches of 10 for efficient API calls.
+     * Batch sync all pending records — called by SyncWorker every 15 min.
      */
     suspend fun syncPending(): SyncResult = withContext(Dispatchers.IO) {
         val pending = dao.getPendingRecords()
@@ -92,7 +122,6 @@ class LocationRepository(context: Context) {
         var uploaded = 0
         var failed = 0
 
-        // Upload individually (each record gets its own retry tracking)
         pending.forEach { record ->
             val success = tryUploadSingle(
                 record.id, record.lat, record.lng, record.accuracy, record.isOd
@@ -100,9 +129,7 @@ class LocationRepository(context: Context) {
             if (success) uploaded++ else failed++
         }
 
-        // Clean up old synced/exhausted records
         dao.cleanup()
-
         Log.d(tag, "Sync complete: uploaded=$uploaded, failed=$failed")
         SyncResult(uploaded, failed)
     }

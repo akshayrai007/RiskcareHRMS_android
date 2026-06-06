@@ -63,7 +63,7 @@ class LocationTrackingService : Service() {
         private val INTERVAL_NORMAL_MS     get() = AndroidMain.TRACK_INTERVAL_MOVING_MS   // 30 sec — 1 point per 30s
         private val INTERVAL_STATIONARY_MS get() = AndroidMain.TRACK_INTERVAL_STATIONARY_MS   // 60 sec — stationary
         private const val GPS_TIMEOUT_MS         = 12_000L
-        private const val MAX_ACCURACY_M         = 500f      // ignore readings > 500m accuracy (200m was too strict indoors)
+        private const val MAX_ACCURACY_M         = 50f       // ignore readings > 50m accuracy — tighter filter reduces GPS jump artifacts
 
         // Adaptive: if displacement < this in 3 consecutive pings → stationary
         private val STATIONARY_THRESHOLD_M get() = AndroidMain.TRACK_STATIONARY_THRESHOLD_M
@@ -124,7 +124,7 @@ class LocationTrackingService : Service() {
 
                 val request = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, interval)
                     .setMinUpdateIntervalMillis(interval)
-                    .setMaxUpdateDelayMillis(interval * 2)   // allow slight batching — deduplication handles exact duplicates
+                    .setMaxUpdateDelayMillis(interval)       // no batching delay — deliver every 30s exactly
                     .setWaitForAccurateLocation(false)
                     .build()
 
@@ -369,6 +369,16 @@ class LocationTrackingService : Service() {
                 return
             }
 
+            // FIX: Reject location fixes whose GPS timestamp is stale.
+            // Android can return a Location object with a timestamp from hours ago
+            // (e.g. the morning room fix) even via getCurrentLocation() on some OEMs.
+            // 5-minute hard cap — if the fix is older than this, it is not the current position.
+            val fixAgeMs = System.currentTimeMillis() - loc.time
+            if (fixAgeMs > 5 * 60 * 1000L) {
+                Log.w(TAG, "Ping: GPS fix is ${fixAgeMs / 60000}min old — rejecting stale location")
+                return
+            }
+
             // FIX: Never drop the very first ping (punch-in point).
             // Indoor GPS accuracy on punch-in is often 200–500m.
             // Dropping it means the employee shows "Not Tracking" until they step outside.
@@ -431,9 +441,14 @@ class LocationTrackingService : Service() {
                     .addOnSuccessListener { cont.resume(it, null) }
                     .addOnFailureListener { cont.resume(null, null) }
             }
-            // Use cached if it's fresh enough (< 60 seconds old) — avoids stale location
-            if (cached != null && (System.currentTimeMillis() - cached.time) < AndroidMain.TRACK_LOCATION_CACHE_MS) {
-                Log.d(TAG, "Using fresh cached location ±${cached.accuracy.toInt()}m")
+            // Use cached if it's fresh enough.
+            // Hard cap: NEVER use a cached fix older than 90 seconds, regardless of config.
+            // This prevents Android returning a location from hours ago (e.g. morning room fix)
+            // as "last known location" during the workday.
+            val cacheAgeMs = System.currentTimeMillis() - (cached?.time ?: 0L)
+            val maxCacheMs = minOf(AndroidMain.TRACK_LOCATION_CACHE_MS, 90_000L)
+            if (cached != null && cacheAgeMs < maxCacheMs) {
+                Log.d(TAG, "Using fresh cached location ±${cached.accuracy.toInt()}m (age=${cacheAgeMs/1000}s)")
                 return cached
             }
 
@@ -464,9 +479,12 @@ class LocationTrackingService : Service() {
                 return networkLoc
             }
 
-            // Last resort: use the cached location even if stale
-            Log.d(TAG, "⚠️ Using stale cached location as last resort")
-            cached
+            // Last resort: DO NOT use stale cached location.
+            // A cached location from hours ago (e.g. morning room fix) would appear
+            // as a false position mid-day. Returning null causes doPing() to skip
+            // this cycle cleanly — far better than a phantom location.
+            Log.w(TAG, "⚠️ GPS and network both timed out — skipping ping (no stale fallback)")
+            null
         } catch (e: Exception) {
             Log.e(TAG, "getBestLocation error: ${e.message}")
             null

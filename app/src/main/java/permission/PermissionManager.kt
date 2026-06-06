@@ -25,18 +25,30 @@ import androidx.fragment.app.Fragment
  *   Step 3: SCHEDULE_EXACT_ALARM                           (Android 12+, optional)
  *           Needed for OD auto-stop precision
  *
- * Google Play requirement: background location must be asked separately with
- * a clear explanation of why it's needed. Bundling it with foreground permission
- * will cause Play Store rejection.
+ * OFFSITE vs ONSITE behaviour:
+ *   - OFFSITE employees: background permission is MANDATORY — "Skip" button
+ *     is replaced with "Open Settings". The dialog makes it clear they MUST
+ *     grant it for tracking to work, and they cannot proceed without it.
+ *   - ONSITE employees: background permission is OPTIONAL — they can tap
+ *     "Skip" and tracking will still work in foreground-only mode.
  *
  * Usage:
- *   val permManager = PermissionManager(fragment)
- *   permManager.checkAndRequestAll { granted -> if (granted) startTracking() }
+ *   val pm = PermissionManager(fragment)
+ *   pm.checkAndRequestAll(isOffsiteEmployee = true) { granted -> startTracking() }
  */
 class PermissionManager(private val fragment: Fragment) {
 
     private val tag = "PermissionManager"
     private var onComplete: ((Boolean) -> Unit)? = null
+
+    /**
+     * Whether the current employee is offsite/field.
+     * Set by checkAndRequestAll() before any dialog is shown.
+     * When true:
+     *   • Background permission dialog has no "Skip" — only "Open Settings"
+     *   • Denied background permission shows "Open Settings" instead of "Continue Anyway"
+     */
+    private var isOffsite = false
 
     // Step 1: Foreground location
     private val foregroundLauncher: ActivityResultLauncher<Array<String>> =
@@ -63,21 +75,29 @@ class PermissionManager(private val fragment: Fragment) {
     private val backgroundLauncher: ActivityResultLauncher<String> =
         fragment.registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
             if (!granted) {
-                Log.w(tag, "Background location denied — tracking may stop when app is closed")
-                // Don't block the user — foreground tracking still works
-                // But warn them that background tracking won't work
-                showBackgroundDeniedWarning()
+                Log.w(tag, "Background location denied (isOffsite=$isOffsite)")
+                if (isOffsite) {
+                    // Offsite: CANNOT skip — show mandatory settings dialog
+                    showOffsiteBackgroundDeniedDialog()
+                    onComplete?.invoke(false)
+                    return@registerForActivityResult
+                } else {
+                    // Onsite: warn but allow to continue with foreground tracking
+                    showBackgroundDeniedWarning()
+                }
             }
-            // Proceed regardless — foreground tracking is still functional
             onComplete?.invoke(true)
         }
 
     /**
      * Main entry point.
-     * Checks all required permissions and requests any that are missing.
-     * [callback] is called with true when tracking can start (foreground at minimum).
+     *
+     * @param isOffsiteEmployee  true for field/offsite employees — background
+     *                           location becomes mandatory and cannot be skipped.
+     * @param callback           called with true when tracking can start.
      */
-    fun checkAndRequestAll(callback: (Boolean) -> Unit) {
+    fun checkAndRequestAll(isOffsiteEmployee: Boolean = false, callback: (Boolean) -> Unit) {
+        this.isOffsite  = isOffsiteEmployee
         this.onComplete = callback
 
         when {
@@ -100,7 +120,6 @@ class PermissionManager(private val fragment: Fragment) {
     private fun requestForegroundPermission() {
         val ctx = fragment.requireContext()
 
-        // Check if we should show rationale
         val shouldShowRationale =
             fragment.shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION)
 
@@ -135,32 +154,78 @@ class PermissionManager(private val fragment: Fragment) {
         }
     }
 
-    /** Step 2: Request background location with Google Play-compliant explanation */
+    /**
+     * Step 2: Request background location.
+     *
+     * Offsite employees see NO "Skip" button — they must grant or open Settings.
+     * Onsite employees see a "Skip" button and can continue with foreground-only tracking.
+     */
     @androidx.annotation.RequiresApi(Build.VERSION_CODES.Q)
     private fun requestBackgroundPermission() {
         val ctx = fragment.requireContext()
 
-        AlertDialog.Builder(ctx)
-            .setTitle("Enable Background Location")
+        if (isOffsite) {
+            // ── OFFSITE: mandatory — no skip allowed ──────────────────────────
+            AlertDialog.Builder(ctx)
+                .setTitle("⚠️ Background Location Required")
+                .setMessage(
+                    "As a field employee, background location access is REQUIRED for attendance tracking.\n\n" +
+                            "To enable it:\n" +
+                            "1. Tap 'Open Settings' below\n" +
+                            "2. Tap 'Permissions' → 'Location'\n" +
+                            "3. Select 'Allow all the time'\n\n" +
+                            "Without this permission, your movement cannot be tracked and your " +
+                            "attendance may be marked incomplete."
+                )
+                .setPositiveButton("Open Settings") { _, _ ->
+                    backgroundLauncher.launch(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+                }
+                // NO negative/skip button for offsite employees
+                .setCancelable(false)
+                .show()
+        } else {
+            // ── ONSITE: optional — skip allowed ──────────────────────────────
+            AlertDialog.Builder(ctx)
+                .setTitle("Enable Background Location")
+                .setMessage(
+                    "To track your location while the app is in the background:\n\n" +
+                            "1. Tap 'Open Settings' below\n" +
+                            "2. Tap 'Permissions' → 'Location'\n" +
+                            "3. Select 'Allow all the time'\n\n" +
+                            "This ensures your location is recorded even when you switch apps " +
+                            "during working hours. Office employees can skip this."
+                )
+                .setPositiveButton("Open Settings") { _, _ ->
+                    backgroundLauncher.launch(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+                }
+                .setNegativeButton("Skip") { _, _ ->
+                    // Onsite can skip background — foreground tracking still works
+                    onComplete?.invoke(true)
+                }
+                .setCancelable(false)
+                .show()
+        }
+    }
+
+    /**
+     * Shown to offsite employees when background permission is denied.
+     * Forces them to open Settings — cannot dismiss without going to settings.
+     */
+    private fun showOffsiteBackgroundDeniedDialog() {
+        AlertDialog.Builder(fragment.requireContext())
+            .setTitle("⚠️ Permission Required")
             .setMessage(
-                "To track your location while the app is in the background:\n\n" +
-                        "1. Tap 'Open Settings' below\n" +
-                        "2. Tap 'Permissions' → 'Location'\n" +
-                        "3. Select 'Allow all the time'\n\n" +
-                        "This ensures your location is recorded even when you switch apps " +
-                        "during working hours. Without this, tracking may stop."
+                "Background location is mandatory for field employees.\n\n" +
+                        "Please go to Settings → Apps → KrishiHR → Permissions → Location " +
+                        "and select 'Allow all the time'.\n\n" +
+                        "You cannot punch in without this permission."
             )
-            .setPositiveButton("Open Settings") { _, _ ->
-                backgroundLauncher.launch(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
-            }
-            .setNegativeButton("Skip") { _, _ ->
-                // Allow punch without background — warn tracking may stop
-                onComplete?.invoke(true)
-            }
+            .setPositiveButton("Open Settings") { _, _ -> openAppSettings() }
             .setCancelable(false)
             .show()
     }
 
+    /** Shown to onsite employees when background permission is denied (warning only). */
     private fun showBackgroundDeniedWarning() {
         AlertDialog.Builder(fragment.requireContext())
             .setTitle("Limited Tracking")
@@ -218,5 +283,23 @@ class PermissionManager(private val fragment: Fragment) {
                     PackageManager.PERMISSION_GRANTED ||
                     ContextCompat.checkSelfPermission(ctx, Manifest.permission.ACCESS_COARSE_LOCATION) ==
                     PackageManager.PERMISSION_GRANTED
+
+        /**
+         * Returns true if the employee's employment_type indicates they are a
+         * field / offsite worker who requires mandatory background tracking.
+         *
+         * Backend values expected for offsite: "field", "offsite", "field_employee",
+         * "sales", "remote_field" — anything that is NOT "office" / "onsite" / null.
+         *
+         * We use a whitelist for onsite (safer than blacklist) so new backend types
+         * default to OFFSITE (stricter) rather than accidentally skipping tracking.
+         */
+        fun isOffsiteEmployee(employmentType: String?): Boolean {
+            if (employmentType.isNullOrBlank()) return false
+            val t = employmentType.trim().lowercase()
+            // Onsite / office types — these employees CAN skip tracking
+            val onsiteTypes = setOf("office", "onsite", "on_site", "wfh", "work_from_home", "hybrid")
+            return t !in onsiteTypes
+        }
     }
 }
