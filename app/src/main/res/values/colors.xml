@@ -1,75 +1,82 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- ══════════════════════════════════════════════════════════════
-         BRAND COLORS — RiskcareHRMS
+         BRAND COLORS — RiskCareHR
+         Source of truth: backend/Main_file.js → primaryColor / accentColor
          To rebrand: change primary, primary_dark, primary_light only.
          ══════════════════════════════════════════════════════════════ -->
 
-    <!-- ── Brand Primary (Navy Blue — Risk Care Insurance) ── -->
-    <color name="primary">#1A3C6E</color>
-    <color name="primary_dark">#0F2548</color>
-    <color name="primary_light">#2E5FA3</color>
-    <color name="primary_ultra_light">#E8EEF8</color>
+    <!-- ── Brand Primary (RiskCare Red) ── -->
+    <color name="primary">#E8303A</color>
+    <color name="primary_dark">#C0272D</color>
+    <color name="primary_light">#FF5252</color>
+    <color name="primary_ultra_light">#FFEBEE</color>
 
-    <!-- ── Accents ── -->
-    <color name="accent_orange">#E65100</color>
-    <color name="accent_orange_light">#FFF3E0</color>
+    <!-- ── Brand Accents ── -->
+    <color name="accent_cyan">#00AEEF</color>
+    <color name="accent_cyan_light">#EAF7FC</color>
+    <color name="accent_navy">#1A2B5A</color>
+    <color name="accent_navy_light">#E8EEF8</color>
+
+    <!-- ── Legacy accent aliases (kept for XML compatibility) ── -->
+    <color name="accent_orange">#E8303A</color>
+    <color name="accent_orange_light">#FFEBEE</color>
     <color name="accent_purple">#6A1B9A</color>
     <color name="accent_purple_light">#F3E5F5</color>
-    <color name="accent_blue">#1565C0</color>
-    <color name="accent_blue_light">#E3F2FD</color>
-    <color name="accent_teal">#00695C</color>
-    <color name="accent_teal_light">#E0F2F1</color>
-    <color name="accent_red">#C62828</color>
+    <color name="accent_blue">#1A2B5A</color>
+    <color name="accent_blue_light">#E8EEF8</color>
+    <color name="accent_teal">#00AEEF</color>
+    <color name="accent_teal_light">#EAF7FC</color>
+    <color name="accent_red">#C0272D</color>
     <color name="accent_yellow">#F59E0B</color>
     <color name="accent_red_light">#FFEBEE</color>
-    <color name="accent_amber">#E65100</color>
-    <color name="accent_amber_light">#FFF8E1</color>
-    <color name="accent_indigo">#283593</color>
-    <color name="accent_indigo_light">#E8EAF6</color>
+    <color name="accent_amber">#E8303A</color>
+    <color name="accent_amber_light">#FFEBEE</color>
+    <color name="accent_indigo">#1A2B5A</color>
+    <color name="accent_indigo_light">#E8EEF8</color>
     <color name="accent_pink">#AD1457</color>
     <color name="accent_pink_light">#FCE4EC</color>
 
     <!-- ── Status chips ── -->
-    <color name="status_present">#1A3C6E</color>
-    <color name="status_absent">#C62828</color>
-    <color name="status_late">#E65100</color>
-    <color name="status_halfday">#1565C0</color>
-    <color name="status_pending">#E65100</color>
-    <color name="status_approved">#1A3C6E</color>
-    <color name="status_rejected">#C62828</color>
-    <color name="status_wfh">#6A1B9A</color>
+    <color name="status_present">#E8303A</color>
+    <color name="status_absent">#C0272D</color>
+    <color name="status_late">#F59E0B</color>
+    <color name="status_halfday">#00AEEF</color>
+    <color name="status_pending">#F59E0B</color>
+    <color name="status_approved">#E8303A</color>
+    <color name="status_rejected">#C0272D</color>
+    <color name="status_wfh">#1A2B5A</color>
 
     <!-- ── Neutrals ── -->
     <color name="white">#FFFFFF</color>
     <color name="black">#1A1A1A</color>
-    <color name="background">#F4F6FB</color>
+    <color name="background">#F5F8FB</color>
     <color name="surface">#FFFFFF</color>
     <color name="divider">#EEEEEE</color>
-    <color name="text_primary">#1C2340</color>
+    <color name="text_primary">#1A2B5A</color>
     <color name="text_secondary">#4A5568</color>
     <color name="text_hint">#90A4AE</color>
     <color name="text_on_primary">#FFFFFF</color>
 
     <!-- ── Navigation ── -->
-    <color name="nav_selected">#1A3C6E</color>
+    <color name="nav_selected">#E8303A</color>
     <color name="nav_unselected">#90A4AE</color>
 
     <!-- ── Card aliases ── -->
     <color name="card_green_start">#E8F5E9</color>
     <color name="card_green_end">#C8E6C9</color>
-    <color name="card_blue_start">#E8EEF8</color>
-    <color name="card_blue_end">#C5D5EE</color>
-    <color name="card_orange_start">#FFF3E0</color>
-    <color name="card_orange_end">#FFE0B2</color>
+    <color name="card_blue_start">#EAF7FC</color>
+    <color name="card_blue_end">#B8E4F5</color>
+    <color name="card_orange_start">#FFEBEE</color>
+    <color name="card_orange_end">#FFCDD2</color>
     <color name="card_purple_start">#F3E5F5</color>
     <color name="card_purple_end">#E1BEE7</color>
-    <color name="card_teal_start">#E0F2F1</color>
-    <color name="card_teal_end">#B2DFDB</color>
+    <color name="card_teal_start">#EAF7FC</color>
+    <color name="card_teal_end">#B8E4F5</color>
     <color name="card_red_start">#FFEBEE</color>
     <color name="card_red_end">#FFCDD2</color>
-    <color name="shimmer_base">#E8EDF5</color>
-    <color name="shimmer_highlight">#F4F6FB</color>
+    <color name="shimmer_base">#F5DEDE</color>
+    <color name="shimmer_highlight">#FFF5F5</color>
     <color name="gradient_overlay">#40000000</color>
     <color name="card_shadow">#08000000</color>
 </resources>

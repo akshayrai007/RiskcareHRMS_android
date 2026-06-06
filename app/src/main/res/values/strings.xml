@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">RiskcareHRMS</string>
-    <string name="app_tagline">Smart HR for Insurance</string>
+    <string name="app_name">RiskCareHR</string>
+    <string name="app_tagline">Servicing All Risks</string>
 
     <!-- Auth -->
     <string name="login">Login</string>
