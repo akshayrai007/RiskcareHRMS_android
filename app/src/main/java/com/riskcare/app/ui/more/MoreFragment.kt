@@ -61,7 +61,6 @@ class MoreFragment : Fragment() {
             R.id.rowPayrollMgmt to "📊  Payroll Management",
             R.id.rowProvision to "📝  Probation & Confirmation",
             R.id.rowProjectMgmt to "🗂️  Project Management",
-            R.id.rowBeatPlan to "📋  Beat Plan / PJP",
             R.id.rowBirthdays to "🎂  Birthdays",
             R.id.rowAnniversaries to "🎉  Work Anniversaries",
             R.id.rowHolidays to "🏖️  Holidays",
@@ -147,12 +146,7 @@ class MoreFragment : Fragment() {
             row.visibility = if (role in adminRoles) View.VISIBLE else View.GONE
             row.setOnClickListener { nav(ProjectManagementFragment()) }
         }
-        // Beat Plan — HR, Admin, Manager, TL only
-        view.findViewById<View>(R.id.rowBeatPlan)?.let { row ->
-            val managerRoles = listOf(Roles.HR, Roles.SUPER_ADMIN, Roles.ADMIN, Roles.MANAGER, Roles.TL)
-            row.visibility = if (role in managerRoles) View.VISIBLE else View.GONE
-            row.setOnClickListener { nav(com.riskcare.app.ui.attendance.BeatPlanFragment()) }
-        }
+        // Beat Plan removed — not required for this deployment
 
         view.findViewById<View>(R.id.rowAdvanceApprovals)?.let { row ->
             row.visibility = if (Roles.canApproveAdvance(role)) View.VISIBLE else View.GONE
