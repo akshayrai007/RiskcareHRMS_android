@@ -170,7 +170,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Forgot Password?"
-                    android:textColor="#1A2B5A"
+                    android:textColor="#E8303A"
                     android:textSize="13sp"
                     android:gravity="end"
                     android:paddingVertical="6dp"
@@ -201,7 +201,7 @@
                     android:textColor="@color/white"
                     android:letterSpacing="0.04"
                     app:cornerRadius="12dp"
-                    app:backgroundTint="#2E7D32"
+                    app:backgroundTint="#E8303A"
                     app:elevation="4dp"/>
 
                 <!-- Loading -->
@@ -210,7 +210,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
-                    app:indicatorColor="#2E7D32"
+                    app:indicatorColor="#E8303A"
                     app:trackColor="#E8F5E9"
                     android:indeterminate="true"
                     android:visibility="gone"/>
