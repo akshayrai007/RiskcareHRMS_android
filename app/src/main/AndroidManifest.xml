@@ -110,7 +110,7 @@
             android:name=".service.LocationUpdateReceiver"
             android:exported="true">
             <intent-filter>
-                <action android:name="com.krishihr.app.LOCATION_UPDATE" />
+                <action android:name="com.riskcare.app.LOCATION_UPDATE" />
             </intent-filter>
         </receiver>
 
