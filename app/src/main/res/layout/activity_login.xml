@@ -43,7 +43,7 @@
                     android:id="@+id/tvLogoName"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="RiskCareHR"
+                    android:text="RiskCare-HRMS"
                     android:textColor="#1A2B5A"
                     android:textSize="26sp"
                     android:textStyle="bold"
