@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">RiskCareHR</string>
+    <string name="app_name">RiskCare-HRMS</string>
     <string name="app_tagline">Servicing All Risks</string>
 
     <!-- Auth -->
