@@ -33,7 +33,7 @@ class LoginActivity : AppCompatActivity() {
         RetrofitClient.init(sessionManager, this)
 
         // Style logo name: Risk[Care]HR — "Care" in cyan #00AEEF matching web
-        val logoText = SpannableString("RiskCareHR")
+        val logoText = SpannableString("RiskCare-HRMS")
         logoText.setSpan(
             ForegroundColorSpan(android.graphics.Color.parseColor("#00AEEF")),
             4, 8, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE  // "Care" is chars 4–8
