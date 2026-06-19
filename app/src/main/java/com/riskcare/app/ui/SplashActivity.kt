@@ -47,7 +47,7 @@ class SplashActivity : AppCompatActivity() {
         val tvVersion   = findViewById<TextView>(R.id.tvVersion)
 
         // Style logo name: Risk[Care]HR — "Care" in cyan #00AEEF matching web & login
-        val logoSpan = SpannableString("RiskCareHR")
+        val logoSpan = SpannableString("RiskCare-HRMS")
         logoSpan.setSpan(
             ForegroundColorSpan(android.graphics.Color.parseColor("#00AEEF")),
             4, 8, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
