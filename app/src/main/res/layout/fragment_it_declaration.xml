@@ -4,13 +4,13 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#F2F6EE">
+    android:background="#FFF5F5">
 
     <!-- Header -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="#1B5E20"
+        android:background="#B71C1C"
         android:padding="16dp"
         android:orientation="vertical">
         <TextView
@@ -24,7 +24,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Investment Declaration, Proof Upload &amp; Tax Calculator"
-            android:textColor="#A5D6A7"
+            android:textColor="#EF9A9A"
             android:textSize="12sp"/>
     </LinearLayout>
 
@@ -79,8 +79,8 @@
         android:background="#FFFFFF"
         app:tabMode="scrollable"
         app:tabTextColor="#757575"
-        app:tabSelectedTextColor="#2E7D32"
-        app:tabIndicatorColor="#2E7D32"/>
+        app:tabSelectedTextColor="#C0272D"
+        app:tabIndicatorColor="#C0272D"/>
 
     <!-- ══════════════════════════════════════════════════════
          PANE 0 — My Declaration
@@ -110,7 +110,7 @@
                     android:padding="14dp">
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                         android:text="Tax Regime" android:textSize="13sp" android:textStyle="bold"
-                        android:textColor="#2E7D32" android:layout_marginBottom="8dp"/>
+                        android:textColor="#C0272D" android:layout_marginBottom="8dp"/>
                     <RadioGroup android:id="@+id/rgRegime" android:layout_width="wrap_content"
                         android:layout_height="wrap_content" android:orientation="horizontal">
                         <RadioButton android:id="@+id/rbOld" android:layout_width="wrap_content"
@@ -131,7 +131,7 @@
                     android:orientation="vertical" android:padding="14dp">
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                         android:text="🏠 HRA Exemption" android:textSize="13sp" android:textStyle="bold"
-                        android:textColor="#2E7D32" android:layout_marginBottom="10dp"/>
+                        android:textColor="#C0272D" android:layout_marginBottom="10dp"/>
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                         android:text="Monthly Rent Paid (₹)" android:textSize="12sp" android:textColor="#616161"/>
                     <EditText android:id="@+id/etRent" android:layout_width="match_parent"
@@ -148,6 +148,10 @@
                     <EditText android:id="@+id/etLandlordPan" android:layout_width="match_parent"
                         android:layout_height="wrap_content" android:hint="ABCDE1234F"
                         android:inputType="textCapCharacters" android:textSize="14sp" android:maxLength="10"/>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="City Type" android:textSize="12sp" android:textColor="#616161" android:layout_marginTop="8dp"/>
+                    <Spinner android:id="@+id/spinnerHraCityType" android:layout_width="match_parent"
+                        android:layout_height="wrap_content"/>
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
@@ -159,7 +163,7 @@
                     android:orientation="vertical" android:padding="14dp">
                     <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
                         android:text="💰 Section 80C — Max ₹1,50,000" android:textSize="13sp"
-                        android:textStyle="bold" android:textColor="#2E7D32" android:layout_marginBottom="10dp"/>
+                        android:textStyle="bold" android:textColor="#C0272D" android:layout_marginBottom="10dp"/>
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                         android:text="PF Contribution (₹)" android:textSize="12sp" android:textColor="#616161"/>
                     <EditText android:id="@+id/et80cPf" android:layout_width="match_parent"
@@ -179,6 +183,10 @@
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                         android:text="NSC (₹)" android:textSize="12sp" android:textColor="#616161" android:layout_marginTop="8dp"/>
                     <EditText android:id="@+id/et80cNsc" android:layout_width="match_parent"
+                        android:layout_height="wrap_content" android:inputType="numberDecimal" android:hint="0" android:textSize="14sp"/>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Tax Saving FD (₹)" android:textSize="12sp" android:textColor="#616161" android:layout_marginTop="8dp"/>
+                    <EditText android:id="@+id/et80cFd" android:layout_width="match_parent"
                         android:layout_height="wrap_content" android:inputType="numberDecimal" android:hint="0" android:textSize="14sp"/>
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                         android:text="Home Loan Principal (₹)" android:textSize="12sp" android:textColor="#616161" android:layout_marginTop="8dp"/>
@@ -203,7 +211,7 @@
                     android:orientation="vertical" android:padding="14dp">
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                         android:text="🏥 Section 80D — Medical Insurance" android:textSize="13sp"
-                        android:textStyle="bold" android:textColor="#2E7D32" android:layout_marginBottom="10dp"/>
+                        android:textStyle="bold" android:textColor="#C0272D" android:layout_marginBottom="10dp"/>
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                         android:text="Self / Family Premium (₹) — Max ₹25,000" android:textSize="12sp" android:textColor="#616161"/>
                     <EditText android:id="@+id/et80dSelf" android:layout_width="match_parent"
@@ -212,6 +220,10 @@
                         android:text="Parents Premium (₹) — Max ₹50,000" android:textSize="12sp"
                         android:textColor="#616161" android:layout_marginTop="8dp"/>
                     <EditText android:id="@+id/et80dParents" android:layout_width="match_parent"
+                        android:layout_height="wrap_content" android:inputType="numberDecimal" android:hint="0" android:textSize="14sp"/>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Senior Parent Medical (₹)" android:textSize="12sp" android:textColor="#616161" android:layout_marginTop="8dp"/>
+                    <EditText android:id="@+id/et80dSeniorParent" android:layout_width="match_parent"
                         android:layout_height="wrap_content" android:inputType="numberDecimal" android:hint="0" android:textSize="14sp"/>
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
@@ -224,11 +236,15 @@
                     android:orientation="vertical" android:padding="14dp">
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                         android:text="📑 Other Deductions" android:textSize="13sp"
-                        android:textStyle="bold" android:textColor="#2E7D32" android:layout_marginBottom="10dp"/>
+                        android:textStyle="bold" android:textColor="#C0272D" android:layout_marginBottom="10dp"/>
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                         android:text="24(b) Home Loan Interest (₹) — Max ₹2,00,000" android:textSize="12sp" android:textColor="#616161"/>
                     <EditText android:id="@+id/et24bHomeLoan" android:layout_width="match_parent"
                         android:layout_height="wrap_content" android:inputType="numberDecimal" android:hint="0" android:textSize="14sp"/>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Loan Provider / Bank" android:textSize="12sp" android:textColor="#616161" android:layout_marginTop="8dp"/>
+                    <EditText android:id="@+id/etHomeLoanProvider" android:layout_width="match_parent"
+                        android:layout_height="wrap_content" android:inputType="text" android:hint="Bank / NBFC name" android:textSize="14sp"/>
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                         android:text="80E Education Loan Interest (₹)" android:textSize="12sp"
                         android:textColor="#616161" android:layout_marginTop="8dp"/>
@@ -239,6 +255,14 @@
                         android:textColor="#616161" android:layout_marginTop="8dp"/>
                     <EditText android:id="@+id/et80gDonation" android:layout_width="match_parent"
                         android:layout_height="wrap_content" android:inputType="numberDecimal" android:hint="0" android:textSize="14sp"/>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Institution Name" android:textSize="12sp" android:textColor="#616161" android:layout_marginTop="8dp"/>
+                    <EditText android:id="@+id/et80gInstitution" android:layout_width="match_parent"
+                        android:layout_height="wrap_content" android:inputType="text" android:hint="Trust / NGO name" android:textSize="14sp"/>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Institution PAN" android:textSize="12sp" android:textColor="#616161" android:layout_marginTop="8dp"/>
+                    <EditText android:id="@+id/et80gPan" android:layout_width="match_parent"
+                        android:layout_height="wrap_content" android:inputType="text" android:hint="AAAAA9999A" android:textSize="14sp" android:textAllCaps="true"/>
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                         android:text="80CCD(1B) NPS (₹) — Max ₹50,000" android:textSize="12sp"
                         android:textColor="#616161" android:layout_marginTop="8dp"/>
@@ -252,38 +276,176 @@
                 android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp" app:cardCornerRadius="10dp" app:cardElevation="2dp">
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                    android:orientation="vertical" android:padding="14dp" android:background="#E8F5E9">
+                    android:orientation="vertical" android:padding="14dp" android:background="#FFEBEE">
                     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
                         android:orientation="horizontal" android:layout_marginBottom="12dp">
                         <TextView android:id="@+id/tvTotal80c" android:layout_width="0dp"
                             android:layout_height="wrap_content" android:layout_weight="1"
                             android:text="80C: ₹0" android:textSize="13sp" android:textStyle="bold"
-                            android:textColor="#2E7D32"/>
+                            android:textColor="#C0272D"/>
                         <TextView android:id="@+id/tvTotalDeductions" android:layout_width="0dp"
                             android:layout_height="wrap_content" android:layout_weight="1"
                             android:text="Total Savings: ₹0" android:textSize="13sp" android:textStyle="bold"
-                            android:textColor="#1B5E20" android:gravity="end"/>
+                            android:textColor="#B71C1C" android:gravity="end"/>
                     </LinearLayout>
                     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
                         android:orientation="horizontal" android:gravity="end">
                         <Button android:id="@+id/btnSaveDraft"
                             android:layout_width="wrap_content" android:layout_height="40dp"
                             android:text="💾 Save Draft" android:textSize="13sp"
-                            android:backgroundTint="#FFFFFF" android:textColor="#2E7D32"
+                            android:backgroundTint="#FFFFFF" android:textColor="#C0272D"
                             android:layout_marginEnd="10dp"/>
                         <Button android:id="@+id/btnSubmitDecl"
                             android:layout_width="wrap_content" android:layout_height="40dp"
                             android:text="✅ Submit to HR" android:textSize="13sp"
-                            android:backgroundTint="#2E7D32" android:textColor="#FFFFFF"/>
+                            android:backgroundTint="#C0272D" android:textColor="#FFFFFF"/>
                     </LinearLayout>
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- 80DD -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginHorizontal="16dp" android:layout_marginBottom="12dp"
+                app:cardCornerRadius="12dp" app:cardElevation="3dp">
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="vertical" android:padding="16dp" android:background="#FFFFFF">
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:text="♿ Section 80DD — Dependent Disability" android:textSize="13sp"
+                        android:textStyle="bold" android:textColor="#C0272D" android:layout_marginBottom="10dp"/>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Claimed Amount (₹)" android:textSize="12sp" android:textColor="#616161"/>
+                    <EditText android:id="@+id/et80ddAmount" android:layout_width="match_parent"
+                        android:layout_height="wrap_content" android:inputType="numberDecimal" android:hint="0" android:textSize="14sp"/>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Dependent Name" android:textSize="12sp" android:textColor="#616161" android:layout_marginTop="8dp"/>
+                    <EditText android:id="@+id/et80ddDependent" android:layout_width="match_parent"
+                        android:layout_height="wrap_content" android:inputType="text" android:hint="Full name" android:textSize="14sp"/>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Relationship" android:textSize="12sp" android:textColor="#616161" android:layout_marginTop="8dp"/>
+                    <EditText android:id="@+id/et80ddRelation" android:layout_width="match_parent"
+                        android:layout_height="wrap_content" android:inputType="text" android:hint="Spouse / Child / Parent" android:textSize="14sp"/>
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- 80U -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginHorizontal="16dp" android:layout_marginBottom="12dp"
+                app:cardCornerRadius="12dp" app:cardElevation="3dp">
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="vertical" android:padding="16dp" android:background="#FFFFFF">
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:text="✏️ Section 80U — Self Disability" android:textSize="13sp"
+                        android:textStyle="bold" android:textColor="#C0272D" android:layout_marginBottom="10dp"/>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Claimed Amount (₹)" android:textSize="12sp" android:textColor="#616161"/>
+                    <EditText android:id="@+id/et80uAmount" android:layout_width="match_parent"
+                        android:layout_height="wrap_content" android:inputType="numberDecimal" android:hint="0" android:textSize="14sp"/>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Disability %" android:textSize="12sp" android:textColor="#616161" android:layout_marginTop="8dp"/>
+                    <EditText android:id="@+id/et80uPct" android:layout_width="match_parent"
+                        android:layout_height="wrap_content" android:inputType="numberDecimal" android:hint="40 / 80" android:textSize="14sp"/>
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- 80DDB -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginHorizontal="16dp" android:layout_marginBottom="12dp"
+                app:cardCornerRadius="12dp" app:cardElevation="3dp">
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="vertical" android:padding="16dp" android:background="#FFFFFF">
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:text="🩺 Section 80DDB — Medical Treatment" android:textSize="13sp"
+                        android:textStyle="bold" android:textColor="#C0272D" android:layout_marginBottom="10dp"/>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Disease Name" android:textSize="12sp" android:textColor="#616161"/>
+                    <EditText android:id="@+id/et80ddbDisease" android:layout_width="match_parent"
+                        android:layout_height="wrap_content" android:inputType="text" android:hint="Cancer / Neurological …" android:textSize="14sp"/>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Patient Name" android:textSize="12sp" android:textColor="#616161" android:layout_marginTop="8dp"/>
+                    <EditText android:id="@+id/et80ddbPatient" android:layout_width="match_parent"
+                        android:layout_height="wrap_content" android:inputType="text" android:hint="Full name" android:textSize="14sp"/>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Relationship" android:textSize="12sp" android:textColor="#616161" android:layout_marginTop="8dp"/>
+                    <EditText android:id="@+id/et80ddbRelation" android:layout_width="match_parent"
+                        android:layout_height="wrap_content" android:inputType="text" android:hint="Self / Spouse / Parent" android:textSize="14sp"/>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Claimed Amount (₹)" android:textSize="12sp" android:textColor="#616161" android:layout_marginTop="8dp"/>
+                    <EditText android:id="@+id/et80ddbAmount" android:layout_width="match_parent"
+                        android:layout_height="wrap_content" android:inputType="numberDecimal" android:hint="0" android:textSize="14sp"/>
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- LTA -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginHorizontal="16dp" android:layout_marginBottom="12dp"
+                app:cardCornerRadius="12dp" app:cardElevation="3dp">
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="vertical" android:padding="16dp" android:background="#FFFFFF">
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:text="✈️ LTA — Leave Travel Allowance" android:textSize="13sp"
+                        android:textStyle="bold" android:textColor="#C0272D" android:layout_marginBottom="10dp"/>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="LTA Amount (₹)" android:textSize="12sp" android:textColor="#616161"/>
+                    <EditText android:id="@+id/etLtaAmount" android:layout_width="match_parent"
+                        android:layout_height="wrap_content" android:inputType="numberDecimal" android:hint="0" android:textSize="14sp"/>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Destination" android:textSize="12sp" android:textColor="#616161" android:layout_marginTop="8dp"/>
+                    <EditText android:id="@+id/etLtaDestination" android:layout_width="match_parent"
+                        android:layout_height="wrap_content" android:inputType="text" android:hint="City / Place" android:textSize="14sp"/>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Travel Period" android:textSize="12sp" android:textColor="#616161" android:layout_marginTop="8dp"/>
+                    <EditText android:id="@+id/etLtaTravelPeriod" android:layout_width="match_parent"
+                        android:layout_height="wrap_content" android:inputType="text" android:hint="e.g. Jan 2026" android:textSize="14sp"/>
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- Previous Employment -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginHorizontal="16dp" android:layout_marginBottom="12dp"
+                app:cardCornerRadius="12dp" app:cardElevation="3dp">
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="vertical" android:padding="16dp" android:background="#FFFFFF">
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:text="🏢 Previous Employment" android:textSize="13sp"
+                        android:textStyle="bold" android:textColor="#C0272D" android:layout_marginBottom="10dp"/>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Employer Name" android:textSize="12sp" android:textColor="#616161"/>
+                    <EditText android:id="@+id/etPrevEmployer" android:layout_width="match_parent"
+                        android:layout_height="wrap_content" android:inputType="text" android:hint="Company name" android:textSize="14sp"/>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Employer TAN" android:textSize="12sp" android:textColor="#616161" android:layout_marginTop="8dp"/>
+                    <EditText android:id="@+id/etPrevTan" android:layout_width="match_parent"
+                        android:layout_height="wrap_content" android:inputType="text" android:hint="AAAA99999A" android:textSize="14sp" android:textAllCaps="true"/>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Period" android:textSize="12sp" android:textColor="#616161" android:layout_marginTop="8dp"/>
+                    <EditText android:id="@+id/etPrevPeriod" android:layout_width="match_parent"
+                        android:layout_height="wrap_content" android:inputType="text" android:hint="Apr 2025 – Nov 2025" android:textSize="14sp"/>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Gross Salary (₹)" android:textSize="12sp" android:textColor="#616161" android:layout_marginTop="8dp"/>
+                    <EditText android:id="@+id/etPrevGross" android:layout_width="match_parent"
+                        android:layout_height="wrap_content" android:inputType="numberDecimal" android:hint="0" android:textSize="14sp"/>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Taxable Income (₹)" android:textSize="12sp" android:textColor="#616161" android:layout_marginTop="8dp"/>
+                    <EditText android:id="@+id/etPrevTaxable" android:layout_width="match_parent"
+                        android:layout_height="wrap_content" android:inputType="numberDecimal" android:hint="0" android:textSize="14sp"/>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="TDS Deducted (₹)" android:textSize="12sp" android:textColor="#616161" android:layout_marginTop="8dp"/>
+                    <EditText android:id="@+id/etPrevTds" android:layout_width="match_parent"
+                        android:layout_height="wrap_content" android:inputType="numberDecimal" android:hint="0" android:textSize="14sp"/>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="PF Contributed (₹)" android:textSize="12sp" android:textColor="#616161" android:layout_marginTop="8dp"/>
+                    <EditText android:id="@+id/etPrevPf" android:layout_width="match_parent"
+                        android:layout_height="wrap_content" android:inputType="numberDecimal" android:hint="0" android:textSize="14sp"/>
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
         </LinearLayout>
     </ScrollView>
-
-    <!-- ══════════════════════════════════════════════════════
-         PANE 1 — Upload Proof (ALL roles)
     ══════════════════════════════════════════════════════ -->
     <ScrollView
         android:id="@+id/paneProof"
@@ -370,9 +532,9 @@
 
             <TextView android:id="@+id/tvRecommended"
                 android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:background="#E8F5E9" android:padding="12dp"
+                android:background="#FFEBEE" android:padding="12dp"
                 android:textSize="13sp" android:textStyle="bold"
-                android:textColor="#1B5E20" android:layout_marginBottom="10dp"
+                android:textColor="#B71C1C" android:layout_marginBottom="10dp"
                 android:gravity="center" android:text=""/>
 
             <androidx.cardview.widget.CardView
@@ -382,7 +544,7 @@
                     android:orientation="vertical" android:padding="14dp">
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                         android:text="📋 Old Regime Breakdown" android:textSize="13sp" android:textStyle="bold"
-                        android:textColor="#2E7D32" android:layout_marginBottom="10dp"/>
+                        android:textColor="#C0272D" android:layout_marginBottom="10dp"/>
                     <TextView android:id="@+id/tvTaxBreakdown"
                         android:layout_width="match_parent" android:layout_height="wrap_content"
                         android:textSize="12sp" android:textColor="#424242"
@@ -422,7 +584,7 @@
             <Button android:id="@+id/btnRefreshHR"
                 android:layout_width="wrap_content" android:layout_height="36dp"
                 android:text="🔄" android:textSize="13sp"
-                android:backgroundTint="#E8F5E9" android:textColor="#2E7D32"
+                android:backgroundTint="#FFEBEE" android:textColor="#C0272D"
                 android:layout_marginStart="8dp"/>
         </LinearLayout>
 

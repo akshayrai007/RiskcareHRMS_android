@@ -67,7 +67,10 @@ data class Employee(
     @SerializedName("team_leader_name") val teamLeaderName: String? = null,
     @SerializedName("is_active") val isActive: Boolean = true,
     @SerializedName("employment_type") val employmentType: String? = null,
-    @SerializedName("saturday_policy") val saturdayPolicy: String? = null
+    @SerializedName("saturday_policy") val saturdayPolicy: String? = null,
+    // onsite | offsite | wfh — set by geofence assignment, never changes for offsite employees
+    @SerializedName("employee_type") val employeeType: String? = null,
+    @SerializedName("client_id") val clientId: Int? = null
 ) : Parcelable {
     val fullName get() = "$firstName $lastName".trim()
     val displayRole get() = role?.replaceFirstChar { it.uppercase() }?.replace("_", " ") ?: "Employee"
@@ -889,35 +892,74 @@ data class Form16YearsResponse(val success: Boolean, val data: List<String> = em
 // ── IT Declaration ────────────────────────────────────────────────────────────
 data class ITDeclaration(
     val id: Int? = null,
-    @SerializedName("employee_id")       val employeeId: Int? = null,
-    @SerializedName("financial_year")    val financialYear: String = "",
+    @SerializedName("employee_id")          val employeeId: Int? = null,
+    @SerializedName("financial_year")       val financialYear: String = "",
     val regime: String = "old",
-    @SerializedName("rent_paid_monthly") val rentPaidMonthly: Double = 0.0,
-    @SerializedName("landlord_name")     val landlordName: String? = null,
-    @SerializedName("landlord_pan")      val landlordPan: String? = null,
-    @SerializedName("sec80c_pf")         val sec80cPf: Double = 0.0,
-    @SerializedName("sec80c_ppf")        val sec80cPpf: Double = 0.0,
-    @SerializedName("sec80c_lic")        val sec80cLic: Double = 0.0,
-    @SerializedName("sec80c_elss")       val sec80cElss: Double = 0.0,
-    @SerializedName("sec80c_nsc")        val sec80cNsc: Double = 0.0,
-    @SerializedName("sec80c_home_loan")  val sec80cHomeLoan: Double = 0.0,
-    @SerializedName("sec80c_tuition")    val sec80cTuition: Double = 0.0,
-    @SerializedName("sec80c_other")      val sec80cOther: Double = 0.0,
-    @SerializedName("sec80d_self")       val sec80dSelf: Double = 0.0,
-    @SerializedName("sec80d_parents")    val sec80dParents: Double = 0.0,
-    @SerializedName("sec80e_edu_loan")   val sec80eEduLoan: Double = 0.0,
-    @SerializedName("sec24b_home_loan")  val sec24bHomeLoan: Double = 0.0,
-    @SerializedName("sec80g_donation")   val sec80gDonation: Double = 0.0,
-    @SerializedName("sec80ccd_nps")      val sec80ccdNps: Double = 0.0,
-    @SerializedName("total_80c")         val total80c: Double = 0.0,
-    @SerializedName("total_deductions")  val totalDeductions: Double = 0.0,
+    // HRA
+    @SerializedName("rent_paid_monthly")    val rentPaidMonthly: Double = 0.0,
+    @SerializedName("landlord_name")        val landlordName: String? = null,
+    @SerializedName("landlord_pan")         val landlordPan: String? = null,
+    @SerializedName("hra_city_type")        val hraCityType: String? = null,
+    // 80C
+    @SerializedName("sec80c_pf")            val sec80cPf: Double = 0.0,
+    @SerializedName("sec80c_ppf")           val sec80cPpf: Double = 0.0,
+    @SerializedName("sec80c_lic")           val sec80cLic: Double = 0.0,
+    @SerializedName("sec80c_elss")          val sec80cElss: Double = 0.0,
+    @SerializedName("sec80c_nsc")           val sec80cNsc: Double = 0.0,
+    @SerializedName("sec80c_fd")            val sec80cFd: Double = 0.0,
+    @SerializedName("sec80c_home_loan")     val sec80cHomeLoan: Double = 0.0,
+    @SerializedName("sec80c_tuition")       val sec80cTuition: Double = 0.0,
+    @SerializedName("sec80c_other")         val sec80cOther: Double = 0.0,
+    // 80CCD NPS
+    @SerializedName("sec80ccd_nps")         val sec80ccdNps: Double = 0.0,
+    // 80D
+    @SerializedName("sec80d_self")          val sec80dSelf: Double = 0.0,
+    @SerializedName("sec80d_parents")       val sec80dParents: Double = 0.0,
+    @SerializedName("sec80d_senior_parent") val sec80dSeniorParent: Double = 0.0,
+    // Home Loan 24b
+    @SerializedName("sec24b_home_loan")     val sec24bHomeLoan: Double = 0.0,
+    @SerializedName("homeloan_provider")    val homeLoanProvider: String? = null,
+    // 80E
+    @SerializedName("sec80e_edu_loan")      val sec80eEduLoan: Double = 0.0,
+    // 80G
+    @SerializedName("sec80g_donation")      val sec80gDonation: Double = 0.0,
+    @SerializedName("sec80g_institution")   val sec80gInstitution: String? = null,
+    @SerializedName("sec80g_pan")           val sec80gPan: String? = null,
+    // 80DD
+    @SerializedName("sec80dd_amount")       val sec80ddAmount: Double = 0.0,
+    @SerializedName("sec80dd_dependent")    val sec80ddDependent: String? = null,
+    @SerializedName("sec80dd_relation")     val sec80ddRelation: String? = null,
+    // 80U
+    @SerializedName("sec80u_amount")        val sec80uAmount: Double = 0.0,
+    @SerializedName("sec80u_pct")           val sec80uPct: Double = 0.0,
+    // 80DDB
+    @SerializedName("sec80ddb_disease")     val sec80ddbDisease: String? = null,
+    @SerializedName("sec80ddb_patient")     val sec80ddbPatient: String? = null,
+    @SerializedName("sec80ddb_relation")    val sec80ddbRelation: String? = null,
+    @SerializedName("sec80ddb_amount")      val sec80ddbAmount: Double = 0.0,
+    // LTA
+    @SerializedName("lta_amount")           val ltaAmount: Double = 0.0,
+    @SerializedName("lta_destination")      val ltaDestination: String? = null,
+    @SerializedName("lta_travel_period")    val ltaTravelPeriod: String? = null,
+    // Previous Employment
+    @SerializedName("prev_employer")        val prevEmployer: String? = null,
+    @SerializedName("prev_employer_tan")    val prevEmployerTan: String? = null,
+    @SerializedName("prev_period")          val prevPeriod: String? = null,
+    @SerializedName("prev_gross_salary")    val prevGrossSalary: Double = 0.0,
+    @SerializedName("prev_taxable_income")  val prevTaxableIncome: Double = 0.0,
+    @SerializedName("prev_tds")             val prevTds: Double = 0.0,
+    @SerializedName("prev_pf")              val prevPf: Double = 0.0,
+    // Totals & status
+    @SerializedName("total_80c")            val total80c: Double = 0.0,
+    @SerializedName("total_deductions")     val totalDeductions: Double = 0.0,
     val status: String = "draft",
-    @SerializedName("hr_comment")        val hrComment: String? = null,
-    @SerializedName("submitted_at")      val submittedAt: String? = null,
-    @SerializedName("proof_documents")   val proofDocuments: List<ITProofDoc>? = null
+    @SerializedName("hr_comment")           val hrComment: String? = null,
+    @SerializedName("submitted_at")         val submittedAt: String? = null,
+    @SerializedName("proof_documents")      val proofDocuments: List<ITProofDoc>? = null
 )
 data class ITProofDoc(
     val id: Int, val section: String,
+    @SerializedName("doc_type")      val docType: String? = null,
     @SerializedName("section_label") val sectionLabel: String? = null,
     @SerializedName("original_name") val originalName: String? = null,
     @SerializedName("mime_type")     val mimeType: String? = null,
@@ -1116,22 +1158,31 @@ data class ChatGroup(
 @Parcelize
 data class ChatMessage(
     val id: Int,
-    @SerializedName("group_id")      val groupId: Int,
-    @SerializedName("sender_id")     val senderId: Int,
-    @SerializedName("sender_name")   val senderName: String? = null,
-    @SerializedName("sender_photo")  val senderPhoto: String? = null,
+    @SerializedName("group_id")        val groupId: Int,
+    @SerializedName("sender_id")       val senderId: Int,
+    @SerializedName("sender_name")     val senderName: String? = null,
+    @SerializedName("sender_photo")    val senderPhoto: String? = null,
     val content: String? = null,
-    @SerializedName("message_type")  val messageType: String = "text",
-    @SerializedName("file_url")      val fileUrl: String? = null,
-    @SerializedName("file_name")     val fileName: String? = null,
-    @SerializedName("file_mime")     val fileMime: String? = null,
-    @SerializedName("file_size")     val fileSize: Long? = null,
-    @SerializedName("created_at")    val createdAt: String? = null,
-    @SerializedName("updated_at")    val updatedAt: String? = null,
+    @SerializedName("message_type")    val messageType: String = "text",
+    @SerializedName("file_url")        val fileUrl: String? = null,
+    @SerializedName("file_name")       val fileName: String? = null,
+    @SerializedName("file_mime")       val fileMime: String? = null,
+    @SerializedName("file_size")       val fileSize: Long? = null,
+    @SerializedName("created_at")      val createdAt: String? = null,
+    @SerializedName("updated_at")      val updatedAt: String? = null,
     val status: String? = null,
-    @SerializedName("is_deleted")    val isDeleted: Boolean = false,
-    @SerializedName("reply_to_id")   val replyToId: Int? = null,
-    @SerializedName("reply_preview") val replyPreview: String? = null
+    @SerializedName("is_deleted")      val isDeleted: Boolean = false,
+    @SerializedName("reply_to_id")     val replyToId: Int? = null,
+    @SerializedName("reply_preview")   val replyPreview: String? = null,
+    // API returns seen_count/delivered_count — we derive status from these
+    @SerializedName("seen_count")      val seenCount: Int = 0,
+    @SerializedName("delivered_count") val deliveredCount: Int = 0
+) : Parcelable
+
+@Parcelize
+data class TypingUser(
+    @SerializedName("userId") val userId: Int = 0,
+    @SerializedName("name")   val name: String = ""
 ) : Parcelable
 
 @Parcelize
@@ -1283,3 +1334,26 @@ data class BeatPlanSummary(
     @SerializedName("coverage_pct")   val coveragePct: Int?,
     @SerializedName("actual_points")  val actualPoints: Int
 )
+
+// ── My Documents ─────────────────────────────────────────────────────────────
+data class EmpDocument(
+    val id: Int,
+    @SerializedName("employee_id")  val employeeId: Int,
+    @SerializedName("doc_key")      val docKey: String,
+    @SerializedName("original_name") val originalName: String? = null,
+    @SerializedName("mime_type")    val mimeType: String? = null,
+    @SerializedName("file_size")    val fileSize: Int? = null,
+    @SerializedName("uploaded_at")  val uploadedAt: String? = null,
+    @SerializedName("uploaded_by")  val uploadedBy: Int? = null
+)
+data class EmpDocumentsResponse(
+    val success: Boolean,
+    val data: List<EmpDocument>? = null,
+    val message: String? = null
+)
+data class EmpDocUploadResponse(
+    val success: Boolean,
+    val data: EmpDocument? = null,
+    val message: String? = null
+)
+

@@ -45,6 +45,9 @@ interface ApiService {
     @GET("employees")
     suspend fun getEmployees(@Query("search") search: String? = null): Response<ApiResponse<List<Employee>>>
 
+    @GET("employees/for-chat")
+    suspend fun getEmployeesForChat(): Response<ApiResponse<List<Employee>>>
+
     @GET("employees/{id}")
     suspend fun getEmployee(@Path("id") id: Int): Response<ApiResponse<Employee>>
 
@@ -270,6 +273,10 @@ interface ApiService {
     @PATCH("notifications/{id}/read")
     suspend fun markRead(@Path("id") id: Int): Response<ApiResponse<Unit>>
 
+    // ── FCM Push Token ────────────────────────────────────────────────────────
+    @POST("auth/fcm-token")
+    suspend fun updateFcmToken(@Body body: Map<String, @JvmSuppressWildcards String>): Response<ApiResponse<Unit>>
+
     // ── GK Quiz ───────────────────────────────────────────────────────────────
     @GET("gk/question")
     suspend fun getGkQuestion(): Response<ApiResponse<GkQuestion>>
@@ -428,7 +435,8 @@ interface ApiService {
         @Part file: MultipartBody.Part,
         @Part("declaration_id") declarationId: RequestBody,
         @Part("section") section: RequestBody,
-        @Part("section_label") sectionLabel: RequestBody
+        @Part("section_label") sectionLabel: RequestBody,
+        @Part("doc_type") docType: RequestBody
     ): Response<ApiResponse<Unit>>
 
     @GET("it-declaration/tax-preview")
@@ -558,12 +566,28 @@ interface ApiService {
         @Path("id") id: Int
     ): Response<ApiResponse<Unit>>
 
+    // Mark messages as seen (triggers blue ticks for sender)
+    @POST("chat/messages/seen")
+    suspend fun markMessagesSeen(
+        @Body body: Map<String, @JvmSuppressWildcards Any>
+    ): Response<ApiResponse<Unit>>
+
     // File upload (actual multipart — not just text)
     @Multipart
     @POST("chat/groups/{groupId}/files")
     suspend fun uploadChatFile(
         @Path("groupId") groupId: Int,
         @Part file: MultipartBody.Part
+    ): Response<ApiResponse<ChatMessage>>
+
+    @Multipart
+    @POST("chat/groups/{groupId}/files")
+    suspend fun uploadVoiceNote(
+        @Path("groupId") groupId: Int,
+        @Part file: MultipartBody.Part,
+        @Part("voice_note") voiceNote: okhttp3.RequestBody,
+        @Part("duration_ms") durationMs: okhttp3.RequestBody,
+        @Part("waveform") waveform: okhttp3.RequestBody
     ): Response<ApiResponse<ChatMessage>>
 
     // Members
@@ -629,5 +653,43 @@ interface ApiService {
     // Mark offline instantly (called on app background/destroy via sendBeacon equivalent)
     @POST("chat/presence/offline")
     suspend fun markOffline(): Response<ApiResponse<Unit>>
+
+    // Typing indicator (REST fallback)
+    @POST("chat/groups/{groupId}/typing")
+    suspend fun sendTyping(
+        @Path("groupId") groupId: Int,
+        @Query("typing") typing: Boolean
+    ): Response<ApiResponse<Unit>>
+
+    @GET("chat/groups/{groupId}/typing")
+    suspend fun getTypingStatus(
+        @Path("groupId") groupId: Int
+    ): Response<ApiResponse<List<TypingUser>>>
+
+
+    // ── My Documents ──────────────────────────────────────────────────────────
+    @GET("emp-documents/{employee_id}")
+    suspend fun getEmpDocuments(
+        @Path("employee_id") employeeId: Int
+    ): Response<EmpDocumentsResponse>
+
+    @Multipart
+    @POST("emp-documents/upload")
+    suspend fun uploadEmpDocument(
+        @Part file: MultipartBody.Part,
+        @Part("employee_id") employeeId: RequestBody,
+        @Part("document_type") documentType: RequestBody
+    ): Response<EmpDocUploadResponse>
+
+    @DELETE("emp-documents/{id}")
+    suspend fun deleteEmpDocument(
+        @Path("id") id: Int
+    ): Response<ApiResponse<Unit>>
+
+    @GET("emp-documents/file/{id}")
+    suspend fun getEmpDocumentFile(
+        @Path("id") id: Int
+    ): Response<okhttp3.ResponseBody>
+
 
 }

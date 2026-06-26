@@ -26,6 +26,7 @@
             <include layout="@layout/item_more_row" android:id="@+id/rowPayslip"/>
             <include layout="@layout/item_more_row" android:id="@+id/rowForm16"/>
             <include layout="@layout/item_more_row" android:id="@+id/rowITDeclaration"/>
+            <include layout="@layout/item_more_row" android:id="@+id/rowMyDocuments"/>
             <include layout="@layout/item_more_row" android:id="@+id/rowAdvance"/>
             <!-- ✅ NEW: Reimbursement row added after Advance -->
             <include layout="@layout/item_more_row" android:id="@+id/rowReimbursement"/>

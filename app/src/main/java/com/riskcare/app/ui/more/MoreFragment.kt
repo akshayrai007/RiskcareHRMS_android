@@ -48,6 +48,7 @@ class MoreFragment : Fragment() {
             R.id.rowPayslip to "💰  My Payslip",
             R.id.rowForm16 to "📄  Form 16",
             R.id.rowITDeclaration to "🧾  IT Declaration",
+            R.id.rowMyDocuments to "📁  My Documents",
             R.id.rowAdvance to "💵  Advance Salary",
             R.id.rowReimbursement to "🧾  Reimbursement",
             R.id.rowAnnouncements to "📢  Announcements",
@@ -80,6 +81,7 @@ class MoreFragment : Fragment() {
         view.findViewById<View>(R.id.rowNotifications)?.setOnClickListener { nav(NotificationsFragment()) }
         view.findViewById<View>(R.id.rowPayslip)?.setOnClickListener       { nav(com.riskcare.app.ui.payroll.PayrollFragment()) }
         view.findViewById<View>(R.id.rowForm16)?.setOnClickListener        { nav(com.riskcare.app.ui.payroll.Form16Fragment()) }
+        view.findViewById<View>(R.id.rowMyDocuments)?.setOnClickListener { nav(MyDocumentsFragment()) }
         view.findViewById<View>(R.id.rowITDeclaration)?.setOnClickListener { nav(com.riskcare.app.ui.payroll.ITDeclarationFragment()) }
         view.findViewById<View>(R.id.rowAdvance)?.setOnClickListener       { nav(AdvanceFragment()) }
         view.findViewById<View>(R.id.rowReimbursement)?.setOnClickListener   { nav(ReimbursementFragment()) }
