@@ -300,8 +300,13 @@ class MyDocumentsFragment : Fragment() {
                 val empBody  = employeeId.toString().toRequestBody("text/plain".toMediaTypeOrNull())
                 val keyBody  = uploadDocKey.toRequestBody("text/plain".toMediaTypeOrNull())
                 val resp     = api.uploadEmpDocument(filePart, empBody, keyBody)
-                Toast.makeText(ctx, resp.body()?.message ?: if (resp.isSuccessful) "Uploaded!" else "Upload failed", Toast.LENGTH_SHORT).show()
-                if (resp.isSuccessful) loadDocuments()
+                if (resp.isSuccessful) {
+                    Toast.makeText(ctx, "✅ Uploaded!", Toast.LENGTH_SHORT).show()
+                    loadDocuments()
+                } else {
+                    val errMsg = try { resp.errorBody()?.string() } catch (e2: Exception) { null }
+                    Toast.makeText(ctx, "Upload failed (${resp.code()}): $errMsg", Toast.LENGTH_LONG).show()
+                }
             } catch (e: Exception) {
                 Toast.makeText(ctx, "Upload error: ${e.message}", Toast.LENGTH_SHORT).show()
             } finally { tmp.delete() }
