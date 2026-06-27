@@ -38,10 +38,7 @@ class MyDocumentsFragment : Fragment() {
     private val DOC_CHECKLIST = linkedMapOf(
         "identity" to listOf(
             "aadhar"     to "Aadhaar Card",
-            "pan"        to "PAN Card",
-            "passport"   to "Passport",
-            "voter_id"   to "Voter ID",
-            "driving_lic" to "Driving Licence"
+            "pan"        to "PAN Card"
         ),
         "education" to listOf(
             "10th_cert"  to "10th Certificate",
