@@ -341,9 +341,18 @@ class MyDocumentsFragment : Fragment() {
             .setMessage("Delete \"${doc.originalName ?: doc.docKey}\"? This cannot be undone.")
             .setPositiveButton("Delete") { _, _ ->
                 lifecycleScope.launch {
-                    val resp = try { api.deleteEmpDocument(doc.id) } catch (e: Exception) { null }
-                    Toast.makeText(context, if (resp?.isSuccessful == true) "Deleted" else "Failed to delete", Toast.LENGTH_SHORT).show()
-                    if (resp?.isSuccessful == true) loadDocuments()
+                    try {
+                        val resp = api.deleteEmpDocument(doc.id)
+                        if (resp.isSuccessful) {
+                            Toast.makeText(context, "Deleted", Toast.LENGTH_SHORT).show()
+                            loadDocuments()
+                        } else {
+                            val errBody = resp.errorBody()?.string() ?: "Unknown error"
+                            Toast.makeText(context, "Failed: $errBody", Toast.LENGTH_LONG).show()
+                        }
+                    } catch (e: Exception) {
+                        Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_LONG).show()
+                    }
                 }
             }
             .setNegativeButton("Cancel", null).show()
