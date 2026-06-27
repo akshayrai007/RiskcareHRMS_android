@@ -79,7 +79,7 @@ class MyDocumentsFragment : Fragment() {
 
     override fun onCreateView(i: LayoutInflater, c: ViewGroup?, s: Bundle?): View {
         session    = SessionManager(requireContext())
-        employeeId = session.getEmployeeId()
+        employeeId = session.getEmployee()?.id ?: 0
         return ScrollView(requireContext()).apply {
             val outer = LinearLayout(requireContext()).apply {
                 orientation = LinearLayout.VERTICAL

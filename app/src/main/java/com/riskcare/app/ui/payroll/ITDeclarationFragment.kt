@@ -193,7 +193,7 @@ class ITDeclarationFragment : Fragment() {
         }
 
         v.findViewWithTag<View>("declFormScroll")?.let { }
-        listOf(R.id.etRent, R.id.etLandlord, R.id.etLandlordPan, R.id.etHraCityType,
+        listOf(R.id.etRent, R.id.etLandlord, R.id.etLandlordPan,
                R.id.et80cPf, R.id.et80cPpf, R.id.et80cLic, R.id.et80cElss, R.id.et80cNsc,
                R.id.et80cFd, R.id.et80cHomeLoan, R.id.et80cTuition, R.id.et80cOther,
                R.id.et80ccdNps, R.id.et80dSelf, R.id.et80dParents, R.id.et80dSeniorParent,
