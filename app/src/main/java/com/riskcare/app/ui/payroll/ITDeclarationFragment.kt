@@ -128,6 +128,12 @@ class ITDeclarationFragment : Fragment() {
 
         btnSave?.setOnClickListener   { saveDeclaration("save") }
         btnSubmit?.setOnClickListener { saveDeclaration("submit") }
+
+        // Regime toggle — hide/show old-regime sections
+        view.findViewById<RadioGroup>(R.id.rgRegime)?.setOnCheckedChangeListener { _, _ ->
+            updateRegimeVisibility(view)
+        }
+        updateRegimeVisibility(view)
         view.findViewById<Button>(R.id.btnRefreshHR)?.setOnClickListener { loadHRReview() }
 
         view.findViewById<Spinner>(R.id.spinnerHRStatus)?.apply {
@@ -148,6 +154,29 @@ class ITDeclarationFragment : Fragment() {
         view.findViewById<View>(R.id.paneProof)?.visibility       = if (pane == "proof") View.VISIBLE else View.GONE
         view.findViewById<View>(R.id.paneTax)?.visibility         = if (pane == "tax") View.VISIBLE else View.GONE
         view.findViewById<View>(R.id.paneHR)?.visibility          = if (pane == "hr") View.VISIBLE else View.GONE
+    }
+
+    // ── New vs Old Regime — hide inapplicable sections ───────────────────────
+    private fun updateRegimeVisibility(view: View) {
+        val isNew = view.findViewById<RadioButton>(R.id.rbNew)?.isChecked == true
+        // In New Regime: no deductions allowed (HRA, 80C, 80D, 80CCD, 80E, 80G, 80DD, 80U, 80DDB, LTA, PrevEmp all gone)
+        val oldRegimeOnly = listOf(
+            R.id.cardHra, R.id.card80C, R.id.card80D, R.id.card80CCD,
+            R.id.card80DD, R.id.card80U, R.id.card80DDB, R.id.cardLta, R.id.cardPrevEmp
+        )
+        val vis = if (isNew) View.GONE else View.VISIBLE
+        oldRegimeOnly.forEach { id -> view.findViewById<View>(id)?.visibility = vis }
+
+        // Show/hide info banner
+        val tvRegimeInfo = view.findViewById<TextView>(R.id.tvRegimeInfo)
+        if (isNew) {
+            tvRegimeInfo?.visibility = View.VISIBLE
+            tvRegimeInfo?.text = "ℹ️ New Tax Regime: Standard deduction of ₹75,000 applies. No HRA/80C/80D deductions allowed."
+            tvRegimeInfo?.setBackgroundColor(Color.parseColor("#FEF9C3"))
+            tvRegimeInfo?.setTextColor(Color.parseColor("#92400E"))
+        } else {
+            tvRegimeInfo?.visibility = View.GONE
+        }
     }
 
     // ── Load declaration ──────────────────────────────────────────────────────
@@ -270,6 +299,7 @@ class ITDeclarationFragment : Fragment() {
         val rg = v.findViewById<RadioGroup>(R.id.rgRegime)
         if (d.regime == "new") rg?.check(R.id.rbNew) else rg?.check(R.id.rbOld)
         updateSummary()
+        view?.let { updateRegimeVisibility(it) }
     }
 
     private fun setNum(view: View, id: Int, value: Double) {

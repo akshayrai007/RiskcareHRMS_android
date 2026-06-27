@@ -123,8 +123,20 @@
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
+            <!-- Regime info banner (shown for New Regime) -->
+            <TextView
+                android:id="@+id/tvRegimeInfo"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginBottom="8dp"
+                android:padding="12dp"
+                android:textSize="12sp"
+                android:visibility="gone"/>
+
             <!-- HRA -->
             <androidx.cardview.widget.CardView
+                android:id="@+id/cardHra"
                 android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:layout_marginBottom="10dp" app:cardCornerRadius="10dp" app:cardElevation="2dp">
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
@@ -157,6 +169,7 @@
 
             <!-- 80C -->
             <androidx.cardview.widget.CardView
+                android:id="@+id/card80C"
                 android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:layout_marginBottom="10dp" app:cardCornerRadius="10dp" app:cardElevation="2dp">
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
@@ -205,6 +218,7 @@
 
             <!-- 80D -->
             <androidx.cardview.widget.CardView
+                android:id="@+id/card80D"
                 android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:layout_marginBottom="10dp" app:cardCornerRadius="10dp" app:cardElevation="2dp">
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
@@ -230,6 +244,7 @@
 
             <!-- Other Deductions -->
             <androidx.cardview.widget.CardView
+                android:id="@+id/card80CCD"
                 android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:layout_marginBottom="10dp" app:cardCornerRadius="10dp" app:cardElevation="2dp">
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
@@ -305,6 +320,7 @@
 
             <!-- 80DD -->
             <androidx.cardview.widget.CardView
+                android:id="@+id/card80DD"
                 android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:layout_marginHorizontal="16dp" android:layout_marginBottom="12dp"
                 app:cardCornerRadius="12dp" app:cardElevation="3dp">
@@ -330,6 +346,7 @@
 
             <!-- 80U -->
             <androidx.cardview.widget.CardView
+                android:id="@+id/card80U"
                 android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:layout_marginHorizontal="16dp" android:layout_marginBottom="12dp"
                 app:cardCornerRadius="12dp" app:cardElevation="3dp">
@@ -351,6 +368,7 @@
 
             <!-- 80DDB -->
             <androidx.cardview.widget.CardView
+                android:id="@+id/card80DDB"
                 android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:layout_marginHorizontal="16dp" android:layout_marginBottom="12dp"
                 app:cardCornerRadius="12dp" app:cardElevation="3dp">
@@ -380,6 +398,7 @@
 
             <!-- LTA -->
             <androidx.cardview.widget.CardView
+                android:id="@+id/cardLta"
                 android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:layout_marginHorizontal="16dp" android:layout_marginBottom="12dp"
                 app:cardCornerRadius="12dp" app:cardElevation="3dp">
@@ -405,6 +424,7 @@
 
             <!-- Previous Employment -->
             <androidx.cardview.widget.CardView
+                android:id="@+id/cardPrevEmp"
                 android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:layout_marginHorizontal="16dp" android:layout_marginBottom="12dp"
                 app:cardCornerRadius="12dp" app:cardElevation="3dp">
