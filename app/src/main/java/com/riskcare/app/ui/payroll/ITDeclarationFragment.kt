@@ -223,7 +223,7 @@ class ITDeclarationFragment : Fragment() {
         }
 
         v.findViewWithTag<View>("declFormScroll")?.let { }
-        listOf(R.id.etRent, R.id.etLandlord, R.id.etLandlordPan,
+        listOf(R.id.etRent, R.id.etLandlord, R.id.etLandlordPan, R.id.etHraCity,
                R.id.et80cPf, R.id.et80cPpf, R.id.et80cLic, R.id.et80cElss, R.id.et80cNsc,
                R.id.et80cFd, R.id.et80cHomeLoan, R.id.et80cTuition, R.id.et80cOther,
                R.id.et80ccdNps, R.id.et80dSelf, R.id.et80dParents, R.id.et80dSeniorParent,
@@ -239,7 +239,7 @@ class ITDeclarationFragment : Fragment() {
                R.id.etOtherCapitalGains, R.id.etOtherMisc
         ).forEach { id -> v.findViewById<EditText>(id)?.isEnabled = !locked }
 
-        v.findViewById<Spinner>(R.id.spinnerHraCityType)?.isEnabled = !locked
+        v.findViewById<EditText>(R.id.etHraCity)?.isEnabled = !locked
         v.findViewById<RadioGroup>(R.id.rgRegime)?.let { rg ->
             for (i in 0 until rg.childCount) rg.getChildAt(i).isEnabled = !locked
         }
@@ -253,12 +253,8 @@ class ITDeclarationFragment : Fragment() {
         setNum(v, R.id.etRent,           d.rentPaidMonthly)
         setTxt(v, R.id.etLandlord,       d.landlordName ?: "")
         setTxt(v, R.id.etLandlordPan,    d.landlordPan ?: "")
-        // HRA city type spinner
-        val cityTypes = listOf("Metro (Mumbai/Delhi/Kolkata/Chennai) — 50%", "Non-Metro — 40%")
-        val citySpinner = v.findViewById<Spinner>(R.id.spinnerHraCityType)
-        citySpinner?.adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_dropdown_item, cityTypes)
-        val cityIdx = if (d.hraCityType == "metro") 0 else 1
-        citySpinner?.setSelection(cityIdx)
+        // HRA city — free text input
+        setTxt(v, R.id.etHraCity, d.hraCityType ?: "")
 
         setNum(v, R.id.et80cPf,          d.sec80cPf)
         setNum(v, R.id.et80cPpf,         d.sec80cPpf)
@@ -342,8 +338,7 @@ class ITDeclarationFragment : Fragment() {
     private fun saveDeclaration(action: String) {
         val v      = view ?: return
         val regime = if (v.findViewById<RadioButton>(R.id.rbNew)?.isChecked == true) "new" else "old"
-        val citySpinner = v.findViewById<Spinner>(R.id.spinnerHraCityType)
-        val cityType    = if (citySpinner?.selectedItemPosition == 0) "metro" else "non_metro"
+        val cityType = getStr(R.id.etHraCity)
         val body: Map<String, Any?> = mapOf(
             "financial_year"      to currentFY,
             "regime"              to regime,
