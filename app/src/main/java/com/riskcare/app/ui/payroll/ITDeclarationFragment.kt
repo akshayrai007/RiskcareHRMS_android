@@ -159,10 +159,11 @@ class ITDeclarationFragment : Fragment() {
     // ── New vs Old Regime — hide inapplicable sections ───────────────────────
     private fun updateRegimeVisibility(view: View) {
         val isNew = view.findViewById<RadioButton>(R.id.rbNew)?.isChecked == true
-        // In New Regime: no deductions allowed (HRA, 80C, 80D, 80CCD, 80E, 80G, 80DD, 80U, 80DDB, LTA, PrevEmp all gone)
+        // In New Regime: no deductions allowed (HRA, 80C, 80D, 80CCD, 80E, 80G, 80DD, 80U, 80DDB, LTA all gone)
+        // Previous Employment stays visible in both regimes (TDS credit still applies)
         val oldRegimeOnly = listOf(
             R.id.cardHra, R.id.card80C, R.id.card80D, R.id.card80CCD,
-            R.id.card80DD, R.id.card80U, R.id.card80DDB, R.id.cardLta, R.id.cardPrevEmp
+            R.id.card80DD, R.id.card80U, R.id.card80DDB, R.id.cardLta
         )
         val vis = if (isNew) View.GONE else View.VISIBLE
         oldRegimeOnly.forEach { id -> view.findViewById<View>(id)?.visibility = vis }
@@ -517,7 +518,7 @@ class ITDeclarationFragment : Fragment() {
 
             val card = androidx.cardview.widget.CardView(ctx).apply {
                 radius = 20f; cardElevation = if (allDone) 6f else 3f
-                val strokeColor = if (allDone) "#FCA5A5" else "#E5E7EB"
+                val strokeColor = if (allDone) "#86EFAC" else "#E5E7EB"
                 layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { bottomMargin = 16 }
                 addView(cardContent)
             }
