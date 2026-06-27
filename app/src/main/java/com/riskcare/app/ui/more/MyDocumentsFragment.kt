@@ -129,7 +129,7 @@ class MyDocumentsFragment : Fragment() {
 
         // Progress summary
         val totalDocs    = DOC_CHECKLIST.values.sumOf { it.size }
-        val uploadedCount = DOC_CHECKLIST.values.sumOf { defs -> defs.count { (key, _) -> uploadedDocs.containsKey(key) } }
+        val uploadedCount = DOC_CHECKLIST.values.sumOf { defs -> defs.count { (key, _) -> uploadedDocs[key]?.isNotEmpty() == true } }
         root.addView(LinearLayout(ctx).apply {
             orientation = LinearLayout.HORIZONTAL
             setBackgroundColor(Color.WHITE)
@@ -170,7 +170,7 @@ class MyDocumentsFragment : Fragment() {
                 "other"      -> "📁 Other"
                 else         -> "📎 Other Documents"
             }
-            val catUploaded = defs.count { (key, _) -> uploadedDocs.containsKey(key) }
+            val catUploaded = defs.count { (key, _) -> uploadedDocs[key]?.isNotEmpty() == true }
             val catDone     = catUploaded == defs.size
 
             val cardContent = LinearLayout(ctx).apply {
