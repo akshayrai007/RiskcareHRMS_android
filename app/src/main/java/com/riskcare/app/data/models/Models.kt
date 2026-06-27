@@ -969,7 +969,7 @@ data class ITProofDoc(
     val id: Int, val section: String,
     @SerializedName("doc_type")      val docType: String? = null,
     @SerializedName("section_label") val sectionLabel: String? = null,
-    @SerializedName("original_name") val originalName: String? = null,
+    @SerializedName("file_name")     val originalName: String? = null,
     @SerializedName("mime_type")     val mimeType: String? = null,
     @SerializedName("file_size")     val fileSize: Int? = null,
     val status: String = "pending",
@@ -1377,8 +1377,8 @@ data class BeatPlanSummary(
 data class EmpDocument(
     val id: Int,
     @SerializedName("employee_id")  val employeeId: Int,
-    @SerializedName("doc_key")      val docKey: String,
-    @SerializedName("original_name") val originalName: String? = null,
+    @SerializedName("document_type") val docKey: String,
+    @SerializedName("file_name")     val originalName: String? = null,
     @SerializedName("mime_type")    val mimeType: String? = null,
     @SerializedName("file_size")    val fileSize: Int? = null,
     @SerializedName("uploaded_at")  val uploadedAt: String? = null,
@@ -1386,7 +1386,8 @@ data class EmpDocument(
 )
 data class EmpDocumentsResponse(
     val success: Boolean,
-    val data: List<EmpDocument>? = null,
+    val list: List<EmpDocument>? = null,  // flat list from backend
+    val data: Any? = null,                // map object (ignored)
     val message: String? = null
 )
 data class EmpDocUploadResponse(

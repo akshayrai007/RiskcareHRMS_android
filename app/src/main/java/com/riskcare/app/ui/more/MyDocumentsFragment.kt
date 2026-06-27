@@ -94,7 +94,7 @@ class MyDocumentsFragment : Fragment() {
     private fun loadDocuments() {
         lifecycleScope.launch {
             val resp = try { api.getEmpDocuments(employeeId) } catch (e: Exception) { null }
-            val list = resp?.body()?.data ?: emptyList()
+            val list = resp?.body()?.list ?: emptyList()
             uploadedDocs = list.groupBy { it.docKey }
             renderChecklist()
         }
