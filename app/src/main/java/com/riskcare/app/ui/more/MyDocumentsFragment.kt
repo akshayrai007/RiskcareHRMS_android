@@ -37,34 +37,33 @@ class MyDocumentsFragment : Fragment() {
     // Document checklist — matching web documentsController
     private val DOC_CHECKLIST = linkedMapOf(
         "identity" to listOf(
-            "aadhar"     to "Aadhaar Card",
-            "pan"        to "PAN Card"
+            "aadhaar_card"         to "Aadhaar Card",
+            "pan_card"             to "PAN Card",
+            "passport_photo"       to "Passport Size Photograph",
+            "passport_dl_voterid"  to "Passport / Driving Licence / Voter ID",
+            "id_residence_proof"   to "Proof of ID & Residence Address"
         ),
         "education" to listOf(
-            "10th_cert"  to "10th Certificate",
-            "12th_cert"  to "12th Certificate",
-            "graduation" to "Graduation Degree",
-            "pg"         to "Post Graduation Degree",
-            "other_edu"  to "Other Education Certificate"
+            "tenth_marksheet"      to "10th Marksheet / Certificate",
+            "twelfth_marksheet"    to "12th Marksheet / Certificate",
+            "graduation_marksheet" to "Graduation Marksheet",
+            "post_graduation_cert" to "Post Graduation Certificate",
+            "other_certificates"   to "Other Certificates"
         ),
         "employment" to listOf(
-            "offer_letter"     to "Offer Letter (Previous)",
-            "exp_letter"       to "Experience Letter",
-            "relieving_letter" to "Relieving Letter",
-            "salary_slips"     to "Salary Slips (Last 3 months)",
-            "form16"           to "Form 16"
+            "resume"               to "Resume / CV",
+            "appointment_ack"      to "Acknowledgement Copy of Appointment Letter",
+            "offer_promo_letter"   to "Offer Letter / Appointment Letter & Promotion / Increment Letter",
+            "relieving_letter"     to "Resignation Acceptance / Relieving Letter / Experience Letter",
+            "last3_payslips"       to "Last 3 Months Pay Slips or Bank Statement"
         ),
         "financial" to listOf(
-            "bank_passbook"   to "Bank Passbook / Cancelled Cheque",
-            "pan_bank"        to "PAN (Bank linked)",
-            "pf_statement"    to "PF Statement",
-            "salary_cert"     to "Salary Certificate"
+            "bank_statement_salary" to "Bank Statement with AC Details or Cancelled Cheque",
+            "uan_pf_document"      to "UAN / PF Document"
         ),
-        "other" to listOf(
-            "photo"           to "Passport Size Photo",
-            "medical_cert"    to "Medical Fitness Certificate",
-            "address_proof"   to "Address Proof",
-            "noc"             to "NOC from Previous Employer"
+        "broker" to listOf(
+            "broker_qual_renewal"  to "Broker Qualification & Renewal Certificate",
+            "broker_training"      to "Broker Training"
         )
     )
 
@@ -162,6 +161,7 @@ class MyDocumentsFragment : Fragment() {
                 "education"  -> "🎓 Education Documents"
                 "employment" -> "💼 Employment Documents"
                 "financial"  -> "🏦 Financial Documents"
+                "broker"     -> "📋 Broker Documents"
                 else         -> "📎 Other Documents"
             }
             val catUploaded = defs.count { (key, _) -> uploadedDocs.containsKey(key) }
