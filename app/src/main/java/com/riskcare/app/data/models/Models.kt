@@ -949,6 +949,14 @@ data class ITDeclaration(
     @SerializedName("prev_taxable_income")  val prevTaxableIncome: Double = 0.0,
     @SerializedName("prev_tds")             val prevTds: Double = 0.0,
     @SerializedName("prev_pf")              val prevPf: Double = 0.0,
+    // Employer NPS 80CCD(2) — valid in both regimes
+    @SerializedName("employer_nps")         val employerNps: Double = 0.0,
+    // Other Income
+    @SerializedName("other_savings_int")    val otherSavingsInt: Double = 0.0,
+    @SerializedName("other_fd_int")         val otherFdInt: Double = 0.0,
+    @SerializedName("other_dividend")       val otherDividend: Double = 0.0,
+    @SerializedName("other_capital_gains")  val otherCapitalGains: Double = 0.0,
+    @SerializedName("other_misc")           val otherMisc: Double = 0.0,
     // Totals & status
     @SerializedName("total_80c")            val total80c: Double = 0.0,
     @SerializedName("total_deductions")     val totalDeductions: Double = 0.0,

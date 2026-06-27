@@ -234,7 +234,9 @@ class ITDeclarationFragment : Fragment() {
                R.id.et80ddbDisease, R.id.et80ddbPatient, R.id.et80ddbRelation, R.id.et80ddbAmount,
                R.id.etLtaAmount, R.id.etLtaDestination, R.id.etLtaTravelPeriod,
                R.id.etPrevEmployer, R.id.etPrevTan, R.id.etPrevPeriod,
-               R.id.etPrevGross, R.id.etPrevTaxable, R.id.etPrevTds, R.id.etPrevPf
+               R.id.etPrevGross, R.id.etPrevTaxable, R.id.etPrevTds, R.id.etPrevPf,
+               R.id.etOtherSavingsInt, R.id.etOtherFdInt, R.id.etOtherDividend,
+               R.id.etOtherCapitalGains, R.id.etOtherMisc
         ).forEach { id -> v.findViewById<EditText>(id)?.isEnabled = !locked }
 
         v.findViewById<Spinner>(R.id.spinnerHraCityType)?.isEnabled = !locked
@@ -296,6 +298,13 @@ class ITDeclarationFragment : Fragment() {
         setNum(v, R.id.etPrevTaxable,    d.prevTaxableIncome)
         setNum(v, R.id.etPrevTds,        d.prevTds)
         setNum(v, R.id.etPrevPf,         d.prevPf)
+
+        setNum(v, R.id.etEmployerNps,       d.employerNps)
+        setNum(v, R.id.etOtherSavingsInt,   d.otherSavingsInt)
+        setNum(v, R.id.etOtherFdInt,        d.otherFdInt)
+        setNum(v, R.id.etOtherDividend,     d.otherDividend)
+        setNum(v, R.id.etOtherCapitalGains, d.otherCapitalGains)
+        setNum(v, R.id.etOtherMisc,         d.otherMisc)
 
         val rg = v.findViewById<RadioGroup>(R.id.rgRegime)
         if (d.regime == "new") rg?.check(R.id.rbNew) else rg?.check(R.id.rbOld)
@@ -377,10 +386,16 @@ class ITDeclarationFragment : Fragment() {
             "prev_employer"       to getStr(R.id.etPrevEmployer),
             "prev_employer_tan"   to getStr(R.id.etPrevTan).uppercase(),
             "prev_period"         to getStr(R.id.etPrevPeriod),
-            "prev_gross_salary"   to getDouble(R.id.etPrevGross),
-            "prev_taxable_income" to getDouble(R.id.etPrevTaxable),
-            "prev_tds"            to getDouble(R.id.etPrevTds),
-            "prev_pf"             to getDouble(R.id.etPrevPf)
+            "prev_gross_salary"    to getDouble(R.id.etPrevGross),
+            "prev_taxable_income"  to getDouble(R.id.etPrevTaxable),
+            "prev_tds"             to getDouble(R.id.etPrevTds),
+            "prev_pf"              to getDouble(R.id.etPrevPf),
+            "employer_nps"         to getDouble(R.id.etEmployerNps),
+            "other_savings_int"    to getDouble(R.id.etOtherSavingsInt),
+            "other_fd_int"         to getDouble(R.id.etOtherFdInt),
+            "other_dividend"       to getDouble(R.id.etOtherDividend),
+            "other_capital_gains"  to getDouble(R.id.etOtherCapitalGains),
+            "other_misc"           to getDouble(R.id.etOtherMisc)
         )
         lifecycleScope.launch {
             val resp = try { api.saveITDeclaration(body) } catch (e: Exception) { null }
