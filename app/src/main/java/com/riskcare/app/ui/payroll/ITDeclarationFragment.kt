@@ -416,22 +416,55 @@ class ITDeclarationFragment : Fragment() {
             val resp = try { api.getTaxPreview(currentFY) } catch (e: Exception) { null }
             val d = resp?.body()?.data
             if (d == null) { tvOld.text = "N/A"; tvNew.text = "N/A"; return@launch }
-            tvOld.text = "${money(d.oldRegime.tax)}\n(${money(d.oldRegime.monthlyTds)}/mo TDS)"
-            tvNew.text = "${money(d.newRegime.tax)}\n(${money(d.newRegime.monthlyTds)}/mo TDS)"
-            val saving = Math.abs(d.oldRegime.tax - d.newRegime.tax)
-            tvRec?.text = "✅ ${d.recommended.uppercase()} REGIME saves you ${money(saving)}"
+            val o  = d.oldRegime
+            val nw = d.newRegime
+
+            tvOld.text = "${money(o.netTax)}\n(${money(o.monthlyTds)}/mo TDS)\nTaxable: ${money(o.taxableIncome)}"
+            tvNew.text = "${money(nw.netTax)}\n(${money(nw.monthlyTds)}/mo TDS)\nTaxable: ${money(nw.taxableIncome)}"
+
+            val recLabel = if (d.recommended == "new") "✨ NEW REGIME" else "🏛️ OLD REGIME"
+            tvRec?.text  = "💡 $recLabel saves you ${money(d.savings)}"
             tvRec?.setTextColor(Color.parseColor("#B71C1C"))
+
             tvBreak?.text = buildString {
-                appendLine("Annual Gross:          ${money(d.annualGross)}")
-                appendLine("Std Deduction:       - ${money(d.stdDeduction)}")
-                appendLine("HRA Exemption:       - ${money(d.hraExemption)}")
-                appendLine("VI-A Deductions:     - ${money(d.totalViA)}")
-                appendLine("─────────────────────────────")
-                appendLine("Old Taxable Income:    ${money(d.oldRegime.taxableIncome)}")
-                appendLine("Old Tax (+ 4% cess):   ${money(d.oldRegime.tax)}")
-                appendLine("─────────────────────────────")
-                appendLine("New Taxable Income:    ${money(d.newRegime.taxableIncome)}")
-                append(    "New Tax (+ 4% cess):   ${money(d.newRegime.tax)}")
+                appendLine("━━━ 🏛️ OLD REGIME BREAKDOWN ━━━")
+                appendLine("Annual Gross:              ${money(d.annualGross)}")
+                if (d.prevSalary > 0) appendLine("+ Prev Employment:         ${money(d.prevSalary)}")
+                if (d.otherIncome > 0) appendLine("+ Other Income:            ${money(d.otherIncome)}")
+                appendLine("− Std Deduction:           ${money(o.stdDeduction)}")
+                if (o.hraExemption > 0) appendLine("− HRA Exemption:           ${money(o.hraExemption)}")
+                if (o.deduction80c > 0) appendLine("− 80C Investments:         ${money(o.deduction80c)}")
+                if (o.deductionNps > 0) appendLine("− NPS 80CCD(1B):           ${money(o.deductionNps)}")
+                if (o.deduction80d > 0) appendLine("− 80D Medical Ins:         ${money(o.deduction80d)}")
+                if (o.deductionHomeloan > 0) appendLine("− Home Loan Int Sec24b:    ${money(o.deductionHomeloan)}")
+                if (o.deduction80e > 0) appendLine("− 80E Edu Loan:            ${money(o.deduction80e)}")
+                if (o.deduction80g > 0) appendLine("− 80G Donation:            ${money(o.deduction80g)}")
+                if (o.deduction80dd > 0) appendLine("− 80DD Disability:         ${money(o.deduction80dd)}")
+                if (o.deduction80u > 0)  appendLine("− 80U Self Disability:     ${money(o.deduction80u)}")
+                if (o.deduction80ddb > 0) appendLine("− 80DDB Medical:           ${money(o.deduction80ddb)}")
+                if (o.deductionLta > 0)  appendLine("− LTA:                     ${money(o.deductionLta)}")
+                if (o.houseProperty > 0) appendLine("− House Property Loss:     ${money(o.houseProperty)}")
+                appendLine("─────────────────────────────────")
+                appendLine("Taxable Income:            ${money(o.taxableIncome)}")
+                appendLine("Income Tax:                ${money(o.taxBeforeCess)}")
+                appendLine("Health & Education Cess:   ${money(o.cess)}")
+                if (o.prevTds > 0) appendLine("− TDS by Prev Employer:    ${money(o.prevTds)}")
+                appendLine("Net Tax Payable:           ${money(o.netTax)}")
+                appendLine("Monthly TDS:               ${money(o.monthlyTds)}/mo")
+                appendLine("")
+                appendLine("━━━ ✨ NEW REGIME BREAKDOWN ━━━")
+                appendLine("Annual Gross:              ${money(d.annualGross)}")
+                if (d.prevSalary > 0) appendLine("+ Prev Employment:         ${money(d.prevSalary)}")
+                if (d.otherIncome > 0) appendLine("+ Other Income:            ${money(d.otherIncome)}")
+                if (nw.employerNps > 0) appendLine("− Employer NPS 80CCD(2):   ${money(nw.employerNps)}")
+                appendLine("− Std Deduction:           ${money(nw.stdDeduction)}")
+                appendLine("─────────────────────────────────")
+                appendLine("Taxable Income:            ${money(nw.taxableIncome)}")
+                appendLine("Income Tax:                ${money(nw.taxBeforeCess)}")
+                appendLine("Health & Education Cess:   ${money(nw.cess)}")
+                if (nw.prevTds > 0) appendLine("− TDS by Prev Employer:    ${money(nw.prevTds)}")
+                appendLine("Net Tax Payable:           ${money(nw.netTax)}")
+                append(    "Monthly TDS:               ${money(nw.monthlyTds)}/mo")
             }
         }
     }

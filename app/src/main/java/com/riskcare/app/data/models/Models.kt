@@ -997,18 +997,48 @@ data class TaxPreviewResponse(
     val success: Boolean, val data: TaxPreviewData? = null, val message: String? = null
 )
 data class TaxPreviewData(
-    @SerializedName("annual_gross")  val annualGross: Double = 0.0,
-    @SerializedName("std_deduction") val stdDeduction: Double = 0.0,
-    @SerializedName("hra_exemption") val hraExemption: Double = 0.0,
-    @SerializedName("total_vi_a")    val totalViA: Double = 0.0,
-    @SerializedName("old_regime")    val oldRegime: TaxRegimeData,
-    @SerializedName("new_regime")    val newRegime: TaxRegimeData,
-    val recommended: String = "old"
+    @SerializedName("annual_gross")              val annualGross: Double = 0.0,
+    @SerializedName("prev_salary")               val prevSalary: Double = 0.0,
+    @SerializedName("other_income")              val otherIncome: Double = 0.0,
+    @SerializedName("old_regime")                val oldRegime: TaxRegimeOld,
+    @SerializedName("new_regime")                val newRegime: TaxRegimeNew,
+    val recommended: String = "old",
+    val savings: Double = 0.0,
+    @SerializedName("recommendation_reasons")    val reasons: List<String>? = null
 )
-data class TaxRegimeData(
-    @SerializedName("taxable_income") val taxableIncome: Double = 0.0,
+data class TaxRegimeOld(
+    @SerializedName("std_deduction")         val stdDeduction: Double = 0.0,
+    @SerializedName("hra_exemption")         val hraExemption: Double = 0.0,
+    @SerializedName("deduction_80c")         val deduction80c: Double = 0.0,
+    @SerializedName("deduction_nps")         val deductionNps: Double = 0.0,
+    @SerializedName("deduction_80d")         val deduction80d: Double = 0.0,
+    @SerializedName("deduction_homeloan")    val deductionHomeloan: Double = 0.0,
+    @SerializedName("deduction_80e")         val deduction80e: Double = 0.0,
+    @SerializedName("deduction_80g")         val deduction80g: Double = 0.0,
+    @SerializedName("deduction_80dd")        val deduction80dd: Double = 0.0,
+    @SerializedName("deduction_80u")         val deduction80u: Double = 0.0,
+    @SerializedName("deduction_80ddb")       val deduction80ddb: Double = 0.0,
+    @SerializedName("deduction_lta")         val deductionLta: Double = 0.0,
+    @SerializedName("house_property")        val houseProperty: Double = 0.0,
+    @SerializedName("total_deductions")      val totalDeductions: Double = 0.0,
+    @SerializedName("taxable_income")        val taxableIncome: Double = 0.0,
+    @SerializedName("tax_before_cess")       val taxBeforeCess: Double = 0.0,
+    val cess: Double = 0.0,
     val tax: Double = 0.0,
-    @SerializedName("monthly_tds")    val monthlyTds: Double = 0.0
+    @SerializedName("prev_tds")              val prevTds: Double = 0.0,
+    @SerializedName("net_tax")               val netTax: Double = 0.0,
+    @SerializedName("monthly_tds")           val monthlyTds: Double = 0.0
+)
+data class TaxRegimeNew(
+    @SerializedName("std_deduction")         val stdDeduction: Double = 0.0,
+    @SerializedName("employer_nps")          val employerNps: Double = 0.0,
+    @SerializedName("taxable_income")        val taxableIncome: Double = 0.0,
+    @SerializedName("tax_before_cess")       val taxBeforeCess: Double = 0.0,
+    val cess: Double = 0.0,
+    val tax: Double = 0.0,
+    @SerializedName("prev_tds")              val prevTds: Double = 0.0,
+    @SerializedName("net_tax")               val netTax: Double = 0.0,
+    @SerializedName("monthly_tds")           val monthlyTds: Double = 0.0
 )
 // ── Geofence Admin ────────────────────────────────────────────────────────────
 data class GeofenceLocation(
