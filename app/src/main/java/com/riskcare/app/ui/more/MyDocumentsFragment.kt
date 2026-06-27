@@ -32,7 +32,7 @@ class MyDocumentsFragment : Fragment() {
 
     private var uploadDocKey   = ""
     private var uploadDocLabel = ""
-    private var uploadedDocs: Map<String, List<EmpDocument>> = emptyMap()
+    private var uploadedDocs: Map<String, List<EmpDocument>> = emptyMap()  // docKey → uploaded files
 
     // Document checklist — matching web documentsController
     private val DOC_CHECKLIST = linkedMapOf(
@@ -94,8 +94,9 @@ class MyDocumentsFragment : Fragment() {
     private fun loadDocuments() {
         lifecycleScope.launch {
             val resp = try { api.getEmpDocuments(employeeId) } catch (e: Exception) { null }
-            val list = resp?.body()?.list ?: emptyList()
-            uploadedDocs = list.groupBy { it.docKey }
+            val defs = resp?.body()?.data ?: emptyList()
+            // Build uploadedDocs map: docKey → list of EmpDocument
+            uploadedDocs = defs.associate { def -> def.key to (def.documents ?: emptyList()) }
             renderChecklist()
         }
     }
@@ -323,7 +324,7 @@ class MyDocumentsFragment : Fragment() {
                     .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
                     .readTimeout(60, java.util.concurrent.TimeUnit.SECONDS).build()
                 val req = okhttp3.Request.Builder()
-                    .url("${AndroidMain.BASE_URL.trimEnd('/')}/emp-documents/file/${doc.id}")
+                    .url("${AndroidMain.BASE_URL.trimEnd('/')}/documents/file/${doc.id}")
                     .addHeader("Authorization", "Bearer $token").build()
                 val response = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { client.newCall(req).execute() }
                 if (!response.isSuccessful) { Toast.makeText(ctx, "Error ${response.code}", Toast.LENGTH_SHORT).show(); return@launch }

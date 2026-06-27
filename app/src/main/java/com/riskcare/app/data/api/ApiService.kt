@@ -668,25 +668,25 @@ interface ApiService {
 
 
     // ── My Documents ──────────────────────────────────────────────────────────
-    @GET("emp-documents/{employee_id}")
+    @GET("documents")
     suspend fun getEmpDocuments(
-        @Path("employee_id") employeeId: Int
+        @Query("employee_id") employeeId: Int
     ): Response<EmpDocumentsResponse>
 
     @Multipart
-    @POST("emp-documents/upload")
+    @POST("documents/upload")
     suspend fun uploadEmpDocument(
         @Part file: MultipartBody.Part,
         @Part("employee_id") employeeId: RequestBody,
-        @Part("document_type") documentType: RequestBody
+        @Part("doc_key") documentType: RequestBody
     ): Response<EmpDocUploadResponse>
 
-    @DELETE("emp-documents/{id}")
+    @DELETE("documents/{id}")
     suspend fun deleteEmpDocument(
         @Path("id") id: Int
     ): Response<ApiResponse<Unit>>
 
-    @GET("emp-documents/file/{id}")
+    @GET("documents/file/{id}")
     suspend fun getEmpDocumentFile(
         @Path("id") id: Int
     ): Response<okhttp3.ResponseBody>

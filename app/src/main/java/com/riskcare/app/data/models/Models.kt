@@ -1375,24 +1375,26 @@ data class BeatPlanSummary(
 
 // ── My Documents ─────────────────────────────────────────────────────────────
 data class EmpDocument(
-    val id: Int,
-    @SerializedName("employee_id")  val employeeId: Int,
-    @SerializedName("document_type") val docKey: String,
-    @SerializedName("file_name")     val originalName: String? = null,
-    @SerializedName("mime_type")    val mimeType: String? = null,
-    @SerializedName("file_size")    val fileSize: Int? = null,
-    @SerializedName("uploaded_at")  val uploadedAt: String? = null,
-    @SerializedName("uploaded_by")  val uploadedBy: Int? = null
+    val id: Int = 0,
+    @SerializedName("doc_key")       val docKey: String = "",
+    @SerializedName("original_name") val originalName: String? = null,
+    @SerializedName("mime_type")     val mimeType: String? = null,
+    @SerializedName("file_size")     val fileSize: Int? = null,
+    @SerializedName("uploaded_at")   val uploadedAt: String? = null
+)
+data class EmpDocDef(
+    val key: String = "",
+    val label: String = "",
+    val uploaded: Boolean = false,
+    val documents: List<EmpDocument>? = null
 )
 data class EmpDocumentsResponse(
     val success: Boolean,
-    val list: List<EmpDocument>? = null,  // flat list from backend
-    val data: Any? = null,                // map object (ignored)
+    val data: List<EmpDocDef>? = null,
     val message: String? = null
 )
 data class EmpDocUploadResponse(
     val success: Boolean,
-    val data: EmpDocument? = null,
     val message: String? = null
 )
 
