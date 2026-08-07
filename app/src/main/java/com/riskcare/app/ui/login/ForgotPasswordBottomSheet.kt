@@ -1,5 +1,6 @@
 package com.riskcare.app.ui.login
 
+import android.app.DatePickerDialog
 import android.os.Bundle
 import android.view.*
 import android.widget.ProgressBar
@@ -10,6 +11,7 @@ import com.riskcare.app.data.api.RetrofitClient
 import com.riskcare.app.data.models.*
 import com.riskcare.app.utils.toast
 import kotlinx.coroutines.launch
+import java.util.Calendar
 
 class ForgotPasswordBottomSheet : BottomSheetDialogFragment() {
 
@@ -24,14 +26,22 @@ class ForgotPasswordBottomSheet : BottomSheetDialogFragment() {
         view.findViewById<View>(R.id.stepTwo)?.visibility = View.GONE
         view.findViewById<View>(R.id.stepThree)?.visibility = View.GONE
 
+        val etDob = view.findViewById<android.widget.EditText>(R.id.etForgotDob)
+        etDob?.setOnClickListener {
+            val cal = Calendar.getInstance()
+            DatePickerDialog(requireContext(), { _, year, month, day ->
+                etDob.setText(String.format("%04d-%02d-%02d", year, month + 1, day))
+            }, cal.get(Calendar.YEAR) - 25, cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH)).show()
+        }
+
         // Step 1 — verify identity
         view.findViewById<android.widget.Button>(R.id.btnStep1)?.setOnClickListener {
-            val code  = view.findViewById<android.widget.EditText>(R.id.etEmpCode)?.text.toString().trim()
             val email = view.findViewById<android.widget.EditText>(R.id.etForgotEmail)?.text.toString().trim()
-            if (code.isEmpty() || email.isEmpty()) { toast("Fill all fields"); return@setOnClickListener }
+            val dob   = etDob?.text.toString().trim()
+            if (email.isEmpty() || dob.isEmpty()) { toast("Fill all fields"); return@setOnClickListener }
             lifecycleScope.launch {
                 try {
-                    val res = RetrofitClient.instance.forgotVerify(ForgotVerifyRequest(code, email))
+                    val res = RetrofitClient.instance.forgotVerify(ForgotVerifyRequest(email, dob))
                     if (res.isSuccessful && res.body()?.success == true) {
                         employeeId = res.body()!!.data!!.employeeId
                         toast("Identity verified ✅")
@@ -42,18 +52,18 @@ class ForgotPasswordBottomSheet : BottomSheetDialogFragment() {
             }
         }
 
-        // Step 2 — verify PAN
+        // Step 2 — verify Employee ID
         view.findViewById<android.widget.Button>(R.id.btnStep2)?.setOnClickListener {
-            val pan = view.findViewById<android.widget.EditText>(R.id.etPan)?.text.toString().trim()
-            if (pan.isEmpty()) { toast("Enter PAN number"); return@setOnClickListener }
+            val empCode = view.findViewById<android.widget.EditText>(R.id.etEmpCodeStep2)?.text.toString().trim()
+            if (empCode.isEmpty()) { toast("Enter your Employee ID"); return@setOnClickListener }
             lifecycleScope.launch {
                 try {
-                    val res = RetrofitClient.instance.forgotVerifyPan(ForgotVerifyPanRequest(employeeId, pan))
+                    val res = RetrofitClient.instance.forgotVerifyEmployeeId(ForgotVerifyEmployeeIdRequest(employeeId, empCode))
                     if (res.isSuccessful && res.body()?.success == true) {
                         resetToken = res.body()!!.data!!.resetToken
                         view.findViewById<View>(R.id.stepTwo)?.visibility = View.GONE
                         view.findViewById<View>(R.id.stepThree)?.visibility = View.VISIBLE
-                    } else toast(res.body()?.message ?: "PAN verification failed")
+                    } else toast(res.body()?.message ?: "Employee ID verification failed")
                 } catch (_: Exception) { toast("Network error") }
             }
         }

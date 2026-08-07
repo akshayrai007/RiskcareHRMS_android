@@ -31,8 +31,8 @@ interface ApiService {
     @POST("auth/forgot-password/verify")
     suspend fun forgotVerify(@Body request: ForgotVerifyRequest): Response<ApiResponse<ForgotVerifyData>>
 
-    @POST("auth/forgot-password/verify-pan")
-    suspend fun forgotVerifyPan(@Body request: ForgotVerifyPanRequest): Response<ApiResponse<ResetTokenData>>
+    @POST("auth/forgot-password/verify-employee-id")
+    suspend fun forgotVerifyEmployeeId(@Body request: ForgotVerifyEmployeeIdRequest): Response<ApiResponse<ResetTokenData>>
 
     @POST("auth/forgot-password/reset")
     suspend fun forgotReset(@Body request: ForgotResetRequest): Response<ApiResponse<Unit>>

@@ -33,9 +33,9 @@ data class ChangePasswordRequest(
     @SerializedName("old_password") val oldPassword: String,
     @SerializedName("new_password") val newPassword: String
 )
-data class ForgotVerifyRequest(@SerializedName("employee_code") val employeeCode: String, val email: String)
+data class ForgotVerifyRequest(val email: String, @SerializedName("date_of_birth") val dateOfBirth: String)
 data class ForgotVerifyData(@SerializedName("employee_id") val employeeId: Int, val name: String)
-data class ForgotVerifyPanRequest(@SerializedName("employee_id") val employeeId: Int, @SerializedName("pan_number") val panNumber: String)
+data class ForgotVerifyEmployeeIdRequest(@SerializedName("employee_id") val employeeId: Int, @SerializedName("employee_code") val employeeCode: String)
 data class ResetTokenData(@SerializedName("reset_token") val resetToken: String)
 data class ForgotResetRequest(@SerializedName("reset_token") val resetToken: String, @SerializedName("new_password") val newPassword: String)
 
