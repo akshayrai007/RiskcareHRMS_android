@@ -292,6 +292,13 @@
 
         </androidx.cardview.widget.CardView>
 
+        <!-- PUNCH MAP (shown only while a punch is in progress) -->
+        <FrameLayout
+            android:id="@+id/dashboardMapContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone"/>
+
         <!-- MONTHLY SUMMARY -->
         <LinearLayout
             android:layout_width="match_parent"

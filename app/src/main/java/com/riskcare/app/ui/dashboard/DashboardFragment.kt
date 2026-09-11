@@ -702,9 +702,33 @@ class DashboardFragment : Fragment() {
 
     private fun startDashboardPunch() {
         if (isPunching) { Toast.makeText(requireContext(), "⏳ Already processing, please wait...", Toast.LENGTH_SHORT).show(); return }
+        showPunchMap()
         permissionManager.checkAndRequestAll { granted ->
-            if (granted) checkGpsAndDashboardPunch()
+            if (granted) checkGpsAndDashboardPunch() else hidePunchMap()
         }
+    }
+
+    // Host the geofence map on the dashboard while a punch is in progress; it is
+    // removed once the punch is recorded so the data slides back up.
+    private fun showPunchMap() {
+        if (_b == null) return
+        binding.dashboardMapContainer.visibility = View.VISIBLE
+        if (childFragmentManager.findFragmentById(R.id.dashboardMapContainer) == null) {
+            childFragmentManager.beginTransaction()
+                .replace(R.id.dashboardMapContainer, com.riskcare.app.ui.common.PunchMapFragment())
+                .commitNowAllowingStateLoss()
+        }
+        binding.dashboardMapContainer.post {
+            if (_b != null) binding.root.smoothScrollTo(0, binding.dashboardMapContainer.top)
+        }
+    }
+
+    private fun hidePunchMap() {
+        if (_b == null) return
+        childFragmentManager.findFragmentById(R.id.dashboardMapContainer)?.let {
+            childFragmentManager.beginTransaction().remove(it).commitNowAllowingStateLoss()
+        }
+        binding.dashboardMapContainer.visibility = View.GONE
     }
 
     private fun checkGpsAndDashboardPunch() {
@@ -756,6 +780,7 @@ class DashboardFragment : Fragment() {
                                 .setPositiveButton("OK", null)
                                 .show()
                         }
+                        hidePunchMap()
                         return
                     }
                 } catch (_: Exception) { geofenceValid = null }
@@ -807,7 +832,7 @@ class DashboardFragment : Fragment() {
             Toast.makeText(ctx, "❌ $lastError", Toast.LENGTH_LONG).show()
         } finally {
             isPunching = false
-            if (_b != null) updatePunchButton()
+            if (_b != null) { updatePunchButton(); hidePunchMap() }
         }
     }
 
