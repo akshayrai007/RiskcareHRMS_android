@@ -26,6 +26,9 @@ import com.riskcare.app.utils.*
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import java.util.*
+import okhttp3.MultipartBody
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.RequestBody.Companion.toRequestBody
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // MORE FRAGMENT — role-based menu list
@@ -63,7 +66,6 @@ class MoreFragment : Fragment() {
             R.id.rowRegularizations to "📋  Regularizations",
             R.id.rowAdvanceApprovals to "💳  Advance Approvals",
             R.id.rowSeparation to "🚪  Separation",
-            R.id.rowPayrollMgmt to "📊  Payroll Management",
             R.id.rowProvision to "📝  Probation & Confirmation",
             R.id.rowBirthdays to "🎂  Birthdays",
             R.id.rowAnniversaries to "🎉  Work Anniversaries",
@@ -71,10 +73,8 @@ class MoreFragment : Fragment() {
             R.id.rowChangePassword to "🔒  Change Password",
             R.id.rowLogout to "⎋  Sign Out",
             R.id.rowMyWork to "🙋  My Work",
-            R.id.rowWorkTracker to "📝  Work Tracker",
             R.id.rowTaskBoard to "🗂️  Task Board",
             R.id.rowAllTasks to "📋  All Tasks",
-            R.id.rowWorkTickets to "🎫  Work Tickets",
             R.id.rowAssetAllocation to "💻  Asset Allocation"
         )
         labels.forEach { (rowId, label) ->
@@ -144,10 +144,6 @@ class MoreFragment : Fragment() {
             row.visibility = if (Roles.canSeeSeparation(role)) View.VISIBLE else View.GONE
             row.setOnClickListener { nav(SeparationFragment()) }
         }
-        view.findViewById<View>(R.id.rowPayrollMgmt)?.let { row ->
-            row.visibility = if (Roles.canRunPayroll(role)) View.VISIBLE else View.GONE
-            row.setOnClickListener { nav(PayrollMgmtFragment()) }
-        }
         view.findViewById<View>(R.id.rowProvision)?.let { row ->
             row.visibility = if (Roles.canSeeProvision(role)) View.VISIBLE else View.GONE
             row.setOnClickListener { nav(ProvisionFragment()) }
@@ -183,25 +179,8 @@ class MoreFragment : Fragment() {
             } catch (_: Exception) {}
         }
 
-        // Work Tracker — only if this employee has been flagged required, OR
-        // they manage others (to toggle who's required / view submitted logs).
-        val rowWorkTracker = view.findViewById<View>(R.id.rowWorkTracker)
-        rowWorkTracker?.visibility = View.GONE
-        rowWorkTracker?.setOnClickListener { nav(WorkTrackerFragment()) }
-        lifecycleScope.launch {
-            try {
-                val res = RetrofitClient.instance.getWorkTrackerMyStatus()
-                val d = res.body()?.data
-                if (d?.required == true || d?.canManageOthers == true) {
-                    rowWorkTracker?.visibility = View.VISIBLE
-                }
-            } catch (_: Exception) {}
-        }
-
-        // Work Tickets — every employee can raise/track a support ticket.
-        view.findViewById<View>(R.id.rowWorkTickets)?.setOnClickListener {
-            nav(com.riskcare.app.ui.tickets.TicketsFragment())
-        }
+        // Work Tracker + Work Tickets removed from More — both live only on
+        // the Dashboard Quick Access grid, not duplicated here.
 
         // Asset Allocation — everyone sees their own allocated assets; the
         // fragment itself shows the allocate form only to HR/Accounts/Admin/
@@ -3153,12 +3132,28 @@ class TeamTodayAdapter(private val items: List<TeamTodayRecord>) : RecyclerView.
 // ═══════════════════════════════════════════════════════════════════════════════
 // SEPARATION FRAGMENT — full: employee submit + approver actions
 // ═══════════════════════════════════════════════════════════════════════════════
+// Mirrors separation.html's isMyTurn(): whether this user needs to action this record NOW.
+private fun isSeparationMyTurn(role: String, userId: Int, sep: SeparationRecord): Boolean {
+    return when {
+        sep.status == "pending"            && sep.managerId == userId -> true
+        sep.status == "manager_approved"   && role == Roles.HR -> true
+        sep.status == "hr_approved"        && role == Roles.ACCOUNTS -> true
+        sep.status == "accounts_approved"  && (role == Roles.ADMIN || role == Roles.SUPER_ADMIN) -> true
+        else -> false
+    }
+}
+
 class SeparationFragment : Fragment() {
     override fun onCreateView(i: LayoutInflater, c: ViewGroup?, s: Bundle?): View {
         val ctx = requireContext(); val dp = ctx.resources.displayMetrics.density
         val session = SessionManager(ctx)
         val role = session.getRole()
-        val isHrAdmin = Roles.canSeeSeparation(role) && role != Roles.EMPLOYEE && role != Roles.MANAGER && role != Roles.TL
+        val userId = session.getEmployee()?.id ?: -1
+        // Only HR/Admin/Super Admin get the unrestricted "All Separations" view.
+        val isFullAdmin = role == Roles.HR || role == Roles.ADMIN || role == Roles.SUPER_ADMIN
+        // Manager/TL/Accounts (and full admins) get a "Pending Approvals" queue scoped to their turn.
+        val canApprove = isFullAdmin || role == Roles.MANAGER || role == Roles.TL || role == Roles.ACCOUNTS
+        val canSubmitOwn = role == Roles.EMPLOYEE || role == Roles.MANAGER || role == Roles.TL || role == Roles.ACCOUNTS
 
         val root = LinearLayout(ctx).apply {
             orientation = LinearLayout.VERTICAL
@@ -3171,15 +3166,23 @@ class SeparationFragment : Fragment() {
         // Title row + submit button for employee
         val titleRow = LinearLayout(ctx).apply {
             orientation = LinearLayout.HORIZONTAL; gravity = android.view.Gravity.CENTER_VERTICAL
-            setPadding((16*dp).toInt(),(16*dp).toInt(),(16*dp).toInt(),(8*dp).toInt())
+            setPadding((16*dp).toInt(),(16*dp).toInt(),(16*dp).toInt(),(4*dp).toInt())
         }
-        titleRow.addView(TextView(ctx).apply {
-            text = if (isHrAdmin) "All Separations" else "My Resignation"
+        val tvTitle = TextView(ctx).apply {
+            text = "Separation"
             textSize = 20f; setTypeface(null, android.graphics.Typeface.BOLD)
             setTextColor(ctx.getColor(R.color.text_primary))
             layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
-        })
+        }
+        titleRow.addView(tvTitle)
         root.addView(titleRow)
+
+        // Tabs: My Request | Pending Approvals | All Separations
+        val tabRow = LinearLayout(ctx).apply {
+            orientation = LinearLayout.HORIZONTAL
+            setPadding((12*dp).toInt(), 0, (12*dp).toInt(), (8*dp).toInt())
+        }
+        root.addView(tabRow)
 
         val rv = RecyclerView(ctx).apply {
             layoutManager = LinearLayoutManager(ctx)
@@ -3195,15 +3198,34 @@ class SeparationFragment : Fragment() {
         }
         root.addView(tvEmpty)
 
-        fun load() {
+        var activeTab = "my"
+        lateinit var load: (String) -> Unit
+
+        fun renderList(items: List<SeparationRecord>) {
+            tvEmpty.visibility = if (items.isEmpty()) View.VISIBLE else View.GONE
+            rv.visibility = if (items.isEmpty()) View.GONE else View.VISIBLE
+            rv.adapter = SeparationAdapter(items, role, session) { load(activeTab) }
+        }
+
+        load = fun(tab: String) {
+            activeTab = tab
             lifecycleScope.launch {
                 try {
-                    val res = if (isHrAdmin) RetrofitClient.instance.getSeparations()
-                    else RetrofitClient.instance.getMySeparations()
-                    val items = res.body()?.data ?: emptyList()
-                    tvEmpty.visibility = if (items.isEmpty()) View.VISIBLE else View.GONE
-                    rv.visibility = if (items.isEmpty()) View.GONE else View.VISIBLE
-                    rv.adapter = SeparationAdapter(items, role, session) { load() }
+                    when (tab) {
+                        "my" -> {
+                            val res = RetrofitClient.instance.getMySeparations()
+                            renderList(res.body()?.data ?: emptyList())
+                        }
+                        "pending" -> {
+                            val res = RetrofitClient.instance.getSeparations()
+                            val all = res.body()?.data ?: emptyList()
+                            renderList(all.filter { isSeparationMyTurn(role, userId, it) })
+                        }
+                        "all" -> {
+                            val res = RetrofitClient.instance.getSeparations()
+                            renderList(res.body()?.data ?: emptyList())
+                        }
+                    }
                 } catch (e: Exception) {
                     tvEmpty.text = "Error loading: ${e.message}"
                     tvEmpty.visibility = View.VISIBLE
@@ -3211,29 +3233,81 @@ class SeparationFragment : Fragment() {
             }
         }
 
-        // Employee/Manager/TL: show Submit Resignation button
-        if (!isHrAdmin) {
+        fun tabButton(label: String, key: String): MaterialButton {
+            return MaterialButton(ctx, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
+                text = label; textSize = 11f
+                layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+                    .also { it.marginEnd = (6*dp).toInt() }
+                setOnClickListener {
+                    // Update visual selection across all tab buttons in this row
+                    for (idx in 0 until tabRow.childCount) {
+                        val btn = tabRow.getChildAt(idx) as MaterialButton
+                        val selected = btn.tag == key
+                        btn.setBackgroundColor(if (selected) ctx.getColor(R.color.primary) else android.graphics.Color.TRANSPARENT)
+                        btn.setTextColor(if (selected) android.graphics.Color.WHITE else ctx.getColor(R.color.primary))
+                    }
+                    load(key)
+                }
+                this.tag = key
+            }
+        }
+
+        tabRow.addView(tabButton("My Request", "my"))
+        if (canApprove) tabRow.addView(tabButton("Pending Approvals", "pending"))
+        if (isFullAdmin) tabRow.addView(tabButton("All Separations", "all"))
+        // Select first tab by default
+        (tabRow.getChildAt(0) as MaterialButton).apply {
+            setBackgroundColor(ctx.getColor(R.color.primary)); setTextColor(android.graphics.Color.WHITE)
+        }
+
+        // Employee/Manager/TL/Accounts: show Submit Resignation button
+        if (canSubmitOwn) {
             titleRow.addView(MaterialButton(ctx, null, com.google.android.material.R.attr.materialButtonStyle).apply {
                 text = "Submit Resignation"; textSize = 12f
                 setBackgroundColor(ctx.getColor(R.color.accent_red))
                 layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT)
-                setOnClickListener { SubmitResignationSheet { load() }.show(childFragmentManager, "resign") }
+                setOnClickListener { SubmitResignationSheet { load(activeTab) }.show(childFragmentManager, "resign") }
             })
         }
 
-        load()
+        load("my")
         return root
     }
 }
 
-// ── Submit Resignation Bottom Sheet ──────────────────────────────────────────
+// ── Submit Resignation Bottom Sheet — mirrors separation.html's #resign-modal ──
 class SubmitResignationSheet(private val onSuccess: () -> Unit) : com.google.android.material.bottomsheet.BottomSheetDialogFragment() {
+
+    private val REASON_CATEGORIES = listOf(
+        "-- Select --", "Better Prospects", "Higher Education", "Medical", "Personal", "Relocation", "Other"
+    )
+    private var attachmentUri: android.net.Uri? = null
+    private lateinit var tvAttachmentName: TextView
+
+    private val pickAttachment = registerForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.GetContent()
+    ) { uri ->
+        attachmentUri = uri
+        tvAttachmentName.text = uri?.let { "📎 " + (queryFileName(it) ?: "attachment") } ?: "No file chosen"
+    }
+
+    private fun queryFileName(uri: android.net.Uri): String? {
+        return try {
+            requireContext().contentResolver.query(uri, null, null, null, null)?.use { c ->
+                val idx = c.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
+                if (c.moveToFirst() && idx >= 0) c.getString(idx) else null
+            }
+        } catch (e: Exception) { null }
+    }
+
     override fun onCreateView(i: LayoutInflater, c: ViewGroup?, s: Bundle?): View {
         val ctx = requireContext(); val dp = ctx.resources.displayMetrics.density
+        val scroll = android.widget.ScrollView(ctx)
         val root = LinearLayout(ctx).apply {
             orientation = LinearLayout.VERTICAL
             setPadding((20*dp).toInt(), (20*dp).toInt(), (20*dp).toInt(), (40*dp).toInt())
         }
+        scroll.addView(root)
 
         root.addView(TextView(ctx).apply {
             text = "Submit Resignation"; textSize = 18f
@@ -3248,45 +3322,127 @@ class SubmitResignationSheet(private val onSuccess: () -> Unit) : com.google.and
             setPadding(0, 0, 0, (16*dp).toInt())
         })
 
-        // Notice date picker
-        var selectedNoticeDate = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(java.util.Date())
+        fun sectionLabel(text: String) = TextView(ctx).apply {
+            this.text = text; textSize = 12f; setTypeface(null, android.graphics.Typeface.BOLD)
+            setTextColor(ctx.getColor(R.color.text_secondary))
+            setPadding(0, (10*dp).toInt(), 0, (4*dp).toInt())
+        }
+
+        val sdf = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
+
+        // Notice Date (today, editable)
+        var selectedNoticeDate = sdf.format(java.util.Date())
+        root.addView(sectionLabel("Notice Date (today) *"))
         val tvNoticeDate = TextView(ctx).apply {
-            text = "Notice Date: $selectedNoticeDate"; textSize = 13f
+            text = selectedNoticeDate; textSize = 14f
             setTextColor(ctx.getColor(R.color.primary))
-            setPadding(0, 0, 0, (8*dp).toInt())
+            setPadding((8*dp).toInt(), (8*dp).toInt(), (8*dp).toInt(), (8*dp).toInt())
+            setBackgroundColor(ctx.getColor(R.color.background))
         }
         root.addView(tvNoticeDate)
+
+        // Actual / Requested Last Working Date (auto-suggested = notice date + noticeDays, editable)
+        fun autoLwd(from: String): String {
+            return try {
+                val cal = java.util.Calendar.getInstance().apply { time = sdf.parse(from)!!; add(java.util.Calendar.DAY_OF_MONTH, noticeDays) }
+                sdf.format(cal.time)
+            } catch (e: Exception) { from }
+        }
+        var selectedLwd = autoLwd(selectedNoticeDate)
+        root.addView(sectionLabel("Actual / Requested Last Working Date *"))
+        val tvLwd = TextView(ctx).apply {
+            text = selectedLwd; textSize = 14f
+            setTextColor(ctx.getColor(R.color.primary))
+            setPadding((8*dp).toInt(), (8*dp).toInt(), (8*dp).toInt(), (8*dp).toInt())
+            setBackgroundColor(ctx.getColor(R.color.background))
+        }
+        root.addView(tvLwd)
+        root.addView(TextView(ctx).apply {
+            text = "💡 You can suggest a later date; earlier than the notice period is not allowed."
+            textSize = 10f; setTextColor(ctx.getColor(R.color.text_hint))
+        })
+
         tvNoticeDate.setOnClickListener {
             val cal = java.util.Calendar.getInstance()
             android.app.DatePickerDialog(ctx, { _, y, m, d ->
                 selectedNoticeDate = "%04d-%02d-%02d".format(y, m+1, d)
-                tvNoticeDate.text = "Notice Date: $selectedNoticeDate"
+                tvNoticeDate.text = selectedNoticeDate
+                selectedLwd = autoLwd(selectedNoticeDate)
+                tvLwd.text = selectedLwd
+            }, cal.get(java.util.Calendar.YEAR), cal.get(java.util.Calendar.MONTH), cal.get(java.util.Calendar.DAY_OF_MONTH)).show()
+        }
+        tvLwd.setOnClickListener {
+            val cal = java.util.Calendar.getInstance()
+            android.app.DatePickerDialog(ctx, { _, y, m, d ->
+                selectedLwd = "%04d-%02d-%02d".format(y, m+1, d)
+                tvLwd.text = selectedLwd
             }, cal.get(java.util.Calendar.YEAR), cal.get(java.util.Calendar.MONTH), cal.get(java.util.Calendar.DAY_OF_MONTH)).show()
         }
 
+        // Resignation Reason (category dropdown)
+        root.addView(sectionLabel("Resignation Reason *"))
+        val spinner = android.widget.Spinner(ctx).apply {
+            adapter = android.widget.ArrayAdapter(ctx, android.R.layout.simple_spinner_dropdown_item, REASON_CATEGORIES)
+        }
+        root.addView(spinner)
+
+        // Comments (free text — this is the backend's "reason" field)
+        root.addView(sectionLabel("Comments *"))
         val etReason = EditText(ctx).apply {
-            hint = "Reason for resignation *"; minLines = 3
+            hint = "Please explain your reason for leaving. This will be reviewed by your manager and HR."
+            minLines = 3
             setBackgroundColor(ctx.getColor(R.color.background))
             setPadding((8*dp).toInt(), (8*dp).toInt(), (8*dp).toInt(), (8*dp).toInt())
             layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
-                .also { it.bottomMargin = (16*dp).toInt() }
         }
         root.addView(etReason)
 
-        val progress = android.widget.ProgressBar(ctx).apply { visibility = View.GONE }
+        // Attachment (optional)
+        root.addView(sectionLabel("Attach Document (optional — resignation letter, etc.)"))
+        tvAttachmentName = TextView(ctx).apply {
+            text = "No file chosen"; textSize = 12f
+            setTextColor(ctx.getColor(R.color.text_hint))
+            setPadding(0, 0, 0, (4*dp).toInt())
+        }
+        root.addView(MaterialButton(ctx, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
+            text = "Choose File"; textSize = 12f
+            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+            setOnClickListener { pickAttachment.launch("*/*") }
+        })
+        root.addView(tvAttachmentName)
+
+        val progress = android.widget.ProgressBar(ctx).apply { visibility = View.GONE; setPadding(0, (12*dp).toInt(), 0, 0) }
         root.addView(progress)
 
         root.addView(MaterialButton(ctx, null, com.google.android.material.R.attr.materialButtonStyle).apply {
             text = "Submit Resignation"; setBackgroundColor(ctx.getColor(R.color.accent_red))
             layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+                .also { it.topMargin = (12*dp).toInt() }
             setOnClickListener {
                 val reason = etReason.text.toString().trim()
-                if (reason.isEmpty()) { toast("Please enter a reason"); return@setOnClickListener }
+                val category = spinner.selectedItem as String
+                if (reason.isEmpty()) { toast("Please enter your comments"); return@setOnClickListener }
+                if (category == REASON_CATEGORIES[0]) { toast("Please select a Resignation Reason"); return@setOnClickListener }
                 progress.visibility = View.VISIBLE; isEnabled = false
                 lifecycleScope.launch {
                     try {
-                        val req = SubmitResignationRequest(reason = reason, noticeDate = selectedNoticeDate)
-                        val res = RetrofitClient.instance.submitResignation(req)
+                        val reasonBody = reason.toRequestBody("text/plain".toMediaTypeOrNull())
+                        val noticeDateBody = selectedNoticeDate.toRequestBody("text/plain".toMediaTypeOrNull())
+                        val lwdBody = selectedLwd.toRequestBody("text/plain".toMediaTypeOrNull())
+                        val categoryBody = category.toRequestBody("text/plain".toMediaTypeOrNull())
+                        var attachmentPart: MultipartBody.Part? = null
+                        attachmentUri?.let { uri ->
+                            val fileName = queryFileName(uri) ?: "attachment"
+                            val bytes = ctx.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+                            if (bytes != null) {
+                                val reqFile = bytes.toRequestBody("application/octet-stream".toMediaTypeOrNull())
+                                attachmentPart = MultipartBody.Part.createFormData("attachment", fileName, reqFile)
+                            }
+                        }
+                        val res = RetrofitClient.instance.submitResignation(
+                            reason = reasonBody, noticeDate = noticeDateBody, suggestedLwd = lwdBody,
+                            reasonCategory = categoryBody, comments = null, attachment = attachmentPart
+                        )
                         if (res.isSuccessful && res.body()?.success == true) {
                             toast("✅ Resignation submitted successfully")
                             onSuccess(); dismiss()
@@ -3298,7 +3454,7 @@ class SubmitResignationSheet(private val onSuccess: () -> Unit) : com.google.and
                 }
             }
         })
-        return root
+        return scroll
     }
 }
 

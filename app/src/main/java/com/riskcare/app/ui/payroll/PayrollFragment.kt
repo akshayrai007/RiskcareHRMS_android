@@ -174,7 +174,7 @@ class PayrollFragment : Fragment() {
         val logoTag = if (logoB64.isNotEmpty())
             """<img src="data:image/png;base64,$logoB64" alt="${AndroidMain.COMPANY_SHORT_NAME}" style="height:88px;width:88px;object-fit:contain;display:block;background:transparent;">"""
         else
-            """<div style="width:88px;height:88px;background:#2E7D32;border-radius:8px;display:flex;align-items:center;justify-content:center;text-align:center;"><span style="color:#fff;font-weight:800;font-size:11px;">KRISHI<br>CARE</span></div>"""
+            """<div style="width:88px;height:88px;background:#2E7D32;border-radius:8px;display:flex;align-items:center;justify-content:center;text-align:center;"><span style="color:#fff;font-weight:800;font-size:11px;">RISK<br>CARE</span></div>"""
 
         // Employee info fields (prefer payslip JOIN, fall back to session)
         val name   = slip.employeeName  ?: e?.fullName         ?: "—"
@@ -768,7 +768,7 @@ $leaveTableHtml
         val white = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = Color.WHITE; textSize = 9f * sc; typeface = Typeface.DEFAULT_BOLD
         }
-        canvas.drawText("KRISHI", lx + 6 * sc, ly + 30 * sc, white)
+        canvas.drawText("RISK", lx + 6 * sc, ly + 30 * sc, white)
         canvas.drawText("CARE",   lx + 14 * sc, ly + 47 * sc, white)
         val leafPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.WHITE }
         val cx = lx + lw / 2f; val baseY = ly + lh - 14 * sc

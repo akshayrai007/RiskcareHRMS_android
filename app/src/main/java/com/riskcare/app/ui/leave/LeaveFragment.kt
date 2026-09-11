@@ -38,7 +38,7 @@ class LeaveFragment : Fragment() {
 
         loadBalance()
         loadApplications()
-        loadCompOffBalance()
+        // loadCompOffBalance() — Comp Off feature hidden, no backend routes
 
         // Header menu clicks
         binding.fabApplyLeave.setOnClickListener {
@@ -52,7 +52,7 @@ class LeaveFragment : Fragment() {
         binding.swipeRefresh.setOnRefreshListener {
             loadBalance()
             loadApplications()
-            loadCompOffBalance()
+            // loadCompOffBalance() — hidden
         }
 
         // Tab clicks
@@ -229,7 +229,7 @@ class LeaveFragment : Fragment() {
         if (prefs.getBoolean("balance_stale", false)) {
             prefs.edit().putBoolean("balance_stale", false).apply()
             loadBalance()
-            loadCompOffBalance()
+            // loadCompOffBalance() — hidden
         }
     }
 

@@ -725,6 +725,7 @@ data class SeparationRecord(
     @SerializedName("notice_date")          val noticeDate: String? = null,
     @SerializedName("last_working_date")    val lastWorkingDate: String? = null,
     @SerializedName("notice_period_days")   val noticePeriodDays: Int? = null,
+    @SerializedName("manager_id")           val managerId: Int? = null,
     @SerializedName("manager_action")       val managerAction: String? = null,
     @SerializedName("manager_actioned_by")  val managerActionedBy: Int? = null,
     @SerializedName("manager_remarks")      val managerRemarks: String? = null,
@@ -741,11 +742,6 @@ data class SeparationRecord(
     val effectiveDate get() = lastWorkingDate
 }
 
-data class SubmitResignationRequest(
-    @SerializedName("reason")        val reason: String,
-    @SerializedName("notice_date")   val noticeDate: String,
-    @SerializedName("suggested_lwd") val suggestedLwd: String? = null
-)
 
 // ── Provision ─────────────────────────────────────────────────────────────────
 @Parcelize

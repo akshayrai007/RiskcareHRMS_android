@@ -415,23 +415,8 @@
             android:paddingHorizontal="4dp"
             android:useDefaultMargins="false">
 
-            <!-- Attendance — colors match KrishiHR-Android exactly -->
-            <LinearLayout android:id="@+id/menuAttendance" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:orientation="vertical" android:gravity="center" android:padding="6dp" android:background="?attr/selectableItemBackgroundBorderless" android:clickable="true" android:focusable="true">
-                <androidx.cardview.widget.CardView android:layout_width="52dp" android:layout_height="52dp" app:cardCornerRadius="14dp" app:cardElevation="2dp" app:cardBackgroundColor="#E8F5E9"><ImageView android:layout_width="28dp" android:layout_height="28dp" android:layout_gravity="center" android:src="@drawable/ic_clock" android:tint="#2E7D45"/></androidx.cardview.widget.CardView>
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Attendance" android:textSize="9sp" android:gravity="center" android:layout_marginTop="4dp" android:textColor="@color/text_primary"/>
-            </LinearLayout>
-
-            <!-- Leave -->
-            <LinearLayout android:id="@+id/menuLeave" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:orientation="vertical" android:gravity="center" android:padding="6dp" android:background="?attr/selectableItemBackgroundBorderless" android:clickable="true" android:focusable="true">
-                <androidx.cardview.widget.CardView android:layout_width="52dp" android:layout_height="52dp" app:cardCornerRadius="14dp" app:cardElevation="2dp" app:cardBackgroundColor="#FFEDD5"><ImageView android:layout_width="28dp" android:layout_height="28dp" android:layout_gravity="center" android:src="@drawable/ic_happy_face" android:tint="#EA580C"/></androidx.cardview.widget.CardView>
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Leave" android:textSize="9sp" android:gravity="center" android:layout_marginTop="4dp" android:textColor="@color/text_primary"/>
-            </LinearLayout>
-
-            <!-- Payslip -->
-            <LinearLayout android:id="@+id/menuPayslip" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:orientation="vertical" android:gravity="center" android:padding="6dp" android:background="?attr/selectableItemBackgroundBorderless" android:clickable="true" android:focusable="true">
-                <androidx.cardview.widget.CardView android:layout_width="52dp" android:layout_height="52dp" app:cardCornerRadius="14dp" app:cardElevation="2dp" app:cardBackgroundColor="#E0E7FF"><ImageView android:layout_width="28dp" android:layout_height="28dp" android:layout_gravity="center" android:src="@drawable/ic_payroll" android:tint="#4338CA"/></androidx.cardview.widget.CardView>
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Payslip" android:textSize="9sp" android:gravity="center" android:layout_marginTop="4dp" android:textColor="@color/text_primary"/>
-            </LinearLayout>
+            <!-- Alphabetical order: Advance, Approvals, Attendance, Birthdays, Calendar, Chat,
+                 Employees, Geofence, Leave, Payslip, Profile, Quiz, Team Today, Work Tickets, Work Tracker -->
 
             <!-- Advance (Riskcare-only tile — not in KrishiHR) -->
             <LinearLayout android:id="@+id/menuAdvance" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:orientation="vertical" android:gravity="center" android:padding="6dp" android:background="?attr/selectableItemBackgroundBorderless" android:clickable="true" android:focusable="true">
@@ -439,28 +424,28 @@
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Advance" android:textSize="9sp" android:gravity="center" android:layout_marginTop="4dp" android:textColor="@color/text_primary"/>
             </LinearLayout>
 
-            <!-- Quiz -->
-            <LinearLayout android:id="@+id/menuQuiz" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:orientation="vertical" android:gravity="center" android:padding="6dp" android:background="?attr/selectableItemBackgroundBorderless" android:clickable="true" android:focusable="true">
-                <androidx.cardview.widget.CardView android:layout_width="52dp" android:layout_height="52dp" app:cardCornerRadius="14dp" app:cardElevation="2dp" app:cardBackgroundColor="#FFE4E6"><ImageView android:layout_width="28dp" android:layout_height="28dp" android:layout_gravity="center" android:src="@drawable/ic_brain" android:tint="#E11D48"/></androidx.cardview.widget.CardView>
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Quiz" android:textSize="9sp" android:gravity="center" android:layout_marginTop="4dp" android:textColor="@color/text_primary"/>
+            <!-- Approvals (Riskcare-only tile — not in KrishiHR) -->
+            <LinearLayout android:id="@+id/menuApprovals" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:orientation="vertical" android:gravity="center" android:padding="6dp" android:background="?attr/selectableItemBackgroundBorderless" android:clickable="true" android:focusable="true" android:visibility="gone">
+                <androidx.cardview.widget.CardView android:layout_width="52dp" android:layout_height="52dp" app:cardCornerRadius="14dp" app:cardElevation="2dp" app:cardBackgroundColor="#DBEAFE"><ImageView android:layout_width="28dp" android:layout_height="28dp" android:layout_gravity="center" android:src="@drawable/ic_check_circle" android:tint="#2563EB"/></androidx.cardview.widget.CardView>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Approvals" android:textSize="9sp" android:gravity="center" android:layout_marginTop="4dp" android:textColor="@color/text_primary"/>
             </LinearLayout>
 
-            <!-- Team Today / Announcements -->
-            <LinearLayout android:id="@+id/menuAnnouncements" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:orientation="vertical" android:gravity="center" android:padding="6dp" android:background="?attr/selectableItemBackgroundBorderless" android:clickable="true" android:focusable="true">
-                <androidx.cardview.widget.CardView android:layout_width="52dp" android:layout_height="52dp" app:cardCornerRadius="14dp" app:cardElevation="2dp" app:cardBackgroundColor="#FAE8FF"><ImageView android:layout_width="28dp" android:layout_height="28dp" android:layout_gravity="center" android:src="@drawable/ic_shield_check" android:tint="#C026D3"/></androidx.cardview.widget.CardView>
-                <TextView android:id="@+id/tvMenuAnnouncementsLabel" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Team Today" android:textSize="9sp" android:gravity="center" android:layout_marginTop="4dp" android:textColor="@color/text_primary"/>
-            </LinearLayout>
-
-            <!-- Profile -->
-            <LinearLayout android:id="@+id/menuProfile" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:orientation="vertical" android:gravity="center" android:padding="6dp" android:background="?attr/selectableItemBackgroundBorderless" android:clickable="true" android:focusable="true">
-                <androidx.cardview.widget.CardView android:layout_width="52dp" android:layout_height="52dp" app:cardCornerRadius="14dp" app:cardElevation="2dp" app:cardBackgroundColor="#CFFAFE"><ImageView android:layout_width="28dp" android:layout_height="28dp" android:layout_gravity="center" android:src="@drawable/ic_profile" android:tint="#0891B2"/></androidx.cardview.widget.CardView>
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Profile" android:textSize="9sp" android:gravity="center" android:layout_marginTop="4dp" android:textColor="@color/text_primary"/>
+            <!-- Attendance — colors match KrishiHR-Android exactly -->
+            <LinearLayout android:id="@+id/menuAttendance" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:orientation="vertical" android:gravity="center" android:padding="6dp" android:background="?attr/selectableItemBackgroundBorderless" android:clickable="true" android:focusable="true">
+                <androidx.cardview.widget.CardView android:layout_width="52dp" android:layout_height="52dp" app:cardCornerRadius="14dp" app:cardElevation="2dp" app:cardBackgroundColor="#E8F5E9"><ImageView android:layout_width="28dp" android:layout_height="28dp" android:layout_gravity="center" android:src="@drawable/ic_clock" android:tint="#2E7D45"/></androidx.cardview.widget.CardView>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Attendance" android:textSize="9sp" android:gravity="center" android:layout_marginTop="4dp" android:textColor="@color/text_primary"/>
             </LinearLayout>
 
             <!-- Birthdays -->
             <LinearLayout android:id="@+id/menuBirthdays" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:orientation="vertical" android:gravity="center" android:padding="6dp" android:background="?attr/selectableItemBackgroundBorderless" android:clickable="true" android:focusable="true">
                 <androidx.cardview.widget.CardView android:layout_width="52dp" android:layout_height="52dp" app:cardCornerRadius="14dp" app:cardElevation="2dp" app:cardBackgroundColor="#FCE7F3"><ImageView android:layout_width="28dp" android:layout_height="28dp" android:layout_gravity="center" android:src="@drawable/ic_party_hat" android:tint="#DB2777"/></androidx.cardview.widget.CardView>
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Birthdays" android:textSize="9sp" android:gravity="center" android:layout_marginTop="4dp" android:textColor="@color/text_primary"/>
+            </LinearLayout>
+
+            <!-- Calendar — matches KrishiHR-Android, jumps straight to Attendance's Calendar tab -->
+            <LinearLayout android:id="@+id/menuCalendar" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:orientation="vertical" android:gravity="center" android:padding="6dp" android:background="?attr/selectableItemBackgroundBorderless" android:clickable="true" android:focusable="true">
+                <androidx.cardview.widget.CardView android:layout_width="52dp" android:layout_height="52dp" app:cardCornerRadius="14dp" app:cardElevation="2dp" app:cardBackgroundColor="#DDD6FE"><ImageView android:layout_width="28dp" android:layout_height="28dp" android:layout_gravity="center" android:src="@drawable/ic_attendance" android:tint="#6D28D9"/></androidx.cardview.widget.CardView>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Calendar" android:textSize="9sp" android:gravity="center" android:layout_marginTop="4dp" android:textColor="@color/text_primary"/>
             </LinearLayout>
 
             <!-- Chat -->
@@ -475,16 +460,40 @@
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Employees" android:textSize="9sp" android:gravity="center" android:layout_marginTop="4dp" android:textColor="@color/text_primary"/>
             </LinearLayout>
 
-            <!-- Approvals (Riskcare-only tile — not in KrishiHR) -->
-            <LinearLayout android:id="@+id/menuApprovals" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:orientation="vertical" android:gravity="center" android:padding="6dp" android:background="?attr/selectableItemBackgroundBorderless" android:clickable="true" android:focusable="true" android:visibility="gone">
-                <androidx.cardview.widget.CardView android:layout_width="52dp" android:layout_height="52dp" app:cardCornerRadius="14dp" app:cardElevation="2dp" app:cardBackgroundColor="#DBEAFE"><ImageView android:layout_width="28dp" android:layout_height="28dp" android:layout_gravity="center" android:src="@drawable/ic_check_circle" android:tint="#2563EB"/></androidx.cardview.widget.CardView>
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Approvals" android:textSize="9sp" android:gravity="center" android:layout_marginTop="4dp" android:textColor="@color/text_primary"/>
-            </LinearLayout>
-
             <!-- Geofence (admin, optional) -->
             <LinearLayout android:id="@+id/menuGeofence" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:orientation="vertical" android:gravity="center" android:padding="6dp" android:background="?attr/selectableItemBackgroundBorderless" android:clickable="true" android:focusable="true" android:visibility="gone">
                 <androidx.cardview.widget.CardView android:layout_width="52dp" android:layout_height="52dp" app:cardCornerRadius="14dp" app:cardElevation="2dp" app:cardBackgroundColor="#F3E8FF"><ImageView android:layout_width="28dp" android:layout_height="28dp" android:layout_gravity="center" android:src="@drawable/ic_geofence" android:tint="#7E22CE"/></androidx.cardview.widget.CardView>
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Geofence" android:textSize="9sp" android:gravity="center" android:layout_marginTop="4dp" android:textColor="@color/text_primary"/>
+            </LinearLayout>
+
+            <!-- Leave -->
+            <LinearLayout android:id="@+id/menuLeave" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:orientation="vertical" android:gravity="center" android:padding="6dp" android:background="?attr/selectableItemBackgroundBorderless" android:clickable="true" android:focusable="true">
+                <androidx.cardview.widget.CardView android:layout_width="52dp" android:layout_height="52dp" app:cardCornerRadius="14dp" app:cardElevation="2dp" app:cardBackgroundColor="#FFEDD5"><ImageView android:layout_width="28dp" android:layout_height="28dp" android:layout_gravity="center" android:src="@drawable/ic_happy_face" android:tint="#EA580C"/></androidx.cardview.widget.CardView>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Leave" android:textSize="9sp" android:gravity="center" android:layout_marginTop="4dp" android:textColor="@color/text_primary"/>
+            </LinearLayout>
+
+            <!-- Payslip -->
+            <LinearLayout android:id="@+id/menuPayslip" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:orientation="vertical" android:gravity="center" android:padding="6dp" android:background="?attr/selectableItemBackgroundBorderless" android:clickable="true" android:focusable="true">
+                <androidx.cardview.widget.CardView android:layout_width="52dp" android:layout_height="52dp" app:cardCornerRadius="14dp" app:cardElevation="2dp" app:cardBackgroundColor="#E0E7FF"><ImageView android:layout_width="28dp" android:layout_height="28dp" android:layout_gravity="center" android:src="@drawable/ic_payroll" android:tint="#4338CA"/></androidx.cardview.widget.CardView>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Payslip" android:textSize="9sp" android:gravity="center" android:layout_marginTop="4dp" android:textColor="@color/text_primary"/>
+            </LinearLayout>
+
+            <!-- Profile -->
+            <LinearLayout android:id="@+id/menuProfile" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:orientation="vertical" android:gravity="center" android:padding="6dp" android:background="?attr/selectableItemBackgroundBorderless" android:clickable="true" android:focusable="true">
+                <androidx.cardview.widget.CardView android:layout_width="52dp" android:layout_height="52dp" app:cardCornerRadius="14dp" app:cardElevation="2dp" app:cardBackgroundColor="#CFFAFE"><ImageView android:layout_width="28dp" android:layout_height="28dp" android:layout_gravity="center" android:src="@drawable/ic_profile" android:tint="#0891B2"/></androidx.cardview.widget.CardView>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Profile" android:textSize="9sp" android:gravity="center" android:layout_marginTop="4dp" android:textColor="@color/text_primary"/>
+            </LinearLayout>
+
+            <!-- Quiz -->
+            <LinearLayout android:id="@+id/menuQuiz" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:orientation="vertical" android:gravity="center" android:padding="6dp" android:background="?attr/selectableItemBackgroundBorderless" android:clickable="true" android:focusable="true">
+                <androidx.cardview.widget.CardView android:layout_width="52dp" android:layout_height="52dp" app:cardCornerRadius="14dp" app:cardElevation="2dp" app:cardBackgroundColor="#FFE4E6"><ImageView android:layout_width="28dp" android:layout_height="28dp" android:layout_gravity="center" android:src="@drawable/ic_brain" android:tint="#E11D48"/></androidx.cardview.widget.CardView>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Quiz" android:textSize="9sp" android:gravity="center" android:layout_marginTop="4dp" android:textColor="@color/text_primary"/>
+            </LinearLayout>
+
+            <!-- Team Today / Announcements -->
+            <LinearLayout android:id="@+id/menuAnnouncements" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:orientation="vertical" android:gravity="center" android:padding="6dp" android:background="?attr/selectableItemBackgroundBorderless" android:clickable="true" android:focusable="true">
+                <androidx.cardview.widget.CardView android:layout_width="52dp" android:layout_height="52dp" app:cardCornerRadius="14dp" app:cardElevation="2dp" app:cardBackgroundColor="#FAE8FF"><ImageView android:layout_width="28dp" android:layout_height="28dp" android:layout_gravity="center" android:src="@drawable/ic_shield_check" android:tint="#C026D3"/></androidx.cardview.widget.CardView>
+                <TextView android:id="@+id/tvMenuAnnouncementsLabel" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Team Today" android:textSize="9sp" android:gravity="center" android:layout_marginTop="4dp" android:textColor="@color/text_primary"/>
             </LinearLayout>
 
             <!-- Work Tickets — everyone can raise/track a support ticket -->

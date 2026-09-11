@@ -114,8 +114,10 @@
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
-            <!-- Comp Off Balance Card -->
+            <!-- Comp Off Balance Card — hidden: no backend routes exist for
+                 compoff/balance or compoff/credits, feature is non-functional -->
             <androidx.cardview.widget.CardView
+                android:visibility="gone"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -154,10 +156,10 @@
                 android:clickable="true"
                 android:focusable="true"/>
 
-            <View android:layout_width="4dp" android:layout_height="match_parent"/>
-
+            <!-- Comp Off tab hidden — see note above, non-functional (no backend routes) -->
             <TextView
                 android:id="@+id/tabCompOff"
+                android:visibility="gone"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"

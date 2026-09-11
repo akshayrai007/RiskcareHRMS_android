@@ -322,8 +322,16 @@ interface ApiService {
     @GET("separations/my")
     suspend fun getMySeparations(): Response<ApiResponse<List<SeparationRecord>>>
 
+    @Multipart
     @POST("separations/resign")
-    suspend fun submitResignation(@Body request: SubmitResignationRequest): Response<ApiResponse<SeparationRecord>>
+    suspend fun submitResignation(
+        @Part("reason") reason: okhttp3.RequestBody,
+        @Part("notice_date") noticeDate: okhttp3.RequestBody,
+        @Part("suggested_lwd") suggestedLwd: okhttp3.RequestBody?,
+        @Part("resignation_reason_category") reasonCategory: okhttp3.RequestBody,
+        @Part("comments") comments: okhttp3.RequestBody?,
+        @Part attachment: MultipartBody.Part?
+    ): Response<ApiResponse<SeparationRecord>>
 
     @POST("separations/{id}/withdraw")
     suspend fun withdrawSeparation(@Path("id") id: Int): Response<ApiResponse<Unit>>

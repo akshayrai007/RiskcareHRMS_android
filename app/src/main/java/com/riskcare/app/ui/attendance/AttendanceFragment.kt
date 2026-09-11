@@ -86,7 +86,7 @@ class AttendanceFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         binding.viewPager.adapter = AttendancePagerAdapter(this)
         TabLayoutMediator(binding.tabLayout, binding.viewPager) { tab, pos ->
-            tab.text = when (pos) { 0 -> "Today"; 1 -> "History"; 2 -> "Calendar"; 3 -> "Regulate"; else -> "OD/WFH" }
+            tab.text = when (pos) { 0 -> "Today"; 1 -> "History"; 2 -> "Regularize"; else -> "OD/WFH" }
         }.attach()
     }
 
@@ -94,12 +94,11 @@ class AttendanceFragment : Fragment() {
 }
 
 class AttendancePagerAdapter(f: Fragment) : FragmentStateAdapter(f) {
-    override fun getItemCount() = 5
+    override fun getItemCount() = 4
     override fun createFragment(pos: Int) = when (pos) {
         0    -> AttendanceTodayFragment()
         1    -> AttendanceHistoryFragment()
-        2    -> AttendanceCalendarFragment()
-        3    -> RegularizationFragment()
+        2    -> RegularizationFragment()
         else -> ODWFHFragment()
     }
 }

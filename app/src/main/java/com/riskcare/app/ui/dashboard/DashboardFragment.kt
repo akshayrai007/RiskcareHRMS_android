@@ -175,6 +175,9 @@ class DashboardFragment : Fragment() {
             binding.menuGeofence.setOnClickListener { nav(GeofenceAdminFragment()) }
         }
 
+        // Calendar — jumps straight to Attendance's Calendar tab.
+        binding.menuCalendar.setOnClickListener { nav(com.riskcare.app.ui.attendance.AttendanceCalendarFragment()) }
+
         // Work Tickets — every employee can raise/track a support ticket.
         binding.menuWorkTickets.setOnClickListener { nav(com.riskcare.app.ui.tickets.TicketsFragment()) }
 

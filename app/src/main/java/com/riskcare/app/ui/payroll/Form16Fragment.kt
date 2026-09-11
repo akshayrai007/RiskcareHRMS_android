@@ -74,7 +74,7 @@ class Form16Fragment : Fragment() {
 
     private fun renderForm16(d: Form16Data, containerA: LinearLayout, containerB: LinearLayout, containerM: LinearLayout) {
         val v = view ?: return
-        v.findViewById<TextView>(R.id.tvF16FY)?.apply { text = "FY ${d.financialYear}  |  AY ${d.assessmentYear}"; setTextColor(Color.parseColor("#2E7D32")) }
+        v.findViewById<TextView>(R.id.tvF16FY)?.apply { text = "FY ${d.financialYear}  |  AY ${d.assessmentYear}"; setTextColor(Color.parseColor("#E8303A")) }
         v.findViewById<TextView>(R.id.tvF16EmpName)?.text  = d.employee.name
         v.findViewById<TextView>(R.id.tvF16EmpCode)?.text  = "Code: ${d.employee.code}"
         v.findViewById<TextView>(R.id.tvF16Pan)?.apply { text = "PAN: ${d.employee.pan ?: "NOT PROVIDED"}"; setTextColor(if (d.employee.pan.isNullOrBlank()) Color.parseColor("#E53935") else Color.parseColor("#212121")) }
@@ -87,14 +87,14 @@ class Form16Fragment : Fragment() {
         containerA.removeAllViews()
         val qGrid = LinearLayout(requireContext()).apply { orientation = LinearLayout.HORIZONTAL; layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { bottomMargin = 12 } }
         d.partA.quarterSummary.forEach { q ->
-            val qBox = LinearLayout(requireContext()).apply { orientation = LinearLayout.VERTICAL; setBackgroundColor(Color.parseColor("#F3F8F0")); setPadding(12,12,12,12); layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { marginEnd = 6 } }
-            qBox.addView(TextView(requireContext()).apply { text = q.quarter; textSize = 11f; setTypeface(typeface, Typeface.BOLD); setTextColor(Color.parseColor("#2E7D32")); layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { bottomMargin = 6 } })
+            val qBox = LinearLayout(requireContext()).apply { orientation = LinearLayout.VERTICAL; setBackgroundColor(Color.parseColor("#FDF2F2")); setPadding(12,12,12,12); layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { marginEnd = 6 } }
+            qBox.addView(TextView(requireContext()).apply { text = q.quarter; textSize = 11f; setTypeface(typeface, Typeface.BOLD); setTextColor(Color.parseColor("#E8303A")); layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { bottomMargin = 6 } })
             qBox.addView(makeQRow("Deducted", money(q.tdsDeducted))); qBox.addView(makeQRow("Deposited", money(q.tdsDeposited))); qGrid.addView(qBox)
         }
         containerA.addView(qGrid)
-        val totRow = LinearLayout(requireContext()).apply { orientation = LinearLayout.HORIZONTAL; setBackgroundColor(Color.parseColor("#E8F5E9")); setPadding(16,12,16,12) }
-        totRow.addView(TextView(requireContext()).apply { text = "Total TDS Deducted & Deposited"; textSize = 13f; setTypeface(typeface, Typeface.BOLD); setTextColor(Color.parseColor("#1B5E20")); layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f) })
-        totRow.addView(TextView(requireContext()).apply { text = money(d.partA.totalTdsDeducted); textSize = 14f; setTypeface(typeface, Typeface.BOLD); setTextColor(Color.parseColor("#1B5E20")) })
+        val totRow = LinearLayout(requireContext()).apply { orientation = LinearLayout.HORIZONTAL; setBackgroundColor(Color.parseColor("#FCE8E8")); setPadding(16,12,16,12) }
+        totRow.addView(TextView(requireContext()).apply { text = "Total TDS Deducted & Deposited"; textSize = 13f; setTypeface(typeface, Typeface.BOLD); setTextColor(Color.parseColor("#C0272D")); layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f) })
+        totRow.addView(TextView(requireContext()).apply { text = money(d.partA.totalTdsDeducted); textSize = 14f; setTypeface(typeface, Typeface.BOLD); setTextColor(Color.parseColor("#C0272D")) })
         containerA.addView(totRow)
 
         containerB.removeAllViews()
@@ -133,27 +133,27 @@ class Form16Fragment : Fragment() {
         row.addView(TextView(requireContext()).apply { text = value; textSize = 11f; setTextColor(Color.parseColor("#212121")) }); return row
     }
     private fun addSectionHeader(container: LinearLayout, title: String) {
-        container.addView(TextView(requireContext()).apply { text = title; setTextColor(Color.parseColor("#2E7D32")); textSize = 12f; typeface = Typeface.DEFAULT_BOLD; setBackgroundColor(Color.parseColor("#F9FBE7")); setPadding(8,12,8,8); layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { topMargin = 8 } })
-        container.addView(divider("#C8E6C9"))
+        container.addView(TextView(requireContext()).apply { text = title; setTextColor(Color.parseColor("#E8303A")); textSize = 12f; typeface = Typeface.DEFAULT_BOLD; setBackgroundColor(Color.parseColor("#FDF2F2")); setPadding(8,12,8,8); layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { topMargin = 8 } })
+        container.addView(divider("#F5C6C6"))
     }
     private fun addRow(container: LinearLayout, label: String, value: String, isTotal: Boolean = false) {
-        val row = LinearLayout(requireContext()).apply { orientation = LinearLayout.HORIZONTAL; setPadding(8,10,8,10); if (isTotal) setBackgroundColor(Color.parseColor("#E8F5E9")) }
+        val row = LinearLayout(requireContext()).apply { orientation = LinearLayout.HORIZONTAL; setPadding(8,10,8,10); if (isTotal) setBackgroundColor(Color.parseColor("#FCE8E8")) }
         row.addView(TextView(requireContext()).apply { text = label; textSize = 13f; layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f); if (isTotal) setTypeface(typeface, Typeface.BOLD); setTextColor(Color.parseColor("#424242")) })
-        row.addView(TextView(requireContext()).apply { text = value; textSize = 13f; typeface = if (isTotal) Typeface.DEFAULT_BOLD else Typeface.DEFAULT; setTextColor(if (isTotal) Color.parseColor("#1B5E20") else Color.parseColor("#212121")) })
+        row.addView(TextView(requireContext()).apply { text = value; textSize = 13f; typeface = if (isTotal) Typeface.DEFAULT_BOLD else Typeface.DEFAULT; setTextColor(if (isTotal) Color.parseColor("#C0272D") else Color.parseColor("#212121")) })
         container.addView(row); container.addView(divider())
     }
     private fun divider(color: String = "#F1F8E9"): View = View(requireContext()).apply { layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 1); setBackgroundColor(Color.parseColor(color)) }
     private fun addMonthHeader(container: LinearLayout) {
-        val row = LinearLayout(requireContext()).apply { orientation = LinearLayout.HORIZONTAL; setPadding(4,10,4,10); setBackgroundColor(Color.parseColor("#E8F5E9")) }
+        val row = LinearLayout(requireContext()).apply { orientation = LinearLayout.HORIZONTAL; setPadding(4,10,4,10); setBackgroundColor(Color.parseColor("#FCE8E8")) }
         listOf("Month","Basic","HRA","Gross","PF","ESI","PT","TDS","Net").forEach { h ->
-            row.addView(TextView(requireContext()).apply { text = h; textSize = 10f; typeface = Typeface.DEFAULT_BOLD; setTextColor(Color.parseColor("#2E7D32")); layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f); gravity = if (h == "Month") android.view.Gravity.START else android.view.Gravity.END })
+            row.addView(TextView(requireContext()).apply { text = h; textSize = 10f; typeface = Typeface.DEFAULT_BOLD; setTextColor(Color.parseColor("#E8303A")); layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f); gravity = if (h == "Month") android.view.Gravity.START else android.view.Gravity.END })
         }; container.addView(row)
     }
     private fun addMonthRow(container: LinearLayout, month: String, basic: Double, hra: Double, gross: Double, pf: Double, esi: Double, pt: Double, tds: Double, net: Double, isTotal: Boolean = false) {
-        val row = LinearLayout(requireContext()).apply { orientation = LinearLayout.HORIZONTAL; setPadding(4,8,4,8); if (isTotal) setBackgroundColor(Color.parseColor("#E8F5E9")) }
+        val row = LinearLayout(requireContext()).apply { orientation = LinearLayout.HORIZONTAL; setPadding(4,8,4,8); if (isTotal) setBackgroundColor(Color.parseColor("#FCE8E8")) }
         val bold = if (isTotal) Typeface.DEFAULT_BOLD else Typeface.DEFAULT
         listOf(month, money(basic), money(hra), money(gross), money(pf), money(esi), money(pt), money(tds), money(net)).forEachIndexed { i, v ->
-            row.addView(TextView(requireContext()).apply { text = v; textSize = 10f; typeface = bold; setTextColor(when { isTotal && i == 8 -> Color.parseColor("#1B5E20"); i == 7 -> Color.parseColor("#C62828"); else -> Color.parseColor("#212121") }); layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f); gravity = if (i == 0) android.view.Gravity.START else android.view.Gravity.END })
+            row.addView(TextView(requireContext()).apply { text = v; textSize = 10f; typeface = bold; setTextColor(when { isTotal && i == 8 -> Color.parseColor("#C0272D"); i == 7 -> Color.parseColor("#C62828"); else -> Color.parseColor("#212121") }); layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f); gravity = if (i == 0) android.view.Gravity.START else android.view.Gravity.END })
         }; container.addView(row); container.addView(divider())
     }
 
