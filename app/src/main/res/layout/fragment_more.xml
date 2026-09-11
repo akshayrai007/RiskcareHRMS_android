@@ -40,6 +40,10 @@
             <include layout="@layout/item_more_row" android:id="@+id/rowAnnouncements"/>
             <include layout="@layout/item_more_row" android:id="@+id/rowGkQuiz"/>
             <include layout="@layout/item_more_row" android:id="@+id/rowEmployees"/>
+            <!-- ✅ NEW: My Work (personal task list) + Work Tracker (only if
+                 flagged required, or a manager managing others) -->
+            <include layout="@layout/item_more_row" android:id="@+id/rowMyWork"/>
+            <include layout="@layout/item_more_row" android:id="@+id/rowWorkTracker"/>
 
             <!-- SECTION: Management (role-gated, shown programmatically) -->
             <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="MANAGEMENT" android:textSize="11sp" android:textStyle="bold" android:textColor="@color/text_hint" android:paddingHorizontal="16dp" android:paddingTop="14dp" android:paddingBottom="4dp"/>
@@ -48,6 +52,11 @@
             <include layout="@layout/item_more_row" android:id="@+id/rowPendingLeaves"/>
             <include layout="@layout/item_more_row" android:id="@+id/rowRegularizations"/>
             <include layout="@layout/item_more_row" android:id="@+id/rowAdvanceApprovals"/>
+            <!-- ✅ NEW: Task Board + All Tasks — visible only to a "manager"
+                 (has real reportees, checked server-side via /tasks/am-i-manager)
+                 or Super Admin -->
+            <include layout="@layout/item_more_row" android:id="@+id/rowTaskBoard"/>
+            <include layout="@layout/item_more_row" android:id="@+id/rowAllTasks"/>
             <include layout="@layout/item_more_row" android:id="@+id/rowSeparation"/>
             <include layout="@layout/item_more_row" android:id="@+id/rowPayrollMgmt"/>
             <include layout="@layout/item_more_row" android:id="@+id/rowProvision"/>

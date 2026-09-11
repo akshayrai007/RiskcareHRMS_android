@@ -66,7 +66,11 @@ class MoreFragment : Fragment() {
             R.id.rowAnniversaries to "🎉  Work Anniversaries",
             R.id.rowHolidays to "🏖️  Holidays",
             R.id.rowChangePassword to "🔒  Change Password",
-            R.id.rowLogout to "⎋  Sign Out"
+            R.id.rowLogout to "⎋  Sign Out",
+            R.id.rowMyWork to "🙋  My Work",
+            R.id.rowWorkTracker to "📝  Work Tracker",
+            R.id.rowTaskBoard to "🗂️  Task Board",
+            R.id.rowAllTasks to "📋  All Tasks"
         )
         labels.forEach { (rowId, label) ->
             view.findViewById<View>(rowId)
@@ -153,6 +157,45 @@ class MoreFragment : Fragment() {
         view.findViewById<View>(R.id.rowAdvanceApprovals)?.let { row ->
             row.visibility = if (Roles.canApproveAdvance(role)) View.VISIBLE else View.GONE
             row.setOnClickListener { nav(AdvanceApprovalsFragment()) }
+        }
+
+        // My Work — every employee sees their own assigned tasks.
+        view.findViewById<View>(R.id.rowMyWork)?.setOnClickListener { nav(MyWorkFragment()) }
+
+        // Task Board / All Tasks — "manager" = has real reportees in the org
+        // chart (checked server-side), NOT the role field literally saying
+        // "manager". Start hidden, reveal once we know.
+        val rowTaskBoard = view.findViewById<View>(R.id.rowTaskBoard)
+        val rowAllTasks  = view.findViewById<View>(R.id.rowAllTasks)
+        rowTaskBoard?.visibility = View.GONE
+        rowAllTasks?.visibility = View.GONE
+        rowTaskBoard?.setOnClickListener { nav(TaskBoardFragment()) }
+        rowAllTasks?.setOnClickListener { nav(AllTasksFragment()) }
+        lifecycleScope.launch {
+            try {
+                val res = RetrofitClient.instance.amIManager()
+                val d = res.body()?.data
+                val isMgrOrAdmin = d?.isManager == true || d?.isSuperAdmin == true
+                if (isMgrOrAdmin) {
+                    rowTaskBoard?.visibility = View.VISIBLE
+                    rowAllTasks?.visibility = View.VISIBLE
+                }
+            } catch (_: Exception) {}
+        }
+
+        // Work Tracker — only if this employee has been flagged required, OR
+        // they manage others (to toggle who's required / view submitted logs).
+        val rowWorkTracker = view.findViewById<View>(R.id.rowWorkTracker)
+        rowWorkTracker?.visibility = View.GONE
+        rowWorkTracker?.setOnClickListener { nav(WorkTrackerFragment()) }
+        lifecycleScope.launch {
+            try {
+                val res = RetrofitClient.instance.getWorkTrackerMyStatus()
+                val d = res.body()?.data
+                if (d?.required == true || d?.canManageOthers == true) {
+                    rowWorkTracker?.visibility = View.VISIBLE
+                }
+            } catch (_: Exception) {}
         }
     }
 }
