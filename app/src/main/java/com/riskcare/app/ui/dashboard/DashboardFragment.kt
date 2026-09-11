@@ -188,7 +188,22 @@ class DashboardFragment : Fragment() {
                 if (_b != null && (d?.required == true || d?.canManageOthers == true)) {
                     binding.menuWorkTracker.visibility = View.VISIBLE
                 }
-            } catch (_: Exception) {}
+            } catch (_: Exception) {
+            } finally {
+                detachHiddenQuickAccessTiles()
+            }
+        }
+    }
+
+    // GridLayout (unlike LinearLayout) still auto-assigns an implicit row/
+    // column to GONE children, so any tile that stayed hidden above leaves a
+    // visible blank cell mid-grid, pushing later tiles onto their own row.
+    // Detach those from the grid entirely so the remaining tiles flow
+    // together with no gaps.
+    private fun detachHiddenQuickAccessTiles() {
+        if (_b == null) return
+        listOf(binding.menuEmployees, binding.menuApprovals, binding.menuGeofence, binding.menuWorkTracker).forEach { tile ->
+            if (tile.visibility != View.VISIBLE) (tile.parent as? ViewGroup)?.removeView(tile)
         }
     }
 
