@@ -174,6 +174,22 @@ class DashboardFragment : Fragment() {
             binding.menuGeofence.visibility = View.VISIBLE
             binding.menuGeofence.setOnClickListener { nav(GeofenceAdminFragment()) }
         }
+
+        // Work Tickets — every employee can raise/track a support ticket.
+        binding.menuWorkTickets.setOnClickListener { nav(com.riskcare.app.ui.tickets.TicketsFragment()) }
+
+        // Work Tracker — only if this employee has been flagged required, OR
+        // they manage others (to toggle who's required / view submitted logs).
+        binding.menuWorkTracker.setOnClickListener { nav(com.riskcare.app.ui.tasks.WorkTrackerFragment()) }
+        lifecycleScope.launch {
+            try {
+                val res = RetrofitClient.instance.getWorkTrackerMyStatus()
+                val d = res.body()?.data
+                if (_b != null && (d?.required == true || d?.canManageOthers == true)) {
+                    binding.menuWorkTracker.visibility = View.VISIBLE
+                }
+            } catch (_: Exception) {}
+        }
     }
 
     // Paint the action tile: rounded colored background + white icon + label —
