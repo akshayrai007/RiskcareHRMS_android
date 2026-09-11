@@ -183,10 +183,7 @@ class AttendanceTodayFragment : Fragment(), OnMapReadyCallback {
         initMapFragment()
         loadGeofenceMap()
 
-        val empType = com.riskcare.app.utils.SessionManager(requireContext()).getEmployee()?.employmentType
-        permissionManager.checkAndRequestAll(
-            isOffsiteEmployee = com.riskcare.app.permission.PermissionManager.isOffsiteEmployee(empType)
-        ) { _ -> /* dot appears via mapLocationRunnable */ }
+        permissionManager.checkAndRequestAll { _ -> /* dot appears via mapLocationRunnable */ }
     }
 
     // ── Map init ──────────────────────────────────────────────────────────────
@@ -828,9 +825,7 @@ class AttendanceTodayFragment : Fragment(), OnMapReadyCallback {
 
     private fun doPunch() {
         if (isPunching) { toast("⏳ Already processing punch, please wait..."); return }
-        val empType = com.riskcare.app.utils.SessionManager(requireContext()).getEmployee()?.employmentType
-        val isOffsite = com.riskcare.app.permission.PermissionManager.isOffsiteEmployee(empType)
-        permissionManager.checkAndRequestAll(isOffsiteEmployee = isOffsite) { granted ->
+        permissionManager.checkAndRequestAll { granted ->
             if (granted) checkGpsAndPunch()
         }
     }
@@ -912,27 +907,9 @@ class AttendanceTodayFragment : Fragment(), OnMapReadyCallback {
                                     Log.w("AttendanceFragment", "Punch-in point queue failed: ${e.message}")
                                 }
                             }
-                            val sessionMgr2  = com.riskcare.app.utils.SessionManager(requireContext())
-                            val empType      = sessionMgr2.getEmployee()?.employmentType
-                            val isOffsiteEmp = com.riskcare.app.permission.PermissionManager.isOffsiteEmployee(empType)
-                            if (isOffsiteEmp || isOnOD) {
-                                // Offsite / OD employees: tracking is MANDATORY.
-                                // Re-run permissions with isOffsite=true so background
-                                // location cannot be skipped, then start the service.
-                                permissionManager.checkAndRequestAll(isOffsiteEmployee = true) { permGranted ->
-                                    if (permGranted) {
-                                        LocationTrackingService.start(requireContext(), isOd = isOnOD)
-                                        LocationTrackingService.requestBatteryExemption(requireContext())
-                                        showTrackingSetupDialogIfNeeded()
-                                    } else {
-                                        android.util.Log.w("AttendanceFragment",
-                                            "Offsite punch-in: background location denied — tracking not started")
-                                    }
-                                }
-                            } else {
-                                // Onsite employees: tracking is optional — show prompt with skip option
-                                showOnsiteTrackingPrompt(isOnOD)
-                            }
+                            // Movement/location tracking removed — no corresponding
+                            // feature on the web app. Punch-in records a one-time
+                            // lat/lng inside the geofence, nothing ongoing.
                         } else {
                             LocationTrackingService.stop(requireContext(), StopReason.PUNCH_OUT)
                         }
@@ -989,24 +966,13 @@ class AttendanceTodayFragment : Fragment(), OnMapReadyCallback {
         checkAndRequestAllPermissions()
     }
 
+    // Foreground location only — needed so the geofence map can show the
+    // employee's own dot. No background permission, no battery-optimization
+    // prompt, no tracking setup: Riskcare has no continuous tracking feature.
     private fun checkAndRequestAllPermissions() {
-        val ctx      = requireContext()
-        val empType  = com.riskcare.app.utils.SessionManager(ctx).getEmployee()?.employmentType
-        val offsite  = com.riskcare.app.permission.PermissionManager.isOffsiteEmployee(empType)
-        val pm       = ctx.getSystemService(android.content.Context.POWER_SERVICE) as android.os.PowerManager
         if (!permissionManager.hasForegroundPermission()) {
-            permissionManager.checkAndRequestAll(isOffsiteEmployee = offsite) {}; return
+            permissionManager.checkAndRequestAll {}
         }
-        if (!pm.isIgnoringBatteryOptimizations(ctx.packageName)) {
-            try { startActivity(android.content.Intent(android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply { data = android.net.Uri.parse("package:${ctx.packageName}") }) }
-            catch (_: Exception) {}
-            return
-        }
-        if (!permissionManager.hasBackgroundPermission()) {
-            permissionManager.checkAndRequestAll(isOffsiteEmployee = offsite) {}; return
-        }
-        val prefs = ctx.getSharedPreferences(AndroidMain.PREFS_TRACK, android.content.Context.MODE_PRIVATE)
-        if (!prefs.getBoolean("autostart_asked", false)) { prefs.edit().putBoolean("autostart_asked", true).apply(); showTrackingSetupDialogIfNeeded() }
     }
 
     override fun onPause() {

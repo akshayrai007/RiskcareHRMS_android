@@ -65,7 +65,6 @@
             <include layout="@layout/item_more_row" android:id="@+id/rowSeparation"/>
             <include layout="@layout/item_more_row" android:id="@+id/rowPayrollMgmt"/>
             <include layout="@layout/item_more_row" android:id="@+id/rowProvision"/>
-            <include layout="@layout/item_more_row" android:id="@+id/rowProjectMgmt"/>
 
             <!-- SECTION: Account -->
             <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="ACCOUNT" android:textSize="11sp" android:textStyle="bold" android:textColor="@color/text_hint" android:paddingHorizontal="16dp" android:paddingTop="14dp" android:paddingBottom="4dp"/>

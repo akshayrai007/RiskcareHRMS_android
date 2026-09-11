@@ -61,7 +61,6 @@ class MoreFragment : Fragment() {
             R.id.rowSeparation to "🚪  Separation",
             R.id.rowPayrollMgmt to "📊  Payroll Management",
             R.id.rowProvision to "📝  Probation & Confirmation",
-            R.id.rowProjectMgmt to "🗂️  Project Management",
             R.id.rowBirthdays to "🎂  Birthdays",
             R.id.rowAnniversaries to "🎉  Work Anniversaries",
             R.id.rowHolidays to "🏖️  Holidays",
@@ -148,11 +147,6 @@ class MoreFragment : Fragment() {
         view.findViewById<View>(R.id.rowProvision)?.let { row ->
             row.visibility = if (Roles.canSeeProvision(role)) View.VISIBLE else View.GONE
             row.setOnClickListener { nav(ProvisionFragment()) }
-        }
-        view.findViewById<View>(R.id.rowProjectMgmt)?.let { row ->
-            val adminRoles = listOf(Roles.ACCOUNTS, Roles.SUPER_ADMIN, Roles.ADMIN, Roles.MANAGER, Roles.HR, Roles.TL)
-            row.visibility = if (role in adminRoles) View.VISIBLE else View.GONE
-            row.setOnClickListener { nav(ProjectManagementFragment()) }
         }
         // Beat Plan removed — not required for this deployment
 
