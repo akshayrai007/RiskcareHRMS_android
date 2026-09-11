@@ -39,6 +39,27 @@ data class ForgotVerifyEmployeeIdRequest(@SerializedName("employee_id") val empl
 data class ResetTokenData(@SerializedName("reset_token") val resetToken: String)
 data class ForgotResetRequest(@SerializedName("reset_token") val resetToken: String, @SerializedName("new_password") val newPassword: String)
 
+// ── Org Chart — flat list from GET /org-chart, assembled into a tree client-side ─
+data class OrgChartPerson(
+    val id: Int,
+    @SerializedName("first_name")             val firstName: String? = null,
+    @SerializedName("last_name")              val lastName: String? = null,
+    @SerializedName("employee_code")          val employeeCode: String? = null,
+    val role: String? = null,
+    val level: String? = null,
+    @SerializedName("profile_photo")          val profilePhoto: String? = null,
+    @SerializedName("reporting_manager_id")   val reportingManagerId: Int? = null,
+    @SerializedName("joining_date")           val joiningDate: String? = null,
+    val email: String? = null,
+    val phone: String? = null,
+    val city: String? = null,
+    @SerializedName("department_name")        val departmentName: String? = null,
+    @SerializedName("designation_title")      val designationTitle: String? = null
+) {
+    val fullName get() = listOfNotNull(firstName, lastName).joinToString(" ").ifBlank { "—" }
+    val initials get() = "${firstName?.firstOrNull() ?: ' '}${lastName?.firstOrNull() ?: ' '}".trim().uppercase()
+}
+
 // ── Employee ──────────────────────────────────────────────────────────────────
 @Parcelize
 data class Employee(

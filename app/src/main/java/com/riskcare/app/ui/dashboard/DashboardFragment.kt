@@ -178,6 +178,9 @@ class DashboardFragment : Fragment() {
         // Calendar — jumps straight to Attendance's Calendar tab.
         binding.menuCalendar.setOnClickListener { nav(com.riskcare.app.ui.attendance.AttendanceCalendarFragment()) }
 
+        // Org Chart — drill-down reporting hierarchy, mirrors org-chart.html.
+        binding.menuOrgChart.setOnClickListener { nav(OrgChartFragment()) }
+
         // Work Tickets — every employee can raise/track a support ticket.
         binding.menuWorkTickets.setOnClickListener { nav(com.riskcare.app.ui.tickets.TicketsFragment()) }
 

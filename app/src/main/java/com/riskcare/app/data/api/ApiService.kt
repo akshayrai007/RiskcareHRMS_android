@@ -66,6 +66,9 @@ interface ApiService {
     @GET("designations")
     suspend fun getDesignations(): Response<ApiResponse<List<Designation>>>
 
+    @GET("org-chart")
+    suspend fun getOrgChart(): Response<ApiResponse<List<OrgChartPerson>>>
+
     // ── Attendance ────────────────────────────────────────────────────────────
     @POST("attendance/punch-in")
     suspend fun punchIn(@Body request: PunchRequest): Response<ApiResponse<Unit>>

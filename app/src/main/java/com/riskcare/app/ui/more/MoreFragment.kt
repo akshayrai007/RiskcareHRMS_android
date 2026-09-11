@@ -4338,3 +4338,208 @@ class ProjectManagementFragment : Fragment() {
         return scroll
     }
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ORG CHART — drill-down reporting hierarchy, mirrors org-chart.html
+// ═══════════════════════════════════════════════════════════════════════════════
+class OrgChartFragment : Fragment() {
+    private data class Node(val person: OrgChartPerson?, val children: MutableList<Node> = mutableListOf())
+
+    private val ROOT_ID = -1
+    private var byId = mutableMapOf<Int, Node>()
+    private var focusId = ROOT_ID
+    private lateinit var crumbRow: LinearLayout
+    private lateinit var stage: LinearLayout
+    private lateinit var tvEmpty: TextView
+
+    private val roleColors = mapOf(
+        "super_admin" to "#7C3AED", "admin" to "#EF4444", "hr" to "#10B981",
+        "accounts" to "#F59E0B", "manager" to "#4361EE", "tl" to "#F59E0B", "employee" to "#6B7280"
+    )
+
+    override fun onCreateView(i: LayoutInflater, c: ViewGroup?, s: Bundle?): View {
+        val ctx = requireContext(); val dp = ctx.resources.displayMetrics.density
+        val sv = android.widget.ScrollView(ctx)
+        val root = LinearLayout(ctx).apply {
+            orientation = LinearLayout.VERTICAL
+            setBackgroundColor(ctx.getColor(R.color.background))
+            setPadding((16*dp).toInt(), (16*dp).toInt(), (16*dp).toInt(), (80*dp).toInt())
+        }
+        sv.addView(root)
+
+        root.addView(TextView(ctx).apply {
+            text = "🧭 Organisation Chart"; textSize = 18f; setTypeface(null, android.graphics.Typeface.BOLD)
+            setTextColor(ctx.getColor(R.color.text_primary))
+            setPadding(0, 0, 0, (12*dp).toInt())
+        })
+
+        crumbRow = LinearLayout(ctx).apply {
+            orientation = LinearLayout.HORIZONTAL
+            setPadding(0, 0, 0, (12*dp).toInt())
+        }
+        val crumbScroll = android.widget.HorizontalScrollView(ctx).apply { isHorizontalScrollBarEnabled = false }
+        crumbScroll.addView(crumbRow)
+        root.addView(crumbScroll)
+
+        stage = LinearLayout(ctx).apply { orientation = LinearLayout.VERTICAL }
+        root.addView(stage)
+
+        tvEmpty = TextView(ctx).apply {
+            text = "Loading org chart…"; textSize = 14f; gravity = android.view.Gravity.CENTER
+            setTextColor(ctx.getColor(R.color.text_hint))
+            setPadding(0, (40*dp).toInt(), 0, 0)
+        }
+        root.addView(tvEmpty)
+
+        load()
+        return sv
+    }
+
+    private fun load() {
+        lifecycleScope.launch {
+            try {
+                val people = RetrofitClient.instance.getOrgChart().body()?.data ?: emptyList()
+                if (people.isEmpty()) { tvEmpty.text = "No employees found."; return@launch }
+                tvEmpty.visibility = View.GONE
+
+                byId = mutableMapOf()
+                people.forEach { byId[it.id] = Node(it) }
+                val roots = mutableListOf<Node>()
+                people.forEach { p ->
+                    val node = byId[p.id]!!
+                    val mgr = p.reportingManagerId?.let { byId[it] }
+                    if (mgr != null) mgr.children.add(node) else roots.add(node)
+                }
+                byId[ROOT_ID] = Node(null, roots)
+                focusId = ROOT_ID
+                render()
+            } catch (e: Exception) {
+                tvEmpty.text = "Error loading org chart: ${e.message}"
+            }
+        }
+    }
+
+    private fun pathToFocus(): List<Int> {
+        val chain = mutableListOf<Int>()
+        var curId: Int? = focusId
+        while (curId != null && curId != ROOT_ID) {
+            chain.add(0, curId)
+            curId = byId[curId]?.person?.reportingManagerId
+        }
+        chain.add(0, ROOT_ID)
+        return chain
+    }
+
+    private fun render() {
+        val ctx = requireContext(); val dp = ctx.resources.displayMetrics.density
+        stage.removeAllViews()
+        crumbRow.removeAllViews()
+
+        // Breadcrumb
+        pathToFocus().forEachIndexed { idx, id ->
+            if (idx > 0) crumbRow.addView(TextView(ctx).apply {
+                text = "  ›  "; textSize = 12f; setTextColor(ctx.getColor(R.color.text_hint))
+            })
+            val isLast = id == focusId
+            val label = if (id == ROOT_ID) "🏢 Organisation" else byId[id]?.person?.fullName ?: "—"
+            crumbRow.addView(TextView(ctx).apply {
+                text = label; textSize = 12f
+                setTextColor(if (isLast) ctx.getColor(R.color.text_primary) else ctx.getColor(R.color.primary))
+                setTypeface(null, if (isLast) android.graphics.Typeface.BOLD else android.graphics.Typeface.NORMAL)
+                setPadding((6*dp).toInt(), (4*dp).toInt(), (6*dp).toInt(), (4*dp).toInt())
+                if (!isLast) setOnClickListener { focusId = id; render() }
+            })
+        }
+
+        val focus = byId[focusId] ?: return
+
+        fun personCard(node: Node, big: Boolean): androidx.cardview.widget.CardView {
+            val p = node.person!!
+            val card = androidx.cardview.widget.CardView(ctx).apply {
+                radius = 12*dp; cardElevation = 2*dp; setCardBackgroundColor(ctx.getColor(R.color.surface))
+                layoutParams = LinearLayout.LayoutParams(if (big) LinearLayout.LayoutParams.MATCH_PARENT else 0, LinearLayout.LayoutParams.WRAP_CONTENT, if (big) 0f else 1f)
+                    .also { it.setMargins((4*dp).toInt(), (4*dp).toInt(), (4*dp).toInt(), (4*dp).toInt()) }
+                isClickable = true; isFocusable = true
+                setOnClickListener { if (!big) { focusId = p.id; render() } }
+            }
+            val inner = LinearLayout(ctx).apply {
+                orientation = LinearLayout.HORIZONTAL; gravity = android.view.Gravity.CENTER_VERTICAL
+                setPadding((12*dp).toInt(), (12*dp).toInt(), (12*dp).toInt(), (12*dp).toInt())
+            }
+            val avSize = if (big) (56*dp).toInt() else (40*dp).toInt()
+            val color = android.graphics.Color.parseColor(roleColors[p.role] ?: "#6B7280")
+            val avatar = androidx.cardview.widget.CardView(ctx).apply {
+                radius = avSize / 2f; cardElevation = 0f; setCardBackgroundColor(color)
+                layoutParams = LinearLayout.LayoutParams(avSize, avSize).also { it.marginEnd = (10*dp).toInt() }
+            }
+            avatar.addView(TextView(ctx).apply {
+                text = p.initials; setTextColor(android.graphics.Color.WHITE); gravity = android.view.Gravity.CENTER
+                textSize = if (big) 16f else 12f; setTypeface(null, android.graphics.Typeface.BOLD)
+                layoutParams = FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT)
+            })
+            inner.addView(avatar)
+            val info = LinearLayout(ctx).apply {
+                orientation = LinearLayout.VERTICAL
+                layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+            }
+            info.addView(TextView(ctx).apply {
+                text = p.fullName; textSize = if (big) 15f else 12.5f; setTypeface(null, android.graphics.Typeface.BOLD)
+                setTextColor(ctx.getColor(R.color.text_primary))
+            })
+            info.addView(TextView(ctx).apply {
+                text = "${p.designationTitle ?: p.role ?: "—"} · ${p.departmentName ?: "—"}"
+                textSize = if (big) 12f else 10f; setTextColor(ctx.getColor(R.color.text_hint))
+            })
+            val kidCount = node.children.size
+            if (kidCount > 0) info.addView(TextView(ctx).apply {
+                text = "$kidCount report${if (kidCount > 1) "s" else ""}"
+                textSize = 10f; setTextColor(ctx.getColor(R.color.primary))
+            })
+            inner.addView(info)
+            card.addView(inner)
+            return card
+        }
+
+        if (focusId == ROOT_ID) {
+            // Top level: show roots directly in a 2-column grid
+            var row: LinearLayout? = null
+            focus.children.forEachIndexed { idx, node ->
+                if (idx % 2 == 0) {
+                    row = LinearLayout(ctx).apply {
+                        orientation = LinearLayout.HORIZONTAL
+                        layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+                    }
+                    stage.addView(row)
+                }
+                row?.addView(personCard(node, big = false))
+            }
+        } else {
+            stage.addView(personCard(focus, big = true))
+            val kids = focus.children
+            if (kids.isEmpty()) {
+                stage.addView(TextView(ctx).apply {
+                    text = "No direct reports."; textSize = 12f; gravity = android.view.Gravity.CENTER
+                    setTextColor(ctx.getColor(R.color.text_hint))
+                    setPadding(0, (16*dp).toInt(), 0, 0)
+                })
+            } else {
+                stage.addView(TextView(ctx).apply {
+                    text = "${kids.size} direct report${if (kids.size > 1) "s" else ""}"
+                    textSize = 12f; setTextColor(ctx.getColor(R.color.text_hint))
+                    setPadding(0, (12*dp).toInt(), 0, (6*dp).toInt())
+                })
+                var row: LinearLayout? = null
+                kids.forEachIndexed { idx, node ->
+                    if (idx % 2 == 0) {
+                        row = LinearLayout(ctx).apply {
+                            orientation = LinearLayout.HORIZONTAL
+                            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+                        }
+                        stage.addView(row)
+                    }
+                    row?.addView(personCard(node, big = false))
+                }
+            }
+        }
+    }
+}

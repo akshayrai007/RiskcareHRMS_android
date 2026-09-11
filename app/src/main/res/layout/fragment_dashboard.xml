@@ -472,6 +472,12 @@
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Leave" android:textSize="9sp" android:gravity="center" android:layout_marginTop="4dp" android:textColor="@color/text_primary"/>
             </LinearLayout>
 
+            <!-- Org Chart -->
+            <LinearLayout android:id="@+id/menuOrgChart" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:orientation="vertical" android:gravity="center" android:padding="6dp" android:background="?attr/selectableItemBackgroundBorderless" android:clickable="true" android:focusable="true">
+                <androidx.cardview.widget.CardView android:layout_width="52dp" android:layout_height="52dp" app:cardCornerRadius="14dp" app:cardElevation="2dp" app:cardBackgroundColor="#E5E7EB"><ImageView android:layout_width="28dp" android:layout_height="28dp" android:layout_gravity="center" android:src="@drawable/ic_employees" android:tint="#374151"/></androidx.cardview.widget.CardView>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Org Chart" android:textSize="9sp" android:gravity="center" android:layout_marginTop="4dp" android:textColor="@color/text_primary"/>
+            </LinearLayout>
+
             <!-- Payslip -->
             <LinearLayout android:id="@+id/menuPayslip" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:orientation="vertical" android:gravity="center" android:padding="6dp" android:background="?attr/selectableItemBackgroundBorderless" android:clickable="true" android:focusable="true">
                 <androidx.cardview.widget.CardView android:layout_width="52dp" android:layout_height="52dp" app:cardCornerRadius="14dp" app:cardElevation="2dp" app:cardBackgroundColor="#E0E7FF"><ImageView android:layout_width="28dp" android:layout_height="28dp" android:layout_gravity="center" android:src="@drawable/ic_payroll" android:tint="#4338CA"/></androidx.cardview.widget.CardView>
