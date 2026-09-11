@@ -18,6 +18,7 @@ import com.riskcare.app.utils.SessionManager
 import com.riskcare.app.utils.hideKeyboard
 import com.riskcare.app.utils.toast
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 class LoginActivity : AppCompatActivity() {
 
@@ -82,6 +83,10 @@ class LoginActivity : AppCompatActivity() {
                 if (response.isSuccessful && response.body()?.success == true) {
                     val data = response.body()!!.data!!
                     sessionManager.saveSession(data.token, data.employee)
+                    try {
+                        val fcmToken = com.google.firebase.messaging.FirebaseMessaging.getInstance().token.await()
+                        RetrofitClient.instance.updateFcmToken(mapOf("fcm_token" to fcmToken))
+                    } catch (_: Exception) { /* push notifications are best-effort */ }
                     startActivity(Intent(this@LoginActivity, MainActivity::class.java))
                     finish()
                     overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)

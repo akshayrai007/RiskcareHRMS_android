@@ -21,6 +21,7 @@ import com.riskcare.app.utils.SessionManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -95,6 +96,13 @@ class SplashActivity : AppCompatActivity() {
             delay(300L)
 
             window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+
+            if (session.isLoggedIn()) {
+                try {
+                    val fcmToken = com.google.firebase.messaging.FirebaseMessaging.getInstance().token.await()
+                    RetrofitClient.instance.updateFcmToken(mapOf("fcm_token" to fcmToken))
+                } catch (_: Exception) { /* push notifications are best-effort */ }
+            }
 
             val intent = if (session.isLoggedIn()) {
                 Intent(this@SplashActivity, MainActivity::class.java).apply {

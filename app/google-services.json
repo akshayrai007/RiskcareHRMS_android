@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "146485432836",
+    "project_id": "riskcarehr-a6afb",
+    "storage_bucket": "riskcarehr-a6afb.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:146485432836:android:44c1b547432054e34e9b51",
+        "android_client_info": {
+          "package_name": "com.riskcare.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAczPrUWMfZyx9LWn2Vmsb6y4q_Jr6Si2E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

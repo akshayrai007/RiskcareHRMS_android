@@ -754,6 +754,10 @@ interface ApiService {
         @Query("department_id") departmentId: Int? = null
     ): Response<WorkLogListResponse>
 
+    // ── Push Notifications (FCM) ─────────────────────────────────────────────
+    @POST("notifications/fcm-token")
+    suspend fun updateFcmToken(@Body body: Map<String, String>): Response<ApiResponse<Unit>>
+
     // ── Asset Allocation ─────────────────────────────────────────────────────
     @GET("assets/my")
     suspend fun getMyAssets(): Response<AssetListResponse>
