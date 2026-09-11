@@ -21,10 +21,7 @@ import com.riskcare.app.R
 import com.riskcare.app.data.api.RetrofitClient
 import com.riskcare.app.data.models.*
 import com.riskcare.app.databinding.FragmentDashboardBinding
-import com.riskcare.app.domain.model.StopReason
-import com.riskcare.app.domain.model.TrackingPrefs
 import com.riskcare.app.permission.PermissionManager
-import com.riskcare.app.service.LocationTrackingService
 import com.riskcare.app.ui.MainActivity
 import com.riskcare.app.ui.attendance.AttendanceFragment
 import com.riskcare.app.ui.more.GeofenceAdminFragment
@@ -730,34 +727,14 @@ class DashboardFragment : Fragment() {
                         Toast.makeText(ctx, msg, Toast.LENGTH_SHORT).show()
 
                         if (!hasPunchedIn) {
-                            // Post-punch-in: log movement + start tracking
-                            val todayStr = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
-                            val isOnOD = try {
-                                val odRes = RetrofitClient.instance.getMyODRequests(status = "approved")
-                                (odRes.body()?.data ?: emptyList()).any { od -> (od.fromDate?.take(10) ?: "") <= todayStr && (od.toDate?.take(10) ?: "") >= todayStr }
-                            } catch (_: Exception) { false }
-                            ctx.getSharedPreferences(TrackingPrefs.PREFS_NAME, android.content.Context.MODE_PRIVATE)
-                                .edit().putBoolean(TrackingPrefs.KEY_IS_OD, isOnOD).apply()
-                            if (lat != null && lng != null) {
-                                try {
-                                    RetrofitClient.instance.logMovement(
-                                        MovementLogRequest(lat = lat, lng = lng, accuracy = 0f, isOd = isOnOD)
-                                    )
-                                } catch (e: Exception) {
-                                    Log.w("DashboardFragment", "First movement log failed: ${e.message}")
-                                }
-                            }
-                            val session = SessionManager(ctx)
-                            val satPolicy = session.getEmployee()?.saturdayPolicy ?: ""
-                            val isOffsiteEmp = satPolicy == "all_working"
-                            if (isOffsiteEmp || isOnOD) {
-                                LocationTrackingService.start(ctx, isOd = isOnOD)
-                                LocationTrackingService.requestBatteryExemption(ctx)
-                            }
+                            // Movement/location tracking removed — it has no
+                            // corresponding page on the web app (movement.html
+                            // exists in the repo but isn't linked in web nav,
+                            // so it's not a real feature there). Punch-in now
+                            // does exactly what the web app does: record the
+                            // punch and its one-time lat/lng, nothing ongoing.
                             hasPunchedIn = true
                         } else {
-                            // Post-punch-out: stop tracking
-                            LocationTrackingService.stop(ctx, StopReason.PUNCH_OUT)
                             ctx.getSharedPreferences(AndroidMain.PREFS_LEAVE_CACHE, android.content.Context.MODE_PRIVATE)
                                 .edit().putBoolean("balance_stale", true).apply()
                             hasPunchedOut = true

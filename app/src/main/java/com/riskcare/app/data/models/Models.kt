@@ -334,6 +334,9 @@ data class Payslip(
     val conveyance: Double? = null,
     @SerializedName("special_allowance") val specialAllowance: Double? = null,
     val gratuity: Double? = null,
+    // Food Coupon — stored in the DB's pre-existing other_allowance column.
+    // Fixed monthly benefit for select employees, NOT prorated by attendance.
+    @SerializedName("other_allowance") val foodCoupon: Double? = null,
     @SerializedName("gross_salary") val grossSalary: Double = 0.0,
     @SerializedName("net_salary") val netSalary: Double = 0.0,
     @SerializedName("total_deductions") val totalDeductions: Double = 0.0,
@@ -1397,4 +1400,92 @@ data class EmpDocUploadResponse(
     val success: Boolean,
     val message: String? = null
 )
+
+// ══════════════════════════════════════════════════════════════════════════
+// TASKS — matches backend taskController.js exactly.
+// "Manager" for task purposes = has real reportees (checked server-side via
+// GET tasks/am-i-manager), NOT the literal role field.
+// ══════════════════════════════════════════════════════════════════════════
+data class Task(
+    val id: Int,
+    val title: String,
+    val description: String? = null,
+    val priority: String = "medium",       // low | medium | high
+    val status: String = "pending",        // pending | in_progress | completed
+    @SerializedName("is_compulsory")  val isCompulsory: Boolean = false,
+    @SerializedName("due_date")       val dueDate: String? = null,
+    @SerializedName("completed_at")   val completedAt: String? = null,
+    @SerializedName("created_at")     val createdAt: String? = null,
+    @SerializedName("updated_at")     val updatedAt: String? = null,
+    @SerializedName("assigned_to")    val assignedTo: Int,
+    @SerializedName("assignee_name")  val assigneeName: String? = null,
+    @SerializedName("assignee_code")  val assigneeCode: String? = null,
+    @SerializedName("department_name") val departmentName: String? = null,
+    @SerializedName("assigned_by")    val assignedBy: Int? = null,
+    @SerializedName("assigner_name")  val assignerName: String? = null
+)
+data class TaskListResponse(val success: Boolean, val data: List<Task>? = null, val message: String? = null)
+data class TaskCreateRequest(
+    val title: String,
+    val description: String? = null,
+    @SerializedName("assigned_to") val assignedTo: Int,
+    val priority: String = "medium",
+    @SerializedName("is_compulsory") val isCompulsory: Boolean = false,
+    @SerializedName("due_date") val dueDate: String? = null
+)
+data class TaskStatusRequest(val status: String)
+data class TaskStatsData(val pending: Int = 0, @SerializedName("in_progress") val inProgress: Int = 0, val completed: Int = 0)
+data class TaskStatsResponse(val success: Boolean, val data: TaskStatsData? = null)
+data class TaskBoardColumns(
+    val pending: List<Task> = emptyList(),
+    @SerializedName("in_progress") val inProgress: List<Task> = emptyList(),
+    val completed: List<Task> = emptyList()
+)
+data class TaskBoardData(val columns: TaskBoardColumns, val order: List<String>? = null)
+data class TaskBoardResponse(val success: Boolean, val data: TaskBoardData? = null)
+data class AssignableEmployee(
+    val id: Int,
+    @SerializedName("employee_code") val employeeCode: String,
+    val name: String,
+    @SerializedName("department_name") val departmentName: String? = null
+)
+data class AssignableEmployeesResponse(val success: Boolean, val data: List<AssignableEmployee>? = null)
+data class AmIManagerData(@SerializedName("is_manager") val isManager: Boolean = false, @SerializedName("is_super_admin") val isSuperAdmin: Boolean = false)
+data class AmIManagerResponse(val success: Boolean, val data: AmIManagerData? = null)
+
+// ══════════════════════════════════════════════════════════════════════════
+// WORK TRACKER — matches backend workTrackerController.js exactly. Only
+// visible to an employee once flagged "required" by their manager/admin —
+// check GET work-tracker/my-status before showing this section at all.
+// ══════════════════════════════════════════════════════════════════════════
+data class WorkTrackerStatusData(
+    val required: Boolean = false,
+    @SerializedName("can_manage_others") val canManageOthers: Boolean = false
+)
+data class WorkTrackerStatusResponse(val success: Boolean, val data: WorkTrackerStatusData? = null)
+data class WorkLogSubmitRequest(
+    @SerializedName("log_date") val logDate: String? = null, // defaults server-side to today
+    val summary: String,
+    @SerializedName("hours_spent") val hoursSpent: Double? = null
+)
+data class WorkLog(
+    val id: Int,
+    @SerializedName("employee_id") val employeeId: Int,
+    @SerializedName("log_date") val logDate: String,
+    val summary: String,
+    @SerializedName("hours_spent") val hoursSpent: Double? = null,
+    @SerializedName("employee_code") val employeeCode: String? = null,
+    @SerializedName("employee_name") val employeeName: String? = null,
+    @SerializedName("department_name") val departmentName: String? = null
+)
+data class WorkLogListResponse(val success: Boolean, val data: List<WorkLog>? = null)
+data class WorkTrackerRequiredEmployee(
+    val id: Int,
+    @SerializedName("employee_code") val employeeCode: String,
+    val name: String,
+    @SerializedName("department_name") val departmentName: String? = null,
+    @SerializedName("work_tracker_required") val workTrackerRequired: Boolean = false
+)
+data class WorkTrackerRequiredListResponse(val success: Boolean, val data: List<WorkTrackerRequiredEmployee>? = null)
+data class WorkTrackerSetRequiredRequest(@SerializedName("employee_id") val employeeId: Int, val required: Boolean)
 

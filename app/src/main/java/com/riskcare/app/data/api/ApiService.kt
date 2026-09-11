@@ -691,5 +691,67 @@ interface ApiService {
         @Path("id") id: Int
     ): Response<okhttp3.ResponseBody>
 
+    // ── Tasks ─────────────────────────────────────────────────────────────────
+    // "Manager" = has real reportees (server-checked), not the role field —
+    // always call amIManager() before deciding whether to show
+    // Task Board / All Tasks / the Assign Task button.
+    @GET("tasks")
+    suspend fun getTasks(
+        @Query("mine") mine: String? = null,           // "1" for My Work (own tasks even if a manager)
+        @Query("status") status: String? = null,        // pending | in_progress | completed
+        @Query("priority") priority: String? = null,     // low | medium | high
+        @Query("department_id") departmentId: Int? = null,
+        @Query("search") search: String? = null
+    ): Response<TaskListResponse>
+
+    @POST("tasks")
+    suspend fun createTask(@Body request: TaskCreateRequest): Response<ApiResponse<Unit>>
+
+    @PUT("tasks/{id}")
+    suspend fun updateTask(@Path("id") id: Int, @Body body: Map<String, @JvmSuppressWildcards Any?>): Response<ApiResponse<Unit>>
+
+    @DELETE("tasks/{id}")
+    suspend fun deleteTask(@Path("id") id: Int): Response<ApiResponse<Unit>>
+
+    @POST("tasks/{id}/status")
+    suspend fun updateTaskStatus(@Path("id") id: Int, @Body request: TaskStatusRequest): Response<ApiResponse<Unit>>
+
+    @GET("tasks/assignable")
+    suspend fun getAssignableEmployees(@Query("department_id") departmentId: Int? = null): Response<AssignableEmployeesResponse>
+
+    @GET("tasks/stats")
+    suspend fun getTaskStats(@Query("department_id") departmentId: Int? = null): Response<TaskStatsResponse>
+
+    @GET("tasks/board")
+    suspend fun getTaskBoard(@Query("department_id") departmentId: Int? = null): Response<TaskBoardResponse>
+
+    @GET("tasks/am-i-manager")
+    suspend fun amIManager(): Response<AmIManagerResponse>
+
+    // ── Work Tracker ──────────────────────────────────────────────────────────
+    // Only show this section at all if getMyStatus().data.required == true,
+    // OR canManageOthers == true (a real manager / super admin).
+    @GET("work-tracker/my-status")
+    suspend fun getWorkTrackerMyStatus(): Response<WorkTrackerStatusResponse>
+
+    @POST("work-tracker/set-required")
+    suspend fun setWorkTrackerRequired(@Body request: WorkTrackerSetRequiredRequest): Response<ApiResponse<Unit>>
+
+    @GET("work-tracker/required-list")
+    suspend fun getWorkTrackerRequiredList(@Query("department_id") departmentId: Int? = null): Response<WorkTrackerRequiredListResponse>
+
+    @POST("work-tracker/submit")
+    suspend fun submitWorkLog(@Body request: WorkLogSubmitRequest): Response<ApiResponse<Unit>>
+
+    @GET("work-tracker/my-logs")
+    suspend fun getMyWorkLogs(): Response<WorkLogListResponse>
+
+    @GET("work-tracker/logs")
+    suspend fun getWorkTrackerLogs(
+        @Query("employee_id") employeeId: Int? = null,
+        @Query("from_date") fromDate: String? = null,
+        @Query("to_date") toDate: String? = null,
+        @Query("department_id") departmentId: Int? = null
+    ): Response<WorkLogListResponse>
 
 }
