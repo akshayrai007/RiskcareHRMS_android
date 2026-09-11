@@ -312,7 +312,7 @@ object AndroidMain {
     //     To rotate: update here AND in AndroidManifest.xml.
     // ══════════════════════════════════════════════════════════════════
 
-    const val GOOGLE_MAPS_API_KEY = "AIzaSyDp21tx1U1OVaXIGv8E8Y94RmfnQl1pNbo"
+    const val GOOGLE_MAPS_API_KEY = "AIzaSyDDQDYyVMhS5UWkzuW403F1ilKfxd2yETM"
 
 
     // ══════════════════════════════════════════════════════════════════
