@@ -68,33 +68,54 @@
                         android:padding="18dp"
                         android:gravity="center_vertical">
 
-                        <!-- Active pill -->
+                        <!-- Status pills row: Active + Late -->
                         <LinearLayout
-                            android:id="@+id/llActivePill"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:orientation="horizontal"
                             android:gravity="center_vertical"
-                            android:background="@drawable/bg_active_pill"
-                            android:paddingHorizontal="10dp"
-                            android:paddingVertical="4dp"
                             android:layout_marginBottom="10dp">
 
-                            <View
-                                android:id="@+id/vActiveDot"
-                                android:layout_width="6dp"
-                                android:layout_height="6dp"
-                                android:background="@drawable/bg_green_dot"
-                                android:layout_marginEnd="5dp"/>
-
-                            <TextView
-                                android:id="@+id/tvActivePillText"
+                            <LinearLayout
+                                android:id="@+id/llActivePill"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Active"
+                                android:orientation="horizontal"
+                                android:gravity="center_vertical"
+                                android:background="@drawable/bg_active_pill"
+                                android:paddingHorizontal="10dp"
+                                android:paddingVertical="4dp">
+
+                                <View
+                                    android:id="@+id/vActiveDot"
+                                    android:layout_width="6dp"
+                                    android:layout_height="6dp"
+                                    android:background="@drawable/bg_green_dot"
+                                    android:layout_marginEnd="5dp"/>
+
+                                <TextView
+                                    android:id="@+id/tvActivePillText"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Active"
+                                    android:textSize="11sp"
+                                    android:textStyle="bold"
+                                    android:textColor="@color/primary_dark"/>
+                            </LinearLayout>
+
+                            <TextView
+                                android:id="@+id/tvLatePill"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Late"
                                 android:textSize="11sp"
                                 android:textStyle="bold"
-                                android:textColor="@color/primary_dark"/>
+                                android:textColor="#8A5300"
+                                android:background="@drawable/bg_late_pill"
+                                android:paddingHorizontal="10dp"
+                                android:paddingVertical="4dp"
+                                android:layout_marginStart="6dp"
+                                android:visibility="gone"/>
                         </LinearLayout>
 
                         <!-- Big live clock -->
@@ -126,44 +147,43 @@
                         android:layout_height="match_parent"
                         android:background="@color/divider"/>
 
-                    <!-- RIGHT: white Mark Attendance panel -->
-                    <LinearLayout
-                        android:id="@+id/btnMarkAttendance"
-                        android:layout_width="110dp"
+                    <!-- RIGHT: single Punch In / Punch Out action tile -->
+                    <FrameLayout
+                        android:layout_width="118dp"
                         android:layout_height="match_parent"
-                        android:orientation="vertical"
-                        android:gravity="center"
                         android:background="@color/surface"
-                        android:padding="16dp"
-                        android:clickable="true"
-                        android:focusable="true">
+                        android:padding="12dp">
 
-                        <ImageView
-                            android:layout_width="26dp"
-                            android:layout_height="26dp"
-                            android:src="@drawable/ic_location"
-                            android:tint="@color/primary"
-                            android:layout_marginBottom="8dp"/>
+                        <LinearLayout
+                            android:id="@+id/btnMarkAttendance"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:orientation="vertical"
+                            android:gravity="center"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:foreground="?attr/selectableItemBackground">
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Mark"
-                            android:textSize="13sp"
-                            android:textStyle="bold"
-                            android:textColor="@color/primary"
-                            android:gravity="center"/>
+                            <ImageView
+                                android:id="@+id/ivPunchIcon"
+                                android:layout_width="28dp"
+                                android:layout_height="28dp"
+                                android:src="@drawable/ic_power"
+                                android:tint="#FFFFFF"
+                                android:layout_marginBottom="7dp"/>
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Attendance"
-                            android:textSize="13sp"
-                            android:textStyle="bold"
-                            android:textColor="@color/primary"
-                            android:gravity="center"/>
+                            <TextView
+                                android:id="@+id/tvPunchLabel"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Punch In"
+                                android:textColor="#FFFFFF"
+                                android:textSize="13sp"
+                                android:letterSpacing="0.01"
+                                android:textStyle="bold"/>
 
-                    </LinearLayout>
+                        </LinearLayout>
+                    </FrameLayout>
 
                 </LinearLayout>
 
@@ -390,13 +410,13 @@
 
             <!-- Attendance -->
             <LinearLayout android:id="@+id/menuAttendance" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:orientation="vertical" android:gravity="center" android:padding="6dp" android:background="?attr/selectableItemBackgroundBorderless" android:clickable="true" android:focusable="true">
-                <androidx.cardview.widget.CardView android:layout_width="52dp" android:layout_height="52dp" app:cardCornerRadius="14dp" app:cardElevation="2dp" app:cardBackgroundColor="@color/primary_ultra_light"><ImageView android:layout_width="28dp" android:layout_height="28dp" android:layout_gravity="center" android:src="@drawable/ic_attendance" android:tint="@color/primary"/></androidx.cardview.widget.CardView>
+                <androidx.cardview.widget.CardView android:layout_width="52dp" android:layout_height="52dp" app:cardCornerRadius="14dp" app:cardElevation="2dp" app:cardBackgroundColor="@color/primary_ultra_light"><ImageView android:layout_width="28dp" android:layout_height="28dp" android:layout_gravity="center" android:src="@drawable/ic_clock" android:tint="@color/primary"/></androidx.cardview.widget.CardView>
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Attendance" android:textSize="9sp" android:gravity="center" android:layout_marginTop="4dp" android:textColor="@color/text_primary"/>
             </LinearLayout>
 
             <!-- Leave -->
             <LinearLayout android:id="@+id/menuLeave" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:orientation="vertical" android:gravity="center" android:padding="6dp" android:background="?attr/selectableItemBackgroundBorderless" android:clickable="true" android:focusable="true">
-                <androidx.cardview.widget.CardView android:layout_width="52dp" android:layout_height="52dp" app:cardCornerRadius="14dp" app:cardElevation="2dp" app:cardBackgroundColor="@color/accent_orange_light"><ImageView android:layout_width="28dp" android:layout_height="28dp" android:layout_gravity="center" android:src="@drawable/ic_leave" android:tint="@color/accent_orange"/></androidx.cardview.widget.CardView>
+                <androidx.cardview.widget.CardView android:layout_width="52dp" android:layout_height="52dp" app:cardCornerRadius="14dp" app:cardElevation="2dp" app:cardBackgroundColor="@color/accent_orange_light"><ImageView android:layout_width="28dp" android:layout_height="28dp" android:layout_gravity="center" android:src="@drawable/ic_happy_face" android:tint="@color/accent_orange"/></androidx.cardview.widget.CardView>
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Leave" android:textSize="9sp" android:gravity="center" android:layout_marginTop="4dp" android:textColor="@color/text_primary"/>
             </LinearLayout>
 
@@ -414,13 +434,13 @@
 
             <!-- Quiz -->
             <LinearLayout android:id="@+id/menuQuiz" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:orientation="vertical" android:gravity="center" android:padding="6dp" android:background="?attr/selectableItemBackgroundBorderless" android:clickable="true" android:focusable="true">
-                <androidx.cardview.widget.CardView android:layout_width="52dp" android:layout_height="52dp" app:cardCornerRadius="14dp" app:cardElevation="2dp" app:cardBackgroundColor="@color/accent_pink_light"><ImageView android:layout_width="28dp" android:layout_height="28dp" android:layout_gravity="center" android:src="@drawable/ic_quiz" android:tint="@color/accent_pink"/></androidx.cardview.widget.CardView>
+                <androidx.cardview.widget.CardView android:layout_width="52dp" android:layout_height="52dp" app:cardCornerRadius="14dp" app:cardElevation="2dp" app:cardBackgroundColor="@color/accent_pink_light"><ImageView android:layout_width="28dp" android:layout_height="28dp" android:layout_gravity="center" android:src="@drawable/ic_brain" android:tint="@color/accent_pink"/></androidx.cardview.widget.CardView>
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Quiz" android:textSize="9sp" android:gravity="center" android:layout_marginTop="4dp" android:textColor="@color/text_primary"/>
             </LinearLayout>
 
             <!-- Team Today / Announcements -->
             <LinearLayout android:id="@+id/menuAnnouncements" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:orientation="vertical" android:gravity="center" android:padding="6dp" android:background="?attr/selectableItemBackgroundBorderless" android:clickable="true" android:focusable="true">
-                <androidx.cardview.widget.CardView android:layout_width="52dp" android:layout_height="52dp" app:cardCornerRadius="14dp" app:cardElevation="2dp" app:cardBackgroundColor="@color/accent_indigo_light"><ImageView android:layout_width="28dp" android:layout_height="28dp" android:layout_gravity="center" android:src="@drawable/ic_announcement" android:tint="@color/accent_indigo"/></androidx.cardview.widget.CardView>
+                <androidx.cardview.widget.CardView android:layout_width="52dp" android:layout_height="52dp" app:cardCornerRadius="14dp" app:cardElevation="2dp" app:cardBackgroundColor="@color/accent_indigo_light"><ImageView android:layout_width="28dp" android:layout_height="28dp" android:layout_gravity="center" android:src="@drawable/ic_shield_check" android:tint="@color/accent_indigo"/></androidx.cardview.widget.CardView>
                 <TextView android:id="@+id/tvMenuAnnouncementsLabel" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Team Today" android:textSize="9sp" android:gravity="center" android:layout_marginTop="4dp" android:textColor="@color/text_primary"/>
             </LinearLayout>
 
@@ -432,7 +452,7 @@
 
             <!-- Birthdays -->
             <LinearLayout android:id="@+id/menuBirthdays" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:orientation="vertical" android:gravity="center" android:padding="6dp" android:background="?attr/selectableItemBackgroundBorderless" android:clickable="true" android:focusable="true">
-                <androidx.cardview.widget.CardView android:layout_width="52dp" android:layout_height="52dp" app:cardCornerRadius="14dp" app:cardElevation="2dp" app:cardBackgroundColor="@color/accent_pink_light"><ImageView android:layout_width="28dp" android:layout_height="28dp" android:layout_gravity="center" android:src="@drawable/ic_notification" android:tint="@color/accent_pink"/></androidx.cardview.widget.CardView>
+                <androidx.cardview.widget.CardView android:layout_width="52dp" android:layout_height="52dp" app:cardCornerRadius="14dp" app:cardElevation="2dp" app:cardBackgroundColor="@color/accent_pink_light"><ImageView android:layout_width="28dp" android:layout_height="28dp" android:layout_gravity="center" android:src="@drawable/ic_party_hat" android:tint="@color/accent_pink"/></androidx.cardview.widget.CardView>
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Birthdays" android:textSize="9sp" android:gravity="center" android:layout_marginTop="4dp" android:textColor="@color/text_primary"/>
             </LinearLayout>
 

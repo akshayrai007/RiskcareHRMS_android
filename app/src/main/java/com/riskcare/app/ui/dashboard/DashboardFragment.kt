@@ -51,6 +51,9 @@ class DashboardFragment : Fragment() {
     private var hasPunchedIn  = false
     private var hasPunchedOut = false
     private var isPunching    = false
+    // Today's attendance status from the server (present/late/half-day/absent),
+    // used to color/label the punch tile after punch-out.
+    private var todayStatus: String? = null
     private lateinit var permissionManager: PermissionManager
 
     private val gpsSettingsLauncher = registerForActivityResult(
@@ -137,6 +140,7 @@ class DashboardFragment : Fragment() {
             it.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
             startDashboardPunch()
         }
+        updatePunchButton()
 
         binding.headerAvatar.setOnClickListener      { nav(ProfileFragment()) }
         binding.notifBtn.setOnClickListener          { nav(NotificationsFragment()) }
@@ -172,6 +176,49 @@ class DashboardFragment : Fragment() {
         }
     }
 
+    // Paint the action tile: rounded colored background + white icon + label —
+    // matches KrishiHR-Android's dashboard punch tile look exactly.
+    private fun setPunchTile(colorHex: String, iconRes: Int, label: String, enabled: Boolean) {
+        if (_b == null) return
+        val dp = resources.displayMetrics.density
+        binding.btnMarkAttendance.background = android.graphics.drawable.GradientDrawable().apply {
+            cornerRadius = 16 * dp
+            setColor(android.graphics.Color.parseColor(colorHex))
+        }
+        binding.btnMarkAttendance.isClickable = enabled
+        binding.btnMarkAttendance.isEnabled   = enabled
+        binding.btnMarkAttendance.alpha       = if (enabled) 1f else 0.9f
+        binding.ivPunchIcon.setImageResource(iconRes)
+        binding.tvPunchLabel.text = label
+    }
+
+    // Drives the single action tile through its lifecycle:
+    //   not punched in → green power icon "Punch In"
+    //   punched in     → red   power icon "Punch Out"
+    //   punched out    → attendance outcome: Present/Half Day/Absent (read-only)
+    private fun updatePunchButton() {
+        if (_b == null) return
+        when {
+            hasPunchedOut -> showOutcomeTile()
+            hasPunchedIn  -> setPunchTile("#C62828", R.drawable.ic_power, "Punch Out", true)
+            else          -> setPunchTile("#2E7D45", R.drawable.ic_power, "Punch In", true)
+        }
+    }
+
+    private fun showOutcomeTile() {
+        when (todayStatus?.trim()?.lowercase() ?: "") {
+            "absent" -> setPunchTile("#C62828", R.drawable.ic_cancel, "Absent", false)
+            "half-day", "half day", "halfday" ->
+                setPunchTile("#B26A00", R.drawable.ic_check_circle, "Half Day", false)
+            "present", "late" -> setPunchTile("#2E7D45", R.drawable.ic_check_circle, "Present", false)
+            else -> {
+                val s = todayStatus?.trim()?.lowercase() ?: ""
+                if (s.startsWith("h-")) setPunchTile("#B26A00", R.drawable.ic_check_circle, "Half Day", false)
+                else setPunchTile("#9E9E9E", R.drawable.ic_check_circle, "Done", false)
+            }
+        }
+    }
+
     private fun loadDashboard() {
         lifecycleScope.launch {
             try {
@@ -185,6 +232,12 @@ class DashboardFragment : Fragment() {
                     val hasPunchOut = att?.punchOut != null
                     hasPunchedIn  = hasPunchIn
                     hasPunchedOut = hasPunchOut
+                    todayStatus   = att?.status
+                    updatePunchButton()
+
+                    // "Late" badge next to the Active pill when punched in late.
+                    val isLate = att?.status?.equals("late", ignoreCase = true) == true && hasPunchIn
+                    binding.tvLatePill.visibility = if (isLate) View.VISIBLE else View.GONE
 
                     binding.tvPunchInTime.text = att?.displayPunchIn ?: att?.punchIn?.let { AttendanceRecord.parseTime(it) } ?: "--:--"
                     binding.tvPunchOutTime.text = att?.displayPunchOut ?: att?.punchOut?.let { AttendanceRecord.parseTime(it) } ?: "--:--"
@@ -754,10 +807,7 @@ class DashboardFragment : Fragment() {
             Toast.makeText(ctx, "❌ $lastError", Toast.LENGTH_LONG).show()
         } finally {
             isPunching = false
-            if (_b != null) {
-                binding.btnMarkAttendance.isEnabled = true
-                binding.btnMarkAttendance.alpha = 1.0f
-            }
+            if (_b != null) updatePunchButton()
         }
     }
 
