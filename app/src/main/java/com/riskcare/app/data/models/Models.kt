@@ -53,6 +53,7 @@ data class OrgChartPerson(
     val email: String? = null,
     val phone: String? = null,
     val city: String? = null,
+    @SerializedName("emergency_contact_phone") val emergencyContactPhone: String? = null,
     @SerializedName("department_name")        val departmentName: String? = null,
     @SerializedName("designation_title")      val designationTitle: String? = null
 ) {

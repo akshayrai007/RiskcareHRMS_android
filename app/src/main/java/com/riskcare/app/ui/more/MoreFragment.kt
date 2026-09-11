@@ -4419,6 +4419,55 @@ class OrgChartFragment : Fragment() {
         }
     }
 
+    private fun showPersonDetails(p: OrgChartPerson) {
+        val ctx = requireContext(); val dp = ctx.resources.displayMetrics.density
+        val role = SessionManager(ctx).getRole()
+        val isAdminOrHR = Roles.canManageEmployees(role)
+        val rows = mutableListOf(
+            "Name" to p.fullName,
+            "Employee ID" to (p.employeeCode ?: "—"),
+            "Date of Joining" to (p.joiningDate?.toDisplayDate() ?: "—"),
+            "Email" to (p.email ?: "—")
+        )
+        if (isAdminOrHR) {
+            rows.add("Contact" to (p.phone ?: "—"))
+            rows.add("Emergency Contact" to (p.emergencyContactPhone ?: "—"))
+        }
+        rows.add("Designation" to (p.designationTitle ?: p.role ?: "—"))
+        rows.add("Branch" to (p.city ?: "—"))
+
+        val body = LinearLayout(ctx).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding((20*dp).toInt(), (16*dp).toInt(), (20*dp).toInt(), (4*dp).toInt())
+        }
+        rows.forEachIndexed { idx, (label, value) ->
+            body.addView(LinearLayout(ctx).apply {
+                orientation = LinearLayout.HORIZONTAL
+                setPadding(0, (9*dp).toInt(), 0, (9*dp).toInt())
+                addView(TextView(ctx).apply {
+                    text = label; textSize = 12.5f; setTypeface(null, android.graphics.Typeface.BOLD)
+                    setTextColor(ctx.getColor(R.color.text_secondary))
+                    layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+                })
+                addView(TextView(ctx).apply {
+                    text = value; textSize = 12.5f; setTextColor(ctx.getColor(R.color.text_primary))
+                    gravity = android.view.Gravity.END
+                    layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+                })
+            })
+            if (idx < rows.lastIndex) body.addView(View(ctx).apply {
+                layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, (1*dp).toInt())
+                setBackgroundColor(ctx.getColor(R.color.divider))
+            })
+        }
+
+        android.app.AlertDialog.Builder(ctx)
+            .setTitle(p.fullName)
+            .setView(body)
+            .setPositiveButton("Close", null)
+            .show()
+    }
+
     private fun pathToFocus(): List<Int> {
         val chain = mutableListOf<Int>()
         var curId: Int? = focusId
@@ -4494,6 +4543,12 @@ class OrgChartFragment : Fragment() {
             if (kidCount > 0) info.addView(TextView(ctx).apply {
                 text = "$kidCount report${if (kidCount > 1) "s" else ""}"
                 textSize = 10f; setTextColor(ctx.getColor(R.color.primary))
+            })
+            if (big) info.addView(TextView(ctx).apply {
+                text = "View details →"; textSize = 11f; setTypeface(null, android.graphics.Typeface.BOLD)
+                setTextColor(ctx.getColor(R.color.primary))
+                setPadding(0, (4*dp).toInt(), 0, 0)
+                setOnClickListener { showPersonDetails(p) }
             })
             inner.addView(info)
             card.addView(inner)
