@@ -70,7 +70,9 @@ class MoreFragment : Fragment() {
             R.id.rowMyWork to "🙋  My Work",
             R.id.rowWorkTracker to "📝  Work Tracker",
             R.id.rowTaskBoard to "🗂️  Task Board",
-            R.id.rowAllTasks to "📋  All Tasks"
+            R.id.rowAllTasks to "📋  All Tasks",
+            R.id.rowWorkTickets to "🎫  Work Tickets",
+            R.id.rowAssetAllocation to "💻  Asset Allocation"
         )
         labels.forEach { (rowId, label) ->
             view.findViewById<View>(rowId)
@@ -196,6 +198,18 @@ class MoreFragment : Fragment() {
                     rowWorkTracker?.visibility = View.VISIBLE
                 }
             } catch (_: Exception) {}
+        }
+
+        // Work Tickets — every employee can raise/track a support ticket.
+        view.findViewById<View>(R.id.rowWorkTickets)?.setOnClickListener {
+            nav(com.riskcare.app.ui.tickets.TicketsFragment())
+        }
+
+        // Asset Allocation — everyone sees their own allocated assets; the
+        // fragment itself shows the allocate form only to HR/Accounts/Admin/
+        // Super Admin.
+        view.findViewById<View>(R.id.rowAssetAllocation)?.setOnClickListener {
+            nav(AssetAllocationFragment())
         }
     }
 }

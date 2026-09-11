@@ -754,4 +754,49 @@ interface ApiService {
         @Query("department_id") departmentId: Int? = null
     ): Response<WorkLogListResponse>
 
+    // ── Asset Allocation ─────────────────────────────────────────────────────
+    @GET("assets/my")
+    suspend fun getMyAssets(): Response<AssetListResponse>
+
+    @GET("assets/items")
+    suspend fun getAssetItems(): Response<AssetItemsResponse>
+
+    @GET("assets/employees")
+    suspend fun getAssetEmployees(): Response<AssetEmployeesResponse>
+
+    @GET("assets/employee")
+    suspend fun getEmployeeAssets(@Query("employee_id") employeeId: Int): Response<AssetListResponse>
+
+    @POST("assets/allocate")
+    suspend fun allocateAssets(@Body body: AllocateAssetRequest): Response<AssetListResponse>
+
+    @PUT("assets/{id}")
+    suspend fun updateAsset(@Path("id") id: Int, @Body body: Map<String, String>): Response<ApiResponse<AssetAllocation>>
+
+    @DELETE("assets/{id}")
+    suspend fun deleteAsset(@Path("id") id: Int): Response<ApiResponse<Unit>>
+
+    // ── Work Tickets ─────────────────────────────────────────────────────────
+    @GET("tickets")
+    suspend fun getTickets(
+        @Query("mine") mine: String? = null,
+        @Query("assigned_to_me") assignedToMe: String? = null,
+        @Query("status") status: String? = null
+    ): Response<TicketListResponse>
+
+    @POST("tickets")
+    suspend fun createTicket(@Body body: CreateTicketRequest): Response<ApiResponse<Unit>>
+
+    @GET("tickets/assignable")
+    suspend fun getTicketAssignableEmployees(): Response<TicketAssigneesResponse>
+
+    @GET("tickets/{id}")
+    suspend fun getTicket(@Path("id") id: Int): Response<TicketResponse>
+
+    @POST("tickets/{id}/status")
+    suspend fun updateTicketStatus(@Path("id") id: Int, @Body body: TicketStatusRequest): Response<ApiResponse<Unit>>
+
+    @POST("tickets/{id}/comments")
+    suspend fun addTicketComment(@Path("id") id: Int, @Body body: TicketCommentRequest): Response<ApiResponse<Unit>>
+
 }

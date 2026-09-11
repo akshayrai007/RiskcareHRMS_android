@@ -44,6 +44,11 @@
                  flagged required, or a manager managing others) -->
             <include layout="@layout/item_more_row" android:id="@+id/rowMyWork"/>
             <include layout="@layout/item_more_row" android:id="@+id/rowWorkTracker"/>
+            <!-- ✅ NEW: Work Tickets (support/request tracker) + Asset
+                 Allocation (view own assets; HR/Accounts/Admin/Super Admin can
+                 also allocate to others) -->
+            <include layout="@layout/item_more_row" android:id="@+id/rowWorkTickets"/>
+            <include layout="@layout/item_more_row" android:id="@+id/rowAssetAllocation"/>
 
             <!-- SECTION: Management (role-gated, shown programmatically) -->
             <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="MANAGEMENT" android:textSize="11sp" android:textStyle="bold" android:textColor="@color/text_hint" android:paddingHorizontal="16dp" android:paddingTop="14dp" android:paddingBottom="4dp"/>

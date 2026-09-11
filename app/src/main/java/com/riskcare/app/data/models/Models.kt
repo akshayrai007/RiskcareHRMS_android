@@ -1505,3 +1505,90 @@ data class WorkTrackerRequiredEmployee(
 data class WorkTrackerRequiredListResponse(val success: Boolean, val data: List<WorkTrackerRequiredEmployee>? = null)
 data class WorkTrackerSetRequiredRequest(@SerializedName("employee_id") val employeeId: Int, val required: Boolean)
 
+// ══════════════════════════════════════════════════════════════════════════
+// ASSET ALLOCATION — matches backend assetController.js. Denormalized on
+// purpose: no separate asset catalog, each row IS the allocated item.
+// ══════════════════════════════════════════════════════════════════════════
+data class AssetAllocation(
+    val id: Int = 0,
+    @SerializedName("item_name")     val itemName: String = "",
+    val quantity: Int = 1,
+    @SerializedName("serial_no")     val serialNo: String? = null,
+    val remark: String? = null,
+    val status: String = "allocated",              // allocated | returned
+    @SerializedName("allocated_at")  val allocatedAt: String? = null,
+    @SerializedName("employee_code") val employeeCode: String? = null,
+    @SerializedName("emp_name")      val empName: String? = null
+)
+data class AssetEmployeeItem(
+    val id: Int = 0,
+    @SerializedName("employee_code") val employeeCode: String = "",
+    @SerializedName("first_name")    val firstName: String = "",
+    @SerializedName("last_name")     val lastName: String? = null
+) {
+    val label: String get() = "$employeeCode — $firstName ${lastName ?: ""}".trim()
+}
+data class AllocateAssetItem(
+    @SerializedName("item_name") val itemName: String,
+    val quantity: Int = 1,
+    @SerializedName("serial_no") val serialNo: String? = null,
+    val remark: String? = null
+)
+data class AllocateAssetRequest(
+    @SerializedName("employee_id") val employeeId: Int,
+    val items: List<AllocateAssetItem>
+)
+data class AssetListResponse(val success: Boolean, val data: List<AssetAllocation>? = null)
+data class AssetItemsResponse(val success: Boolean, val data: List<String>? = null)
+data class AssetEmployeesResponse(val success: Boolean, val data: List<AssetEmployeeItem>? = null)
+
+// ══════════════════════════════════════════════════════════════════════════
+// WORK TICKETS — matches backend ticketController.js. A support/request
+// tracker, distinct from Task Assignment: any employee raises a ticket,
+// routed to admin/HR/super_admin support staff.
+// ══════════════════════════════════════════════════════════════════════════
+data class TicketAssignee(
+    val id: Int,
+    @SerializedName("employee_code") val employeeCode: String? = null,
+    val name: String,
+    @SerializedName("department_name") val departmentName: String? = null
+)
+data class TicketEvent(
+    val id: Int,
+    @SerializedName("actor_id")    val actorId: Int,
+    @SerializedName("actor_name")  val actorName: String? = null,
+    val action: String,
+    @SerializedName("from_status") val fromStatus: String? = null,
+    @SerializedName("to_status")   val toStatus: String? = null,
+    val note: String? = null,
+    @SerializedName("created_at")  val createdAt: String? = null
+)
+data class Ticket(
+    val id: Int,
+    val title: String,
+    val description: String? = null,
+    val priority: String = "medium",
+    val status: String = "open",
+    @SerializedName("due_date")          val dueDate: String? = null,
+    @SerializedName("created_at")        val createdAt: String? = null,
+    @SerializedName("raised_by")         val raisedBy: Int,
+    @SerializedName("raised_by_name")    val raisedByName: String? = null,
+    @SerializedName("raised_by_code")    val raisedByCode: String? = null,
+    @SerializedName("assigned_to")       val assignedTo: Int? = null,
+    @SerializedName("assigned_to_name")  val assignedToName: String? = null,
+    @SerializedName("assigned_to_code")  val assignedToCode: String? = null,
+    val events: List<TicketEvent>? = null
+)
+data class TicketListResponse(val success: Boolean, val data: List<Ticket>? = null)
+data class TicketResponse(val success: Boolean, val data: Ticket? = null)
+data class TicketAssigneesResponse(val success: Boolean, val data: List<TicketAssignee>? = null)
+data class CreateTicketRequest(
+    val title: String,
+    val description: String? = null,
+    val priority: String = "medium",
+    @SerializedName("due_date") val dueDate: String? = null,
+    @SerializedName("assigned_to") val assignedTo: List<Int>
+)
+data class TicketStatusRequest(val status: String, val note: String? = null)
+data class TicketCommentRequest(val note: String)
+
