@@ -24,6 +24,7 @@ import com.riskcare.app.ui.tasks.AllTasksFragment
 import com.riskcare.app.ui.tasks.WorkTrackerFragment
 import com.riskcare.app.utils.*
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
 import java.util.*
 import okhttp3.MultipartBody
@@ -2079,26 +2080,29 @@ class EmployeesFragment : Fragment() {
                     tvEmpty.visibility = if (employees.isEmpty()) android.view.View.VISIBLE else android.view.View.GONE
 
                     // Step 2: For employees still missing a photo, fetch their individual
-                    // profile in the background — the /employees/{id} endpoint returns profile_photo
+                    // profile in the background — the /employees/{id} endpoint returns profile_photo.
+                    // Throttled to small batches (not all ~100 at once) so this doesn't flood
+                    // OkHttp's request queue and starve a just-tapped employee-detail fetch.
                     val session = SessionManager(ctx)
                     val missingPhoto = employees.filter { it.profilePhoto.isNullOrBlank() }
-                    missingPhoto.forEach { emp ->
-                        launch {
-                            try {
-                                val detail = RetrofitClient.instance.getEmployee(emp.id)
-                                val photo = detail.body()?.data?.profilePhoto
-                                if (!photo.isNullOrBlank()) {
-                                    // Cache the photo so future loads don't need to fetch again
-                                    session.saveEmployeePhoto(emp.id, photo)
-                                    // Update the in-memory list item and notify adapter
-                                    val idx = allEmployees.indexOfFirst { it.id == emp.id }
-                                    if (idx >= 0) {
-                                        allEmployees[idx] = allEmployees[idx].copy(profilePhoto = photo)
-                                        // Re-pass updated list to adapter so it renders the photo
-                                        adapter?.updateList(allEmployees.toList())
-                                    }
+                    launch {
+                        missingPhoto.chunked(5).forEach { batch ->
+                            batch.map { emp ->
+                                async {
+                                    try {
+                                        val detail = RetrofitClient.instance.getEmployee(emp.id)
+                                        val photo = detail.body()?.data?.profilePhoto
+                                        if (!photo.isNullOrBlank()) {
+                                            session.saveEmployeePhoto(emp.id, photo)
+                                            val idx = allEmployees.indexOfFirst { it.id == emp.id }
+                                            if (idx >= 0) {
+                                                allEmployees[idx] = allEmployees[idx].copy(profilePhoto = photo)
+                                                adapter?.updateList(allEmployees.toList())
+                                            }
+                                        }
+                                    } catch (_: Exception) {}
                                 }
-                            } catch (_: Exception) {}
+                            }.awaitAll()
                         }
                     }
                 } else {
@@ -2199,45 +2203,51 @@ class EmployeeAdapter(
 class EmployeeDetailFragment : Fragment() {
     override fun onCreateView(i: LayoutInflater, c: ViewGroup?, s: Bundle?): View {
         val ctx = requireContext(); val dp = ctx.resources.displayMetrics.density
-        val emp = arguments?.getParcelable<Employee>("emp") ?: return LinearLayout(ctx)
+        val listEmp = arguments?.getParcelable<Employee>("emp") ?: return LinearLayout(ctx)
         val sv = android.widget.ScrollView(ctx)
         val root = LinearLayout(ctx).apply { orientation = LinearLayout.VERTICAL; setBackgroundColor(ctx.getColor(R.color.background)); setPadding((16*dp).toInt(),(16*dp).toInt(),(16*dp).toInt(),(80*dp).toInt()) }
         sv.addView(root)
 
-        // Header card
-        val hCard = androidx.cardview.widget.CardView(ctx).apply { radius = 16*dp; cardElevation = 3*dp; setCardBackgroundColor(ctx.getColor(R.color.primary)); layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).also { it.bottomMargin = (16*dp).toInt() } }
-        val hll = LinearLayout(ctx).apply { orientation = LinearLayout.VERTICAL; gravity = android.view.Gravity.CENTER; setPadding((16*dp).toInt(),(24*dp).toInt(),(16*dp).toInt(),(24*dp).toInt()) }
-        hll.addView(TextView(ctx).apply { text = emp.initials; textSize = 36f; setTextColor(ctx.getColor(R.color.white)); setTypeface(null, android.graphics.Typeface.BOLD); gravity = android.view.Gravity.CENTER })
-        hll.addView(TextView(ctx).apply { text = emp.fullName; textSize = 20f; setTextColor(ctx.getColor(R.color.white)); setTypeface(null, android.graphics.Typeface.BOLD); gravity = android.view.Gravity.CENTER })
-        hll.addView(TextView(ctx).apply { text = emp.designationTitle ?: emp.displayRole; textSize = 13f; setTextColor(ctx.getColor(R.color.primary_ultra_light)); gravity = android.view.Gravity.CENTER })
-        hCard.addView(hll); root.addView(hCard)
+        fun render(emp: Employee) {
+            root.removeAllViews()
+            // Header card
+            val hCard = androidx.cardview.widget.CardView(ctx).apply { radius = 16*dp; cardElevation = 3*dp; setCardBackgroundColor(ctx.getColor(R.color.primary)); layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).also { it.bottomMargin = (16*dp).toInt() } }
+            val hll = LinearLayout(ctx).apply { orientation = LinearLayout.VERTICAL; gravity = android.view.Gravity.CENTER; setPadding((16*dp).toInt(),(24*dp).toInt(),(16*dp).toInt(),(24*dp).toInt()) }
+            hll.addView(TextView(ctx).apply { text = emp.initials; textSize = 36f; setTextColor(ctx.getColor(R.color.white)); setTypeface(null, android.graphics.Typeface.BOLD); gravity = android.view.Gravity.CENTER })
+            hll.addView(TextView(ctx).apply { text = emp.fullName; textSize = 20f; setTextColor(ctx.getColor(R.color.white)); setTypeface(null, android.graphics.Typeface.BOLD); gravity = android.view.Gravity.CENTER })
+            hll.addView(TextView(ctx).apply { text = emp.designationTitle ?: emp.displayRole; textSize = 13f; setTextColor(ctx.getColor(R.color.primary_ultra_light)); gravity = android.view.Gravity.CENTER })
+            hCard.addView(hll); root.addView(hCard)
 
-        fun row(label: String, value: String) {
-            val ll = LinearLayout(ctx).apply { orientation = LinearLayout.HORIZONTAL; gravity = android.view.Gravity.CENTER_VERTICAL; setPadding(0,(10*dp).toInt(),0,(10*dp).toInt()) }
-            val div = View(ctx).apply { layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, (1*dp).toInt()); setBackgroundColor(ctx.getColor(R.color.divider)) }
-            ll.addView(TextView(ctx).apply { text = label; textSize = 12f; setTextColor(ctx.getColor(R.color.text_secondary)); layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f) })
-            ll.addView(TextView(ctx).apply { text = value; textSize = 13f; setTypeface(null, android.graphics.Typeface.BOLD); setTextColor(ctx.getColor(R.color.text_primary)) })
-            root.addView(ll); root.addView(div)
+            fun row(label: String, value: String) {
+                val ll = LinearLayout(ctx).apply { orientation = LinearLayout.HORIZONTAL; gravity = android.view.Gravity.CENTER_VERTICAL; setPadding(0,(10*dp).toInt(),0,(10*dp).toInt()) }
+                val div = View(ctx).apply { layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, (1*dp).toInt()); setBackgroundColor(ctx.getColor(R.color.divider)) }
+                ll.addView(TextView(ctx).apply { text = label; textSize = 12f; setTextColor(ctx.getColor(R.color.text_secondary)); layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f) })
+                ll.addView(TextView(ctx).apply { text = value; textSize = 13f; setTypeface(null, android.graphics.Typeface.BOLD); setTextColor(ctx.getColor(R.color.text_primary)) })
+                root.addView(ll); root.addView(div)
+            }
+            row("Employee ID",    emp.employeeCode ?: "—")
+            row("Designation",    emp.designationTitle ?: "—")
+            row("Department",     emp.departmentName ?: "—")
+            row("Role",           emp.displayRole)
+            row("Manager",        emp.managerName ?: "—")
+            row("Date of Birth",  emp.dateOfBirth?.toDisplayDate() ?: "—")
+            row("Date of Joining",emp.effectiveJoiningDate?.toDisplayDate() ?: "—")
+            row("Gender",         emp.gender?.replaceFirstChar { it.uppercase() } ?: "—")
+            row("Phone",          emp.phone ?: "—")
+            row("Email",          emp.email)
+            row("Status",      if (emp.isActive) "Active" else "Inactive")
         }
-        row("Employee ID",    emp.employeeCode ?: "—")
-        row("Designation",    emp.designationTitle ?: "—")
-        row("Department",     emp.departmentName ?: "—")
-        row("Role",           emp.displayRole)
-        row("Manager",        emp.managerName ?: "—")
-        row("Date of Birth",  emp.dateOfBirth?.toDisplayDate() ?: "—")
-        row("Date of Joining",emp.effectiveJoiningDate?.toDisplayDate() ?: "—")
-        row("Gender",         emp.gender?.replaceFirstChar { it.uppercase() } ?: "—")
-        row("Phone",          emp.phone ?: "—")
-        row("Email",          emp.email)
-        row("Status",      if (emp.isActive) "Active" else "Inactive")
 
-        val role = SessionManager(ctx).getRole()
-        if (Roles.canManageEmployees(role)) {
-            root.addView(MaterialButton(ctx, null, com.google.android.material.R.attr.materialButtonStyle).apply {
-                text = "Edit Employee"; setBackgroundColor(ctx.getColor(R.color.primary))
-                layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).also { it.topMargin = (16*dp).toInt() }
-                setOnClickListener { toast("Edit employee via web panel for full form") }
-            })
+        render(listEmp)
+        // The list endpoint doesn't include date_of_birth (and a few other fields) —
+        // fetch the full record so Date of Birth actually shows instead of "—".
+        if (listEmp.dateOfBirth.isNullOrBlank()) {
+            lifecycleScope.launch {
+                try {
+                    val full = RetrofitClient.instance.getEmployee(listEmp.id).body()?.data
+                    if (full != null) render(full)
+                } catch (_: Exception) {}
+            }
         }
         return sv
     }
