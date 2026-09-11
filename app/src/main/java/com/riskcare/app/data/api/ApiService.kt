@@ -274,7 +274,7 @@ interface ApiService {
     suspend fun markRead(@Path("id") id: Int): Response<ApiResponse<Unit>>
 
     // ── FCM Push Token ────────────────────────────────────────────────────────
-    @POST("auth/fcm-token")
+    @POST("notifications/fcm-token")
     suspend fun updateFcmToken(@Body body: Map<String, @JvmSuppressWildcards String>): Response<ApiResponse<Unit>>
 
     // ── GK Quiz ───────────────────────────────────────────────────────────────
@@ -753,10 +753,6 @@ interface ApiService {
         @Query("to_date") toDate: String? = null,
         @Query("department_id") departmentId: Int? = null
     ): Response<WorkLogListResponse>
-
-    // ── Push Notifications (FCM) ─────────────────────────────────────────────
-    @POST("notifications/fcm-token")
-    suspend fun updateFcmToken(@Body body: Map<String, String>): Response<ApiResponse<Unit>>
 
     // ── Asset Allocation ─────────────────────────────────────────────────────
     @GET("assets/my")

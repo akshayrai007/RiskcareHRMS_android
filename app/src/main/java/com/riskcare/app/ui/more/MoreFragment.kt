@@ -18,6 +18,10 @@ import com.riskcare.app.data.models.*
 import com.riskcare.app.ui.MainActivity
 import com.riskcare.app.ui.leave.LeaveListAdapter
 import com.riskcare.app.ui.payroll.PayrollMgmtFragment
+import com.riskcare.app.ui.tasks.MyWorkFragment
+import com.riskcare.app.ui.tasks.TaskBoardFragment
+import com.riskcare.app.ui.tasks.AllTasksFragment
+import com.riskcare.app.ui.tasks.WorkTrackerFragment
 import com.riskcare.app.utils.*
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch

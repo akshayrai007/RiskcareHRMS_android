@@ -1538,7 +1538,7 @@ data class AllocateAssetRequest(
     @SerializedName("employee_id") val employeeId: Int,
     val items: List<AllocateAssetItem>
 )
-data class AssetListResponse(val success: Boolean, val data: List<AssetAllocation>? = null)
+data class AssetListResponse(val success: Boolean, val data: List<AssetAllocation>? = null, val message: String? = null)
 data class AssetItemsResponse(val success: Boolean, val data: List<String>? = null)
 data class AssetEmployeesResponse(val success: Boolean, val data: List<AssetEmployeeItem>? = null)
 
