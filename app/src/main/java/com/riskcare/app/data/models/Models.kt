@@ -322,6 +322,14 @@ data class AdvanceApplication(
 ) : Parcelable
 
 // ── Payroll ───────────────────────────────────────────────────────────────────
+data class PayslipLeaveBalance(
+    val name: String? = null,
+    val code: String? = null,
+    val allocated: Double? = null,
+    val used: Double? = null,
+    @SerializedName("carry_forward") val carryForward: Double? = null,
+    val available: Double? = null
+)
 data class Payslip(
     val id: Int? = null, val month: Int? = null, val year: Int? = null, val status: String? = null,
     @SerializedName("employee_name") val employeeName: String? = null,
@@ -371,7 +379,15 @@ data class Payslip(
     @SerializedName("bank_account")  val bankAccount: String? = null,
     @SerializedName("bank_ifsc")     val bankIfsc: String? = null,
     @SerializedName("date_of_birth") val slipDob: String? = null,
-    @SerializedName("joining_date")  val slipDoj: String? = null
+    @SerializedName("joining_date")  val slipDoj: String? = null,
+    // Fixed (full salary-structure) amounts, vs the earned/prorated ones above —
+    // web payslip.html shows both columns side by side.
+    @SerializedName("fixed_basic")             val fixedBasic: Double? = null,
+    @SerializedName("fixed_hra")                val fixedHra: Double? = null,
+    @SerializedName("fixed_conveyance")         val fixedConveyance: Double? = null,
+    @SerializedName("fixed_special_allowance")  val fixedSpecialAllowance: Double? = null,
+    @SerializedName("fixed_gratuity")           val fixedGratuity: Double? = null,
+    @SerializedName("leave_balances") val leaveBalances: List<PayslipLeaveBalance>? = null
 ) {
     val effectiveNet   get() = netSalaryDisplay ?: netSalary
     val effectiveGross get() = grossSalary

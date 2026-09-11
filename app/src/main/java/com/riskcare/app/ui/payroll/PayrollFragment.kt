@@ -239,6 +239,39 @@ class PayrollFragment : Fragment() {
             }
         }
 
+        // Leave balance table — matches web payslip.html's leave table exactly
+        val leaveTypeNames = mapOf("EL" to "Earned Leave", "SL" to "Sick or Casual Leave", "CL" to "Casual Leave", "PL" to "Privilege Leave")
+        val leaveRowsHtml = (slip.leaveBalances ?: emptyList()).joinToString("") { l ->
+            val name = leaveTypeNames[l.code] ?: (l.name ?: "")
+            val alloc = l.allocated ?: 0.0
+            val used = l.used ?: 0.0
+            val avail = l.available ?: 0.0
+            val cf = l.carryForward ?: 0.0
+            val opening = if (cf > 0) "%.2f".format(cf) else if (alloc - used > 0) "%.2f".format(alloc - used) else "0.00"
+            """<tr>
+              <td style='padding:4px 10px;border:1px solid #ccc;font-size:12px'>$name</td>
+              <td style='padding:4px 8px;border:1px solid #ccc;font-size:12px;text-align:right'>$opening</td>
+              <td style='padding:4px 8px;border:1px solid #ccc;font-size:12px;text-align:right'>0.00</td>
+              <td style='padding:4px 8px;border:1px solid #ccc;font-size:12px;text-align:right'>0.00</td>
+              <td style='padding:4px 8px;border:1px solid #ccc;font-size:12px;text-align:right'>${"%.2f".format(used)}</td>
+              <td style='padding:4px 8px;border:1px solid #ccc;font-size:12px;text-align:right'>${"%.2f".format(avail)}</td>
+              <td style='padding:4px 8px;border:1px solid #ccc;font-size:12px;text-align:right'>0.00</td>
+            </tr>"""
+        }
+        val leaveTableHtml = if (leaveRowsHtml.isNotEmpty()) """
+<table style="width:100%;border-collapse:collapse;margin-top:12px">
+  <tr style="background:#E3F2FD">
+    <th style="padding:5px 10px;border:1px solid #ccc;font-size:11px;font-weight:700;text-align:left">Leave Type</th>
+    <th style="padding:5px 8px;border:1px solid #ccc;font-size:11px;font-weight:700;text-align:right">Opening<br>Balance</th>
+    <th style="padding:5px 8px;border:1px solid #ccc;font-size:11px;font-weight:700;text-align:right">Current Month<br>Credit</th>
+    <th style="padding:5px 8px;border:1px solid #ccc;font-size:11px;font-weight:700;text-align:right">Leaves Withdrawn<br>/Rejected of<br>previous month</th>
+    <th style="padding:5px 8px;border:1px solid #ccc;font-size:11px;font-weight:700;text-align:right">Leaves<br>Utilized</th>
+    <th style="padding:5px 8px;border:1px solid #ccc;font-size:11px;font-weight:700;text-align:right">Available<br>Balance</th>
+    <th style="padding:5px 8px;border:1px solid #ccc;font-size:11px;font-weight:700;text-align:right">Leave<br>Lapsed</th>
+  </tr>
+  $leaveRowsHtml
+</table>""" else ""
+
         return """<!DOCTYPE html>
 <html>
 <head>
@@ -359,6 +392,8 @@ class PayrollFragment : Fragment() {
     <td style="padding:9px 10px;font-size:14px;font-weight:800;border:2px solid #2E7D32 !important;text-align:center;background:#E8F5E9 !important;color:#1B5E20 !important" colspan="3">${fmt(netSalary)}</td>
   </tr>
 </table>
+
+$leaveTableHtml
 
 <div style="padding:10px 12px;font-size:11px;color:#555;font-style:italic">
   It is computer generated statement signature is not required.
@@ -785,8 +820,9 @@ class PayrollFragment : Fragment() {
         (slip.basic ?: slip.basicSalary)?.let  { if (it > 0) list += "Basic Salary"    to it }
         slip.hra?.let                           { if (it > 0) list += "HRA"             to it }
         slip.gratuity?.let                      { if (it > 0) list += "Gratuity"        to it }
-        slip.specialAllowance?.let              { if (it > 0) list += "Other Allowance" to it }
+        slip.specialAllowance?.let              { if (it > 0) list += "Defray Allowance" to it }
         slip.conveyance?.let                    { if (it > 0) list += "Conveyance"      to it }
+        slip.foodCoupon?.let                    { if (it > 0) list += "Food Coupon"     to it }
         slip.components
             ?.filter { it.type.lowercase() in listOf("earning","earnings","allowance") }
             ?.forEach { c ->
