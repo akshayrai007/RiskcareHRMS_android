@@ -96,8 +96,7 @@ private fun buildTaskCard(
             setTextColor(ctx.getColor(R.color.white))
             background = pill(ctx, ctx.getColor(R.color.accent_red))
             setPadding((8 * dp).toInt(), (3 * dp).toInt(), (8 * dp).toInt(), (3 * dp).toInt())
-            (layoutParams as? LinearLayout.LayoutParams)?.marginEnd = (6 * dp).toInt()
-                ?: run { layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).also { it.marginEnd = (6 * dp).toInt() } }
+            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).also { it.marginEnd = (6 * dp).toInt() }
         })
     }
     badgeRow.addView(TextView(ctx).apply {
