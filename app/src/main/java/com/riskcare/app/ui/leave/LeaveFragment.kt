@@ -35,6 +35,7 @@ class LeaveFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         binding.rvLeaveApplications.layoutManager = LinearLayoutManager(requireContext())
         binding.rvCompOffCredits.layoutManager = LinearLayoutManager(requireContext())
+        binding.rvAllLeaves.layoutManager = LinearLayoutManager(requireContext())
 
         loadBalance()
         loadApplications()
@@ -58,6 +59,17 @@ class LeaveFragment : Fragment() {
         // Tab clicks
         binding.tabApplications.setOnClickListener { switchTab("leave") }
         binding.tabCompOff.setOnClickListener      { switchTab("compoff") }
+        binding.tabAllLeaves.setOnClickListener        { switchTab("all") }
+        binding.tabLeaveSummary.setOnClickListener      { switchTab("summary") }
+        binding.tabLeaveTransactions.setOnClickListener { switchTab("transactions") }
+
+        // Role-gated tabs — mirrors leaves.html's exact visibility rules
+        val role = SessionManager(requireContext()).getRole()
+        if (Roles.canManageEmployees(role)) binding.tabAllLeaves.visibility = View.VISIBLE
+        if (role == Roles.HR || role == Roles.SUPER_ADMIN) {
+            binding.tabLeaveSummary.visibility = View.VISIBLE
+            binding.tabLeaveTransactions.visibility = View.VISIBLE
+        }
 
         switchTab("leave") // default
     }
@@ -65,29 +77,320 @@ class LeaveFragment : Fragment() {
     // ── Tab switching ─────────────────────────────────────────────────────────
     private fun switchTab(tab: String) {
         activeTab = tab
-        if (tab == "leave") {
-            binding.rvLeaveApplications.visibility = View.VISIBLE
-            binding.tvNoLeaves.visibility = if (
-                (binding.rvLeaveApplications.adapter?.itemCount ?: 0) == 0
-            ) View.VISIBLE else View.GONE
-            binding.layoutCompOff.visibility = View.GONE
-            // Active tab styling
-            binding.tabApplications.setTextColor(requireContext().getColor(R.color.primary))
-            binding.tabApplications.setBackgroundColor(
-                android.graphics.Color.parseColor("#E8F5E9"))
-            binding.tabCompOff.setTextColor(requireContext().getColor(R.color.text_secondary))
-            binding.tabCompOff.setBackgroundColor(requireContext().getColor(R.color.surface))
-        } else {
-            binding.rvLeaveApplications.visibility = View.GONE
-            binding.tvNoLeaves.visibility = View.GONE
-            binding.layoutCompOff.visibility = View.VISIBLE
-            // Active tab styling
-            binding.tabCompOff.setTextColor(android.graphics.Color.parseColor("#E65100"))
-            binding.tabCompOff.setBackgroundColor(android.graphics.Color.parseColor("#FFF3E0"))
-            binding.tabApplications.setTextColor(requireContext().getColor(R.color.text_secondary))
-            binding.tabApplications.setBackgroundColor(requireContext().getColor(R.color.surface))
-            loadCompOffCredits()
+        val ctx = requireContext()
+        val allTabs = listOf(
+            binding.tabApplications, binding.tabCompOff,
+            binding.tabAllLeaves, binding.tabLeaveSummary, binding.tabLeaveTransactions
+        )
+        val allContent = listOf(
+            binding.rvLeaveApplications, binding.layoutCompOff,
+            binding.rvAllLeaves, binding.containerLeaveSummary, binding.containerLeaveTransactions
+        )
+        allContent.forEach { it.visibility = View.GONE }
+        binding.tvNoLeaves.visibility = View.GONE
+        allTabs.forEach {
+            it.setTextColor(ctx.getColor(R.color.text_secondary))
+            it.setBackgroundColor(ctx.getColor(R.color.surface))
         }
+        fun activate(tv: TextView, bg: String, fg: Int) {
+            tv.setBackgroundColor(android.graphics.Color.parseColor(bg))
+            tv.setTextColor(fg)
+        }
+        when (tab) {
+            "leave" -> {
+                binding.rvLeaveApplications.visibility = View.VISIBLE
+                binding.tvNoLeaves.visibility = if ((binding.rvLeaveApplications.adapter?.itemCount ?: 0) == 0) View.VISIBLE else View.GONE
+                activate(binding.tabApplications, "#E8F5E9", ctx.getColor(R.color.primary))
+            }
+            "compoff" -> {
+                binding.layoutCompOff.visibility = View.VISIBLE
+                activate(binding.tabCompOff, "#FFF3E0", android.graphics.Color.parseColor("#E65100"))
+                loadCompOffCredits()
+            }
+            "all" -> {
+                binding.rvAllLeaves.visibility = View.VISIBLE
+                activate(binding.tabAllLeaves, "#E8F5E9", ctx.getColor(R.color.primary))
+                loadAllLeaves()
+            }
+            "summary" -> {
+                binding.containerLeaveSummary.visibility = View.VISIBLE
+                activate(binding.tabLeaveSummary, "#E0E7FF", android.graphics.Color.parseColor("#3730A3"))
+                loadLeaveSummary()
+            }
+            "transactions" -> {
+                binding.containerLeaveTransactions.visibility = View.VISIBLE
+                activate(binding.tabLeaveTransactions, "#E0E7FF", android.graphics.Color.parseColor("#3730A3"))
+                setupLeaveTransactionsUi()
+            }
+        }
+    }
+
+    // ── All Applications (hr/admin/super_admin/accounts) — every employee's leave ──
+    private fun loadAllLeaves() {
+        lifecycleScope.launch {
+            try {
+                val res = RetrofitClient.instance.getLeaveApplications(scope = "all")
+                val apps = res.body()?.data ?: emptyList()
+                if (_b == null) return@launch
+                binding.tvNoLeaves.visibility = if (apps.isEmpty()) View.VISIBLE else View.GONE
+                binding.tvNoLeaves.text = "No leave applications found"
+                binding.rvAllLeaves.adapter = LeaveListAdapter(
+                    apps.sortedByDescending { it.appliedAt ?: it.fromDate ?: "" },
+                    showName = true, showAction = true
+                ) { loadAllLeaves() }
+            } catch (e: Exception) {
+                if (_b == null) return@launch
+                binding.tvNoLeaves.visibility = View.VISIBLE
+                binding.tvNoLeaves.text = "Error: ${e.message}"
+            }
+        }
+    }
+
+    // ── Leave Summary — EL/SL/CL/ML allocated/used/available per employee ──────
+    private fun loadLeaveSummary() {
+        val ctx = requireContext(); val dp = ctx.resources.displayMetrics.density
+        binding.containerLeaveSummary.removeAllViews()
+        val progress = ProgressBar(ctx).apply {
+            layoutParams = FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT, android.view.Gravity.CENTER)
+        }
+        binding.containerLeaveSummary.addView(progress)
+        val year = Calendar.getInstance().get(Calendar.YEAR)
+        lifecycleScope.launch {
+            try {
+                val rows = RetrofitClient.instance.getLeaveSummary(year).body()?.data ?: emptyList()
+                if (_b == null) return@launch
+                binding.containerLeaveSummary.removeAllViews()
+                if (rows.isEmpty()) {
+                    binding.containerLeaveSummary.addView(TextView(ctx).apply {
+                        text = "No leave data found for $year"; textSize = 13f
+                        setTextColor(ctx.getColor(R.color.text_hint))
+                        layoutParams = FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT, android.view.Gravity.CENTER)
+                    })
+                    return@launch
+                }
+                val sv = android.widget.ScrollView(ctx)
+                val list = LinearLayout(ctx).apply { orientation = LinearLayout.VERTICAL; setPadding(0, (4*dp).toInt(), 0, (80*dp).toInt()) }
+                sv.addView(list)
+                binding.containerLeaveSummary.addView(sv)
+
+                val headerRow = LinearLayout(ctx).apply {
+                    orientation = LinearLayout.HORIZONTAL
+                    setBackgroundColor(android.graphics.Color.parseColor("#F0F4FF"))
+                    setPadding((14*dp).toInt(), (10*dp).toInt(), (14*dp).toInt(), (10*dp).toInt())
+                }
+                fun headerCell(text: String, weight: Float) = TextView(ctx).apply {
+                    this.text = text; textSize = 11f; setTypeface(null, android.graphics.Typeface.BOLD)
+                    setTextColor(ctx.getColor(R.color.text_secondary))
+                    layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, weight)
+                }
+                headerRow.addView(headerCell("Code", 0.8f))
+                headerRow.addView(headerCell("Name", 2f))
+                headerRow.addView(headerCell("Department", 1.5f))
+                list.addView(headerRow)
+
+                rows.forEach { r ->
+                    val row = LinearLayout(ctx).apply {
+                        orientation = LinearLayout.HORIZONTAL
+                        gravity = android.view.Gravity.CENTER_VERTICAL
+                        setPadding((14*dp).toInt(), (12*dp).toInt(), (14*dp).toInt(), (12*dp).toInt())
+                        isClickable = true; isFocusable = true
+                        background = android.util.TypedValue().let { tv ->
+                            ctx.theme.resolveAttribute(android.R.attr.selectableItemBackground, tv, true)
+                            ctx.getDrawable(tv.resourceId)
+                        }
+                        setOnClickListener { showEmployeeLeaveDetail(r, year) }
+                    }
+                    row.addView(TextView(ctx).apply {
+                        text = r.employeeCode ?: "—"; textSize = 12f; setTypeface(null, android.graphics.Typeface.BOLD)
+                        setTextColor(ctx.getColor(R.color.primary))
+                        layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 0.8f)
+                    })
+                    row.addView(TextView(ctx).apply {
+                        text = r.employeeName ?: "—"; textSize = 13f
+                        setTextColor(ctx.getColor(R.color.text_primary))
+                        layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 2f)
+                    })
+                    row.addView(TextView(ctx).apply {
+                        text = r.department ?: "—"; textSize = 12f
+                        setTextColor(ctx.getColor(R.color.text_secondary))
+                        layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1.5f)
+                    })
+                    list.addView(row)
+                    list.addView(View(ctx).apply {
+                        layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, (1*dp).toInt())
+                        setBackgroundColor(ctx.getColor(R.color.divider))
+                    })
+                }
+            } catch (e: Exception) {
+                if (_b == null) return@launch
+                binding.containerLeaveSummary.removeAllViews()
+                binding.containerLeaveSummary.addView(TextView(ctx).apply {
+                    text = "Error: ${e.message}"; textSize = 13f
+                    layoutParams = FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT, android.view.Gravity.CENTER)
+                })
+            }
+        }
+    }
+
+    // ── Tap an employee row in Summary → combined Used/Available + Transactions popup ─
+    private fun showEmployeeLeaveDetail(r: LeaveSummaryRow, year: Int) {
+        val ctx = requireContext(); val dp = ctx.resources.displayMetrics.density
+        val body = android.widget.ScrollView(ctx)
+        val root = LinearLayout(ctx).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding((20*dp).toInt(), (12*dp).toInt(), (20*dp).toInt(), (4*dp).toInt())
+        }
+        body.addView(root)
+
+        fun fmtNum(d: Double?) = d?.let { if (it == it.toLong().toDouble()) it.toLong().toString() else "%.1f".format(it) } ?: "0"
+        fun sectionLabel(t: String) = TextView(ctx).apply {
+            text = t; textSize = 12f; setTypeface(null, android.graphics.Typeface.BOLD)
+            setTextColor(ctx.getColor(R.color.primary))
+            setPadding(0, (10*dp).toInt(), 0, (8*dp).toInt())
+        }
+
+        root.addView(sectionLabel("SUMMARY $year"))
+        val greenColor = android.graphics.Color.parseColor("#2E7D32")
+        val redColor = android.graphics.Color.parseColor("#C62828")
+        val summaryTable = LinearLayout(ctx).apply { orientation = LinearLayout.VERTICAL }
+        root.addView(summaryTable)
+        val head = LinearLayout(ctx).apply { orientation = LinearLayout.HORIZONTAL }
+        fun hc(t: String, w: Float) = TextView(ctx).apply {
+            text = t; textSize = 10.5f; setTypeface(null, android.graphics.Typeface.BOLD)
+            setTextColor(ctx.getColor(R.color.text_secondary)); gravity = android.view.Gravity.CENTER
+            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, w)
+        }
+        head.addView(hc("Type", 1f)); head.addView(hc("Alloc.", 1f)); head.addView(hc("Used", 1f)); head.addView(hc("Avail.", 1f))
+        summaryTable.addView(head)
+        listOf(
+            Triple("EL", r.elAllocated, r.elUsed to r.elAvailable),
+            Triple("SL", r.slAllocated, r.slUsed to r.slAvailable),
+            Triple("CL", r.clAllocated, r.clUsed to r.clAvailable),
+            Triple("ML", r.mlAllocated, r.mlUsed to r.mlAvailable)
+        ).forEach { (label, alloc, usedAvail) ->
+            val (used, avail) = usedAvail
+            val row = LinearLayout(ctx).apply {
+                orientation = LinearLayout.HORIZONTAL; gravity = android.view.Gravity.CENTER_VERTICAL
+                setPadding(0, (6*dp).toInt(), 0, (6*dp).toInt())
+            }
+            fun dc(t: String, bold: Boolean = false, color: Int? = null) = TextView(ctx).apply {
+                text = t; textSize = 12.5f; gravity = android.view.Gravity.CENTER
+                setTypeface(null, if (bold) android.graphics.Typeface.BOLD else android.graphics.Typeface.NORMAL)
+                setTextColor(color ?: ctx.getColor(R.color.text_primary))
+                layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+            }
+            row.addView(dc(label, bold = true))
+            row.addView(dc(fmtNum(alloc)))
+            row.addView(dc(fmtNum(used), color = redColor))
+            row.addView(dc(fmtNum(avail), bold = true, color = greenColor))
+            summaryTable.addView(row)
+            summaryTable.addView(View(ctx).apply {
+                layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, (1*dp).toInt())
+                setBackgroundColor(ctx.getColor(R.color.divider))
+            })
+        }
+
+        root.addView(sectionLabel("TRANSACTIONS $year"))
+        val txnContainer = LinearLayout(ctx).apply { orientation = LinearLayout.VERTICAL }
+        root.addView(txnContainer)
+        txnContainer.addView(ProgressBar(ctx).apply {
+            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+                .also { it.gravity = android.view.Gravity.CENTER }
+        })
+
+        val dialog = android.app.AlertDialog.Builder(ctx)
+            .setTitle("${r.employeeName} (${r.employeeCode})")
+            .setView(body)
+            .setPositiveButton("Close", null)
+            .show()
+
+        lifecycleScope.launch {
+            try {
+                val res = RetrofitClient.instance.getLeaveTransactions(year, r.employeeCode ?: "")
+                val items = res.body()?.data ?: emptyList()
+                txnContainer.removeAllViews()
+                if (items.isEmpty()) {
+                    txnContainer.addView(TextView(ctx).apply {
+                        text = "No transactions found for $year"; textSize = 12f
+                        setTextColor(ctx.getColor(R.color.text_hint))
+                    })
+                } else {
+                    items.sortedBy { it.fromDate ?: "" }.forEach { t ->
+                        txnContainer.addView(TextView(ctx).apply {
+                            text = "${t.displayType} · ${t.fromDate?.toDisplayDate() ?: "—"} → ${t.toDate?.toDisplayDate() ?: "—"} · ${t.totalDays?.let { "${it.toInt()}d" } ?: ""} · ${t.status.replaceFirstChar { c -> c.uppercase() }}"
+                            textSize = 12f
+                            setTextColor(ctx.getColor(R.color.text_primary))
+                            setPadding(0, (5*dp).toInt(), 0, (5*dp).toInt())
+                        })
+                    }
+                }
+            } catch (e: Exception) {
+                txnContainer.removeAllViews()
+                txnContainer.addView(TextView(ctx).apply {
+                    text = "Error loading transactions: ${e.message}"; textSize = 12f
+                    setTextColor(ctx.getColor(R.color.text_hint))
+                })
+            }
+        }
+    }
+
+    // ── Leave Transactions — search-driven, matches web (no results until you search) ─
+    private fun setupLeaveTransactionsUi() {
+        if (binding.containerLeaveTransactions.childCount > 0) return // already built
+        val ctx = requireContext(); val dp = ctx.resources.displayMetrics.density
+        val root = LinearLayout(ctx).apply { orientation = LinearLayout.VERTICAL }
+        val etSearch = EditText(ctx).apply {
+            hint = "Enter employee name or ID…"; textSize = 13f
+            setBackgroundColor(ctx.getColor(R.color.background))
+            setPadding((10*dp).toInt(), (10*dp).toInt(), (10*dp).toInt(), (10*dp).toInt())
+            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+                .also { it.setMargins((8*dp).toInt(), (8*dp).toInt(), (8*dp).toInt(), (8*dp).toInt()) }
+        }
+        root.addView(etSearch)
+        val rv = RecyclerView(ctx).apply {
+            layoutManager = LinearLayoutManager(ctx)
+            setPadding((8*dp).toInt(), 0, (8*dp).toInt(), (80*dp).toInt()); clipToPadding = false
+            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f)
+        }
+        root.addView(rv)
+        val tvEmpty = TextView(ctx).apply {
+            text = "No leave transactions found."
+            textSize = 13f; gravity = android.view.Gravity.CENTER
+            setTextColor(ctx.getColor(R.color.text_hint))
+            setPadding((24*dp).toInt(), (40*dp).toInt(), (24*dp).toInt(), 0)
+            visibility = View.GONE
+        }
+        root.addView(tvEmpty)
+        binding.containerLeaveTransactions.addView(root)
+
+        var searchJob: kotlinx.coroutines.Job? = null
+        fun runSearch(q: String) {
+            searchJob?.cancel()
+            searchJob = lifecycleScope.launch {
+                kotlinx.coroutines.delay(300) // debounce
+                try {
+                    val year = Calendar.getInstance().get(Calendar.YEAR)
+                    val res = RetrofitClient.instance.getLeaveTransactions(year, q)
+                    val items = res.body()?.data ?: emptyList()
+                    if (_b == null) return@launch
+                    if (items.isEmpty()) {
+                        rv.visibility = View.GONE
+                        tvEmpty.visibility = View.VISIBLE
+                        tvEmpty.text = if (q.isEmpty()) "No leave transactions found." else "No transactions found for \"$q\"."
+                    } else {
+                        tvEmpty.visibility = View.GONE
+                        rv.visibility = View.VISIBLE
+                        rv.adapter = LeaveListAdapter(items, showName = true, showAction = false) {}
+                    }
+                } catch (_: Exception) {}
+            }
+        }
+        etSearch.addTextChangedListener(object : android.text.TextWatcher {
+            override fun afterTextChanged(s: android.text.Editable?) { runSearch(s?.toString()?.trim() ?: "") }
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+        })
+        runSearch("") // load everyone by default, like Leave Summary
     }
 
     // ── Leave Balance ─────────────────────────────────────────────────────────

@@ -42,29 +42,44 @@ private fun priorityColor(ctx: android.content.Context, priority: String) = when
     else -> ctx.getColor(R.color.status_pending)
 }
 
+private enum class TicketTab { MINE, ASSIGNED, SUPERVISING }
+
 class TicketsFragment : Fragment() {
-    private var mine = true
+    private var tab = TicketTab.ASSIGNED
     private lateinit var rv: RecyclerView
     private lateinit var progress: ProgressBar
     private lateinit var tvEmpty: TextView
     private lateinit var tabMine: TextView
     private lateinit var tabAssigned: TextView
+    private lateinit var tabSupervising: TextView
 
     override fun onCreateView(i: LayoutInflater, c: ViewGroup?, s: Bundle?): View {
         val ctx = requireContext(); val dp = ctx.resources.displayMetrics.density
         val root = LinearLayout(ctx).apply { orientation = LinearLayout.VERTICAL; setBackgroundColor(ctx.getColor(R.color.background)) }
 
         root.addView(LinearLayout(ctx).apply {
-            orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL
-            setBackgroundColor(ctx.getColor(R.color.primary))
+            orientation = LinearLayout.VERTICAL
+            background = GradientDrawable(
+                GradientDrawable.Orientation.TL_BR,
+                intArrayOf(ctx.getColor(R.color.primary), ctx.getColor(R.color.accent_red))
+            )
             setPadding((16*dp).toInt(), (16*dp).toInt(), (16*dp).toInt(), (16*dp).toInt())
-            addView(TextView(ctx).apply {
-                text = "🎫  Work Tickets"; textSize = 20f; setTypeface(null, android.graphics.Typeface.BOLD)
-                setTextColor(ctx.getColor(R.color.white)); layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+            addView(LinearLayout(ctx).apply {
+                orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL
+                addView(TextView(ctx).apply {
+                    text = "🎫  Work Tickets"; textSize = 20f; setTypeface(null, android.graphics.Typeface.BOLD)
+                    setTextColor(ctx.getColor(R.color.white)); layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+                })
+                addView(TextView(ctx).apply {
+                    text = "+ RAISE"; textSize = 12f; setTypeface(null, android.graphics.Typeface.BOLD)
+                    setTextColor(ctx.getColor(R.color.white))
+                    setOnClickListener { showRaiseDialog(ctx) { load() } }
+                })
             })
-            addView(MaterialButton(ctx).apply {
-                text = "+ Raise"; textSize = 12f
-                setOnClickListener { showRaiseDialog(ctx) { load() } }
+            addView(TextView(ctx).apply {
+                text = "Route and track requests"; textSize = 12f
+                setTextColor(android.graphics.Color.WHITE); alpha = 0.85f
+                setPadding(0, (2*dp).toInt(), 0, 0)
             })
         })
 
@@ -74,14 +89,22 @@ class TicketsFragment : Fragment() {
             setPadding((14*dp).toInt(), (10*dp).toInt(), (14*dp).toInt(), 0)
         }
         fun tabBtn() = TextView(ctx).apply {
-            textSize = 13f; setTypeface(null, android.graphics.Typeface.BOLD); gravity = Gravity.CENTER
+            textSize = 12f; setTypeface(null, android.graphics.Typeface.BOLD); gravity = Gravity.CENTER
             setPadding(0, (10*dp).toInt(), 0, (10*dp).toInt())
             layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
         }
-        tabMine = tabBtn().apply { text = "My Tickets" }
         tabAssigned = tabBtn().apply { text = "Assigned to Me" }
-        tabRow.addView(tabMine); tabRow.addView(tabAssigned)
+        tabMine = tabBtn().apply { text = "Raised by Me" }
+        tabSupervising = tabBtn().apply { text = "Supervising" }
+        tabRow.addView(tabAssigned); tabRow.addView(tabMine); tabRow.addView(tabSupervising)
         root.addView(tabRow)
+
+        root.addView(MaterialButton(ctx).apply {
+            text = "+ Raise a Ticket"; setBackgroundColor(ctx.getColor(R.color.primary))
+            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+                .also { it.setMargins((14*dp).toInt(), (10*dp).toInt(), (14*dp).toInt(), 0) }
+            setOnClickListener { showRaiseDialog(ctx) { load() } }
+        })
 
         progress = ProgressBar(ctx).apply {
             layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT)
@@ -103,19 +126,23 @@ class TicketsFragment : Fragment() {
         }
         root.addView(tvEmpty)
 
-        tabMine.setOnClickListener { setActive(true) }
-        tabAssigned.setOnClickListener { setActive(false) }
-        setActive(true)
+        tabAssigned.setOnClickListener { setActive(TicketTab.ASSIGNED) }
+        tabMine.setOnClickListener { setActive(TicketTab.MINE) }
+        tabSupervising.setOnClickListener { setActive(TicketTab.SUPERVISING) }
+        setActive(TicketTab.ASSIGNED)
         return root
     }
 
-    private fun setActive(showMine: Boolean) {
-        mine = showMine
+    private fun setActive(newTab: TicketTab) {
+        tab = newTab
         val ctx = requireContext()
-        tabMine.background = if (mine) pill(ctx.getColor(R.color.primary)) else null
-        tabMine.setTextColor(if (mine) ctx.getColor(R.color.white) else ctx.getColor(R.color.text_secondary))
-        tabAssigned.background = if (!mine) pill(ctx.getColor(R.color.primary)) else null
-        tabAssigned.setTextColor(if (!mine) ctx.getColor(R.color.white) else ctx.getColor(R.color.text_secondary))
+        fun style(v: TextView, active: Boolean) {
+            v.background = if (active) pill(ctx.getColor(R.color.primary)) else null
+            v.setTextColor(if (active) ctx.getColor(R.color.white) else ctx.getColor(R.color.text_secondary))
+        }
+        style(tabAssigned, tab == TicketTab.ASSIGNED)
+        style(tabMine, tab == TicketTab.MINE)
+        style(tabSupervising, tab == TicketTab.SUPERVISING)
         load()
     }
 
@@ -124,11 +151,21 @@ class TicketsFragment : Fragment() {
         progress.visibility = View.VISIBLE; rv.visibility = View.GONE; tvEmpty.visibility = View.GONE
         lifecycleScope.launch {
             try {
-                val res = if (mine) RetrofitClient.instance.getTickets(mine = "1")
-                          else RetrofitClient.instance.getTickets(assignedToMe = "1")
+                val res = when (tab) {
+                    TicketTab.MINE        -> RetrofitClient.instance.getTickets(mine = "1")
+                    TicketTab.ASSIGNED    -> RetrofitClient.instance.getTickets(assignedToMe = "1")
+                    TicketTab.SUPERVISING -> RetrofitClient.instance.getTickets(supervising = "1")
+                }
                 progress.visibility = View.GONE
                 val list = res.body()?.data ?: emptyList()
-                if (list.isEmpty()) { tvEmpty.text = if (mine) "You haven't raised any tickets." else "No tickets assigned to you."; tvEmpty.visibility = View.VISIBLE }
+                if (list.isEmpty()) {
+                    tvEmpty.text = when (tab) {
+                        TicketTab.MINE        -> "You haven't raised any tickets."
+                        TicketTab.ASSIGNED    -> "No tickets assigned to you."
+                        TicketTab.SUPERVISING -> "You're not supervising any tickets."
+                    }
+                    tvEmpty.visibility = View.VISIBLE
+                }
                 else {
                     rv.visibility = View.VISIBLE
                     rv.adapter = object : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
@@ -170,7 +207,9 @@ class TicketsFragment : Fragment() {
         })
         ll.addView(badgeRow)
         val meta = mutableListOf<String>()
-        if (mine) t.assignedToName?.let { meta.add("To $it") } else t.raisedByName?.let { meta.add("From $it") }
+        if (tab == TicketTab.MINE) t.assignedToName?.let { meta.add("To $it") } else t.raisedByName?.let { meta.add("From $it") }
+        t.team?.let { meta.add("Dept: $it") }
+        t.supervisorName?.let { meta.add("Supervisor: $it") }
         t.dueDate?.let { meta.add("Due: ${it.take(10)}") }
         if (meta.isNotEmpty()) ll.addView(TextView(ctx).apply {
             text = meta.joinToString("  ·  "); textSize = 11f; setTextColor(ctx.getColor(R.color.text_hint))
@@ -181,58 +220,178 @@ class TicketsFragment : Fragment() {
 
     private fun showRaiseDialog(ctx: android.content.Context, onDone: () -> Unit) {
         val dp = ctx.resources.displayMetrics.density
-        val container = LinearLayout(ctx).apply { orientation = LinearLayout.VERTICAL; setPadding((20*dp).toInt(), (16*dp).toInt(), (20*dp).toInt(), 0) }
-        val etTitle = EditText(ctx).apply { hint = "Title *" }
-        val etDesc = EditText(ctx).apply { hint = "Description (optional)"; minLines = 2 }
-        val spPriority = Spinner(ctx).apply {
+
+        fun fieldBg() = GradientDrawable().apply {
+            setColor(android.graphics.Color.WHITE); cornerRadius = 8*dp
+            setStroke((1*dp).toInt(), ctx.getColor(R.color.primary))
+        }
+        fun label(text: String) = TextView(ctx).apply {
+            this.text = text; textSize = 12f; setTypeface(null, android.graphics.Typeface.BOLD)
+            setTextColor(ctx.getColor(R.color.text_secondary))
+            setPadding(0, (10*dp).toInt(), 0, (4*dp).toInt())
+        }
+        fun styledEditText(hintText: String, lines: Int = 1) = EditText(ctx).apply {
+            hint = hintText; minLines = lines
+            setTextColor(ctx.getColor(R.color.text_primary))
+            setHintTextColor(ctx.getColor(R.color.text_hint))
+            background = fieldBg()
+            setPadding((10*dp).toInt(), (10*dp).toInt(), (10*dp).toInt(), (10*dp).toInt())
+        }
+        fun styledSpinner() = Spinner(ctx).apply { background = fieldBg() }
+
+        // ── Outer shell: colored header banner (Riskcare red) + white card body ──
+        val outer = LinearLayout(ctx).apply {
+            orientation = LinearLayout.VERTICAL
+            background = GradientDrawable().apply { setColor(android.graphics.Color.WHITE); cornerRadius = 16*dp }
+            clipToOutline = true
+        }
+        val header = LinearLayout(ctx).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding((20*dp).toInt(), (18*dp).toInt(), (20*dp).toInt(), (18*dp).toInt())
+            background = GradientDrawable(
+                GradientDrawable.Orientation.TL_BR,
+                intArrayOf(ctx.getColor(R.color.primary), ctx.getColor(R.color.accent_red))
+            )
+        }
+        header.addView(TextView(ctx).apply {
+            text = "🎫 Raise a Ticket"; textSize = 17f; setTypeface(null, android.graphics.Typeface.BOLD)
+            setTextColor(android.graphics.Color.WHITE)
+        })
+        header.addView(TextView(ctx).apply {
+            text = "Route a request to the right person"; textSize = 12f
+            setTextColor(android.graphics.Color.WHITE); alpha = 0.9f
+            setPadding(0, (2*dp).toInt(), 0, 0)
+        })
+        outer.addView(header)
+
+        // Capped so the popup never grows taller than the screen — content scrolls within it (same as KrishiHR).
+        val sv = androidx.core.widget.NestedScrollView(ctx).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                (0.72 * ctx.resources.displayMetrics.heightPixels).toInt()
+            )
+        }
+        val container = LinearLayout(ctx).apply { orientation = LinearLayout.VERTICAL; setPadding((20*dp).toInt(), (14*dp).toInt(), (20*dp).toInt(), (16*dp).toInt()) }
+        sv.addView(container)
+        outer.addView(sv)
+
+        val etTitle = styledEditText("e.g. Clear pending QC backlog")
+        val etDesc = styledEditText("Description (optional)", lines = 2)
+        val spPriority = styledSpinner().apply {
             adapter = ArrayAdapter(ctx, android.R.layout.simple_spinner_dropdown_item, listOf("Low", "Medium", "High")).also { it.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item) }
             setSelection(1)
         }
-        val spAssignee = Spinner(ctx)
+        val etTeam = styledEditText("Auto-fills from the assignee's department")
+        val spSupervisor = styledSpinner()
 
-        container.addView(TextView(ctx).apply { text = "Route To *"; textSize = 12f; setPadding(0, (8*dp).toInt(), 0, 2) })
-        container.addView(spAssignee)
-        container.addView(etTitle)
-        container.addView(etDesc)
-        container.addView(TextView(ctx).apply { text = "Priority"; textSize = 12f; setPadding(0, (8*dp).toInt(), 0, 2) })
-        container.addView(spPriority)
+        // ── Assign To (pick one or more) — checkbox list, same interaction as KrishiHR's Assign Work ──
+        container.addView(label("Route To (pick one or more) *"))
+        val selectedIds = mutableSetOf<Int>()
+        val employeeListWrap = LinearLayout(ctx).apply {
+            orientation = LinearLayout.VERTICAL
+            background = fieldBg()
+            setPadding((8*dp).toInt(), (4*dp).toInt(), (8*dp).toInt(), (4*dp).toInt())
+        }
+        // No nested scroll needed here — the outer dialog scroll (`sv`) already handles
+        // overflow, and the assignable-employee list is always short (support staff only).
+        container.addView(employeeListWrap)
 
         var assignees: List<TicketAssignee> = emptyList()
+        fun renderEmployeeList() {
+            employeeListWrap.removeAllViews()
+            if (assignees.isEmpty()) {
+                employeeListWrap.addView(TextView(ctx).apply {
+                    text = "Loading…"; textSize = 12f; setTextColor(ctx.getColor(R.color.text_hint))
+                    gravity = Gravity.CENTER; setPadding(0, (16*dp).toInt(), 0, (16*dp).toInt())
+                })
+                return
+            }
+            assignees.forEach { emp ->
+                val row = LinearLayout(ctx).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; setPadding(0, (4*dp).toInt(), 0, (4*dp).toInt()) }
+                val cb = CheckBox(ctx).apply { isChecked = selectedIds.contains(emp.id) }
+                cb.setOnCheckedChangeListener { _, checked ->
+                    if (checked) {
+                        selectedIds.add(emp.id)
+                        if (!emp.departmentName.isNullOrBlank()) etTeam.setText(emp.departmentName)
+                    } else selectedIds.remove(emp.id)
+                }
+                val empLabel = TextView(ctx).apply {
+                    text = "${emp.name}${emp.employeeCode?.let { " ($it)" } ?: ""}${emp.departmentName?.let { " · $it" } ?: ""}"
+                    textSize = 13f; setTextColor(ctx.getColor(R.color.text_primary))
+                }
+                row.addView(cb); row.addView(empLabel)
+                employeeListWrap.addView(row)
+            }
+        }
+        renderEmployeeList()
+
+        container.addView(label("Title / What needs to be done *"))
+        container.addView(etTitle)
+        container.addView(label("Department"))
+        container.addView(etTeam)
+        container.addView(label("Supervisor"))
+        container.addView(spSupervisor)
+        container.addView(label("Description"))
+        container.addView(etDesc)
+        container.addView(label("Priority"))
+        container.addView(spPriority)
+
+        val btnRow = LinearLayout(ctx).apply {
+            orientation = LinearLayout.HORIZONTAL
+            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+                .also { it.topMargin = (18*dp).toInt() }
+        }
+        val btnCancel = com.google.android.material.button.MaterialButton(ctx, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
+            text = "Cancel"; setTextColor(ctx.getColor(R.color.text_secondary))
+            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).also { it.marginEnd = (8*dp).toInt() }
+        }
+        val btnRaise = com.google.android.material.button.MaterialButton(ctx, null, com.google.android.material.R.attr.materialButtonStyle).apply {
+            text = "🎫 Raise"; setBackgroundColor(ctx.getColor(R.color.primary))
+            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+        }
+        btnRow.addView(btnCancel); btnRow.addView(btnRaise)
+        container.addView(btnRow)
+
         lifecycleScope.launch {
             try {
                 val res = RetrofitClient.instance.getTicketAssignableEmployees()
                 assignees = res.body()?.data ?: emptyList()
-                spAssignee.adapter = ArrayAdapter(ctx, android.R.layout.simple_spinner_dropdown_item,
-                    assignees.map { "${it.name}${it.departmentName?.let { d -> " ($d)" } ?: ""}" })
+                renderEmployeeList()
+                spSupervisor.adapter = ArrayAdapter(ctx, android.R.layout.simple_spinner_dropdown_item,
+                    listOf("— none —") + assignees.map { "${it.name}${it.departmentName?.let { d -> " ($d)" } ?: ""}" })
             } catch (_: Exception) { ctx.toast("Could not load support staff") }
         }
 
-        val scroll = ScrollView(ctx).apply { addView(container) }
-        android.app.AlertDialog.Builder(ctx)
-            .setTitle("Raise a Ticket")
-            .setView(scroll)
-            .setPositiveButton("Raise") { _, _ ->
-                val title = etTitle.text.toString().trim()
-                if (title.isEmpty()) { ctx.toast("Title is required"); return@setPositiveButton }
-                val assignee = assignees.getOrNull(spAssignee.selectedItemPosition)
-                if (assignee == null) { ctx.toast("Select who to route this to"); return@setPositiveButton }
-                val priority = listOf("low", "medium", "high")[spPriority.selectedItemPosition]
-                lifecycleScope.launch {
-                    try {
-                        val res = RetrofitClient.instance.createTicket(
-                            CreateTicketRequest(
-                                title = title,
-                                description = etDesc.text.toString().trim().ifEmpty { null },
-                                priority = priority,
-                                assignedTo = listOf(assignee.id)
-                            )
+        val scroll = ScrollView(ctx).apply { addView(outer) }
+        val dialog = android.app.AlertDialog.Builder(ctx).setView(scroll).create()
+        dialog.window?.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT))
+
+        btnCancel.setOnClickListener { dialog.dismiss() }
+        btnRaise.setOnClickListener {
+            val title = etTitle.text.toString().trim()
+            if (title.isEmpty()) { ctx.toast("Title is required"); return@setOnClickListener }
+            if (selectedIds.isEmpty()) { ctx.toast("Select at least one person to route this to"); return@setOnClickListener }
+            val supervisor = if (spSupervisor.selectedItemPosition > 0) assignees.getOrNull(spSupervisor.selectedItemPosition - 1) else null
+            if (supervisor != null && selectedIds.contains(supervisor.id)) { ctx.toast("Supervisor can't also be an assignee"); return@setOnClickListener }
+            val priority = listOf("low", "medium", "high")[spPriority.selectedItemPosition]
+            lifecycleScope.launch {
+                try {
+                    val res = RetrofitClient.instance.createTicket(
+                        CreateTicketRequest(
+                            title = title,
+                            description = etDesc.text.toString().trim().ifEmpty { null },
+                            priority = priority,
+                            assignedTo = selectedIds.toList(),
+                            team = etTeam.text.toString().trim().ifEmpty { null },
+                            supervisorId = supervisor?.id
                         )
-                        if (res.isSuccessful && res.body()?.success == true) { ctx.toast("Ticket raised"); onDone() }
-                        else ctx.toast(res.body()?.message ?: "Failed to raise ticket")
-                    } catch (_: Exception) { ctx.toast("Network error") }
-                }
+                    )
+                    if (res.isSuccessful && res.body()?.success == true) { ctx.toast(res.body()?.message ?: "Ticket raised"); dialog.dismiss(); onDone() }
+                    else ctx.toast(res.body()?.message ?: "Failed to raise ticket")
+                } catch (_: Exception) { ctx.toast("Network error") }
             }
-            .setNegativeButton("Cancel", null).show()
+        }
+        dialog.show()
     }
 
     private fun showDetailDialog(ctx: android.content.Context, ticketId: Int, onChanged: () -> Unit) {
@@ -255,16 +414,38 @@ class TicketsFragment : Fragment() {
                 setPadding((10*dp).toInt(), (4*dp).toInt(), (10*dp).toInt(), (4*dp).toInt())
                 layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).also { it.topMargin = (8*dp).toInt() }
             })
+
+            // ── Bordered info card: assigned to / assigned by / supervisor / team / due ──
+            val infoCard = LinearLayout(ctx).apply {
+                orientation = LinearLayout.VERTICAL
+                background = GradientDrawable().apply {
+                    setColor(android.graphics.Color.WHITE); cornerRadius = 12*dp
+                    setStroke((1*dp).toInt(), ctx.getColor(R.color.primary))
+                }
+                setPadding((14*dp).toInt(), (12*dp).toInt(), (14*dp).toInt(), (12*dp).toInt())
+                layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).also { it.topMargin = (14*dp).toInt() }
+            }
+            fun row(icon: String, text: String) {
+                val r = LinearLayout(ctx).apply { orientation = LinearLayout.HORIZONTAL; setPadding(0, (3*dp).toInt(), 0, (3*dp).toInt()) }
+                r.addView(TextView(ctx).apply { this.text = icon; textSize = 13f; setPadding(0, 0, (8*dp).toInt(), 0) })
+                r.addView(TextView(ctx).apply { this.text = text; textSize = 12.5f; setTextColor(ctx.getColor(R.color.text_secondary)) })
+                infoCard.addView(r)
+            }
+            row("👤", "Assigned to: ${t.assignedToName ?: "—"}${t.assignedToCode?.let { " ($it)" } ?: ""}")
+            row("👔", "Assigned by: ${t.raisedByName ?: "—"}")
+            row("🧑‍💼", "Supervisor: ${t.supervisorName ?: "—"}")
+            t.team?.let { row("🧩", "Department: $it") }
+            t.dueDate?.let { row("📅", "Due: ${it.take(10)}") }
+            root.addView(infoCard)
+
             if (!t.description.isNullOrBlank()) {
                 root.addView(TextView(ctx).apply {
-                    text = t.description; textSize = 13f; setTextColor(ctx.getColor(R.color.text_secondary))
-                    setPadding(0, (10*dp).toInt(), 0, 0)
+                    text = t.description; textSize = 12.5f; setTextColor(ctx.getColor(R.color.text_secondary))
+                    setPadding((14*dp).toInt(), (10*dp).toInt(), (14*dp).toInt(), (10*dp).toInt())
+                    background = GradientDrawable().apply { setColor(ctx.getColor(R.color.surface)); cornerRadius = 10*dp }
+                    layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).also { it.topMargin = (10*dp).toInt() }
                 })
             }
-            root.addView(TextView(ctx).apply {
-                text = "Raised by ${t.raisedByName ?: "—"}  →  ${t.assignedToName ?: "unassigned"}"
-                textSize = 12f; setTextColor(ctx.getColor(R.color.text_hint)); setPadding(0, (8*dp).toInt(), 0, 0)
-            })
 
             val canAct = t.status != "closed"
             if (canAct) {
@@ -293,40 +474,55 @@ class TicketsFragment : Fragment() {
             }
 
             root.addView(TextView(ctx).apply {
-                text = "Comments"; textSize = 12f; setTypeface(null, android.graphics.Typeface.BOLD)
-                setPadding(0, (14*dp).toInt(), 0, (4*dp).toInt())
+                text = "ACTIVITY"; textSize = 11.5f; setTypeface(null, android.graphics.Typeface.BOLD)
+                setTextColor(ctx.getColor(R.color.primary))
+                setPadding(0, (16*dp).toInt(), 0, (6*dp).toInt())
             })
-            val commentsWrap = LinearLayout(ctx).apply { orientation = LinearLayout.VERTICAL }
-            root.addView(commentsWrap)
-            (t.events ?: emptyList()).filter { it.action == "comment" || it.action == "status_changed" }.forEach { e ->
-                commentsWrap.addView(TextView(ctx).apply {
-                    text = when (e.action) {
-                        "status_changed" -> "${e.actorName ?: "Someone"} changed status to ${statusLabel(e.toStatus ?: "")}${e.note?.let { " — $it" } ?: ""}"
-                        else -> "${e.actorName ?: "Someone"}: ${e.note}"
-                    }
-                    textSize = 12f; setTextColor(ctx.getColor(R.color.text_secondary)); setPadding(0, (4*dp).toInt(), 0, (4*dp).toInt())
+            val activityWrap = LinearLayout(ctx).apply { orientation = LinearLayout.VERTICAL }
+            root.addView(activityWrap)
+            fun activityRow(text: String) {
+                activityWrap.addView(LinearLayout(ctx).apply {
+                    orientation = LinearLayout.VERTICAL
+                    background = GradientDrawable().apply { setColor(ctx.getColor(R.color.surface)); cornerRadius = 8*dp }
+                    setPadding((10*dp).toInt(), (8*dp).toInt(), (10*dp).toInt(), (8*dp).toInt())
+                    layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).also { it.bottomMargin = (6*dp).toInt() }
+                    addView(TextView(ctx).apply { this.text = text; textSize = 12.5f; setTextColor(ctx.getColor(R.color.text_secondary)) })
                 })
+            }
+            activityRow("${t.raisedByName ?: "Someone"} created this ticket")
+            (t.events ?: emptyList()).filter { it.action == "comment" || it.action == "status_changed" }.forEach { e ->
+                activityRow(when (e.action) {
+                    "status_changed" -> "${e.actorName ?: "Someone"} changed status to ${statusLabel(e.toStatus ?: "")}${e.note?.let { " — $it" } ?: ""}"
+                    else -> "${e.actorName ?: "Someone"}: ${e.note}"
+                })
+            }
+
+            val commentRow = LinearLayout(ctx).apply {
+                orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL
+                layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).also { it.topMargin = (8*dp).toInt(); it.bottomMargin = (16*dp).toInt() }
             }
             val etComment = EditText(ctx).apply {
                 hint = "Add a comment…"; textSize = 13f
-                layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).also { it.topMargin = (8*dp).toInt() }
+                background = GradientDrawable().apply { setColor(android.graphics.Color.WHITE); cornerRadius = 8*dp; setStroke((1*dp).toInt(), ctx.getColor(R.color.primary)) }
+                setPadding((10*dp).toInt(), (10*dp).toInt(), (10*dp).toInt(), (10*dp).toInt())
+                layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).also { it.marginEnd = (8*dp).toInt() }
             }
-            root.addView(etComment)
-            root.addView(MaterialButton(ctx).apply {
-                text = "Post Comment"; textSize = 12f
-                layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).also { it.topMargin = (6*dp).toInt(); it.bottomMargin = (16*dp).toInt() }
-                setOnClickListener {
-                    val note = etComment.text.toString().trim()
-                    if (note.isEmpty()) return@setOnClickListener
-                    lifecycleScope.launch {
-                        try {
-                            val r = RetrofitClient.instance.addTicketComment(t.id, TicketCommentRequest(note))
-                            if (r.isSuccessful && r.body()?.success == true) { etComment.setText(""); loadDetail(ctx, ticketId) { render(it) } }
-                            else ctx.toast(r.body()?.message ?: "Failed")
-                        } catch (_: Exception) { ctx.toast("Network error") }
-                    }
+            val btnSend = com.google.android.material.button.MaterialButton(ctx, null, com.google.android.material.R.attr.materialButtonStyle).apply {
+                text = "Send"; setBackgroundColor(ctx.getColor(R.color.primary))
+            }
+            commentRow.addView(etComment); commentRow.addView(btnSend)
+            root.addView(commentRow)
+            btnSend.setOnClickListener {
+                val note = etComment.text.toString().trim()
+                if (note.isEmpty()) return@setOnClickListener
+                lifecycleScope.launch {
+                    try {
+                        val r = RetrofitClient.instance.addTicketComment(t.id, TicketCommentRequest(note))
+                        if (r.isSuccessful && r.body()?.success == true) { etComment.setText(""); loadDetail(ctx, ticketId) { render(it) } }
+                        else ctx.toast(r.body()?.message ?: "Failed")
+                    } catch (_: Exception) { ctx.toast("Network error") }
                 }
-            })
+            }
         }
 
         loadDetail(ctx, ticketId) { render(it) }

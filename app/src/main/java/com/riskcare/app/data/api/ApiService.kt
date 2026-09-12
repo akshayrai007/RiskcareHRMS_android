@@ -24,6 +24,10 @@ interface ApiService {
     @POST("auth/update-photo")
     suspend fun updatePhoto(@Body body: Map<String, String>): Response<ApiResponse<Employee>>
 
+    // ── Access Control — same effective-access system driving the web sidebar ───
+    @GET("access-control/my-effective-all")
+    suspend fun getMyEffectiveAccessAll(): Response<ApiResponse<List<EffectivePageAccess>>>
+
     @Multipart
     @POST("auth/update-photo")
     suspend fun updatePhotoMultipart(@Part photo: MultipartBody.Part): Response<ApiResponse<Employee>>
@@ -175,11 +179,26 @@ interface ApiService {
     @GET("leave/applications")
     suspend fun getLeaveApplications(
         @Query("status") status: String? = null,
-        @Query("employee_id") employeeId: Int? = null
+        @Query("employee_id") employeeId: Int? = null,
+        @Query("scope") scope: String? = null
     ): Response<ApiResponse<List<LeaveApplication>>>
 
     @GET("leave/balance")
     suspend fun getLeaveBalance(): Response<LeaveBalanceResponse>
+
+    @GET("leave/summary")
+    suspend fun getLeaveSummary(
+        @Query("year") year: Int,
+        @Query("search") search: String? = null
+    ): Response<ApiResponse<List<LeaveSummaryRow>>>
+
+    @GET("leave/transactions")
+    suspend fun getLeaveTransactions(
+        @Query("year") year: Int,
+        @Query("search") search: String,
+        @Query("leave_type") leaveType: String? = null,
+        @Query("status") status: String? = null
+    ): Response<ApiResponse<List<LeaveApplication>>>
 
     @POST("leave/{id}/action")
     suspend fun leaveAction(@Path("id") id: Int, @Body request: ActionRequest): Response<ApiResponse<Unit>>
@@ -792,6 +811,7 @@ interface ApiService {
     suspend fun getTickets(
         @Query("mine") mine: String? = null,
         @Query("assigned_to_me") assignedToMe: String? = null,
+        @Query("supervising") supervising: String? = null,
         @Query("status") status: String? = null
     ): Response<TicketListResponse>
 
@@ -809,5 +829,15 @@ interface ApiService {
 
     @POST("tickets/{id}/comments")
     suspend fun addTicketComment(@Path("id") id: Int, @Body body: TicketCommentRequest): Response<ApiResponse<Unit>>
+
+    // ── Coming Late Notices ──────────────────────────────────────────────────
+    @POST("late-notices")
+    suspend fun createLateNotice(@Body body: CreateLateNoticeRequest): Response<ApiResponse<Unit>>
+
+    @GET("late-notices")
+    suspend fun getLateNotices(@Query("date") date: String? = null): Response<LateNoticeListResponse>
+
+    @POST("late-notices/{id}/decide")
+    suspend fun decideLateNotice(@Path("id") id: Int, @Body body: LateNoticeDecisionRequest): Response<ApiResponse<Unit>>
 
 }

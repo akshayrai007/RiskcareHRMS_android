@@ -156,6 +156,21 @@ class MoreFragment : Fragment() {
             row.setOnClickListener { nav(AdvanceApprovalsFragment()) }
         }
 
+        // Access Control override correction — same rule the web Access Control
+        // screen defines now also applies here. Falls back to the Roles.kt
+        // decision above if the fetch hasn't resolved or the page isn't in the
+        // catalog, so nothing regresses if this call fails.
+        viewLifecycleOwner.lifecycleScope.launch {
+            AccessControl.ensureLoaded()
+            fun correct(rowId: Int, pageKey: String) {
+                val row = view.findViewById<View>(rowId) ?: return
+                row.visibility = if (AccessControl.hasAccess(pageKey, row.visibility == View.VISIBLE)) View.VISIBLE else View.GONE
+            }
+            correct(R.id.rowSeparation, AccessControl.PageKeys.SEPARATION)
+            correct(R.id.rowProvision, AccessControl.PageKeys.PROVISION)
+            correct(R.id.rowEmployees, AccessControl.PageKeys.EMPLOYEES)
+        }
+
         // My Work — every employee sees their own assigned tasks.
         view.findViewById<View>(R.id.rowMyWork)?.setOnClickListener { nav(MyWorkFragment()) }
 
@@ -3721,12 +3736,15 @@ class ProvisionFragment : Fragment() {
             layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
                 .also { it.marginEnd = (6*dp).toInt() }
             setBackgroundColor(ctx.getColor(R.color.primary))
+            setTextColor(android.graphics.Color.WHITE)
         }
         val btnTabApprovals = com.google.android.material.button.MaterialButton(ctx, null,
             com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
             text = "My Approvals"; textSize = 12f
             layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
             visibility = if (isHR || isMgr) View.VISIBLE else View.GONE
+            setTextColor(ctx.getColor(R.color.primary))
+            strokeColor = android.content.res.ColorStateList.valueOf(ctx.getColor(R.color.primary))
         }
         tabRow.addView(btnTabAll); tabRow.addView(btnTabApprovals)
         root.addView(tabRow)
@@ -3785,13 +3803,17 @@ class ProvisionFragment : Fragment() {
         btnTabAll.setOnClickListener {
             currentTab = "all"
             btnTabAll.setBackgroundColor(ctx.getColor(R.color.primary))
+            btnTabAll.setTextColor(android.graphics.Color.WHITE)
             btnTabApprovals.setBackgroundColor(android.graphics.Color.TRANSPARENT)
+            btnTabApprovals.setTextColor(ctx.getColor(R.color.primary))
             showList(allItems)
         }
         btnTabApprovals.setOnClickListener {
             currentTab = "approvals"
             btnTabApprovals.setBackgroundColor(ctx.getColor(R.color.primary))
+            btnTabApprovals.setTextColor(android.graphics.Color.WHITE)
             btnTabAll.setBackgroundColor(android.graphics.Color.TRANSPARENT)
+            btnTabAll.setTextColor(ctx.getColor(R.color.primary))
             showApprovals()
         }
 

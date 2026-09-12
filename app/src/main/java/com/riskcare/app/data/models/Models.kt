@@ -39,6 +39,18 @@ data class ForgotVerifyEmployeeIdRequest(@SerializedName("employee_id") val empl
 data class ResetTokenData(@SerializedName("reset_token") val resetToken: String)
 data class ForgotResetRequest(@SerializedName("reset_token") val resetToken: String, @SerializedName("new_password") val newPassword: String)
 
+// ── Access Control — GET /access-control/my-effective-all, same source of truth
+// the web sidebar uses. page_key matches the web's .html filenames (e.g.
+// "dashboard.html", "payroll.html") — see PAGE_KEY_MAP in Roles.kt for the
+// Android-screen-to-page-key mapping.
+data class EffectivePageAccess(
+    @SerializedName("page_key")     val pageKey: String,
+    val label: String? = null,
+    @SerializedName("access_level") val accessLevel: String, // full | partial | none
+    @SerializedName("data_scope")   val dataScope: String? = null, // all | reportees | own
+    @SerializedName("allowed_tabs") val allowedTabs: List<String>? = null
+)
+
 // ── Org Chart — flat list from GET /org-chart, assembled into a tree client-side ─
 data class OrgChartPerson(
     val id: Int,
@@ -285,6 +297,26 @@ data class LeaveApplication(
     val displayType get() = leaveTypeName ?: leaveType ?: type ?: "Leave"
     val appliedDate get() = appliedOn ?: appliedAt
 }
+
+// ── Leave Summary row — GET /leave/summary (HR/super_admin only) ────────────────
+data class LeaveSummaryRow(
+    @SerializedName("employee_code")   val employeeCode: String? = null,
+    @SerializedName("employee_name")   val employeeName: String? = null,
+    val department: String? = null,
+    val designation: String? = null,
+    @SerializedName("el_allocated") val elAllocated: Double? = null,
+    @SerializedName("el_used")      val elUsed: Double? = null,
+    @SerializedName("el_available") val elAvailable: Double? = null,
+    @SerializedName("sl_allocated") val slAllocated: Double? = null,
+    @SerializedName("sl_used")      val slUsed: Double? = null,
+    @SerializedName("sl_available") val slAvailable: Double? = null,
+    @SerializedName("cl_allocated") val clAllocated: Double? = null,
+    @SerializedName("cl_used")      val clUsed: Double? = null,
+    @SerializedName("cl_available") val clAvailable: Double? = null,
+    @SerializedName("ml_allocated") val mlAllocated: Double? = null,
+    @SerializedName("ml_used")      val mlUsed: Double? = null,
+    @SerializedName("ml_available") val mlAvailable: Double? = null
+)
 
 // Custom response wrapper for leave balance — captures is_provisional at top level
 data class LeaveBalanceResponse(
@@ -1595,6 +1627,9 @@ data class Ticket(
     @SerializedName("assigned_to")       val assignedTo: Int? = null,
     @SerializedName("assigned_to_name")  val assignedToName: String? = null,
     @SerializedName("assigned_to_code")  val assignedToCode: String? = null,
+    val team: String? = null,
+    @SerializedName("supervisor_id")     val supervisorId: Int? = null,
+    @SerializedName("supervisor_name")   val supervisorName: String? = null,
     val events: List<TicketEvent>? = null
 )
 data class TicketListResponse(val success: Boolean, val data: List<Ticket>? = null)
@@ -1605,8 +1640,26 @@ data class CreateTicketRequest(
     val description: String? = null,
     val priority: String = "medium",
     @SerializedName("due_date") val dueDate: String? = null,
-    @SerializedName("assigned_to") val assignedTo: List<Int>
+    @SerializedName("assigned_to") val assignedTo: List<Int>,
+    val team: String? = null,
+    @SerializedName("supervisor_id") val supervisorId: Int? = null
 )
 data class TicketStatusRequest(val status: String, val note: String? = null)
 data class TicketCommentRequest(val note: String)
+
+data class LateNotice(
+    val id: Int,
+    @SerializedName("employee_id")   val employeeId: Int,
+    @SerializedName("employee_name") val employeeName: String? = null,
+    @SerializedName("employee_code") val employeeCode: String? = null,
+    @SerializedName("notice_date")   val noticeDate: String? = null,
+    @SerializedName("expected_time") val expectedTime: String,
+    val reason: String,
+    val status: String = "pending",
+    @SerializedName("approved_by_name") val approvedByName: String? = null,
+    @SerializedName("created_at")    val createdAt: String? = null
+)
+data class LateNoticeListResponse(val success: Boolean, val data: List<LateNotice>? = null)
+data class CreateLateNoticeRequest(@SerializedName("expected_time") val expectedTime: String, val reason: String)
+data class LateNoticeDecisionRequest(val decision: String)
 

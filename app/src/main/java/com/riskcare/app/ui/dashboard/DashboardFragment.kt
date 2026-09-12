@@ -175,6 +175,12 @@ class DashboardFragment : Fragment() {
             binding.menuGeofence.setOnClickListener { nav(GeofenceAdminFragment()) }
         }
 
+        // Detach whichever of these are already GONE right now, before the first
+        // layout pass — GridLayout still reserves a slot for a GONE (not removed)
+        // child, so waiting until the async Work Tracker check below to detach
+        // them caused a visible shuffle on every app open.
+        detachHiddenQuickAccessTiles()
+
         // Calendar — jumps straight to Attendance's Calendar tab.
         binding.menuCalendar.setOnClickListener { nav(com.riskcare.app.ui.attendance.AttendanceCalendarFragment()) }
 
@@ -196,7 +202,7 @@ class DashboardFragment : Fragment() {
                 }
             } catch (_: Exception) {
             } finally {
-                detachHiddenQuickAccessTiles()
+                detachWorkTrackerTileIfHidden()
             }
         }
     }
@@ -208,8 +214,18 @@ class DashboardFragment : Fragment() {
     // together with no gaps.
     private fun detachHiddenQuickAccessTiles() {
         if (_b == null) return
-        listOf(binding.menuEmployees, binding.menuApprovals, binding.menuGeofence, binding.menuWorkTracker).forEach { tile ->
+        listOf(binding.menuEmployees, binding.menuApprovals, binding.menuGeofence).forEach { tile ->
             if (tile.visibility != View.VISIBLE) (tile.parent as? ViewGroup)?.removeView(tile)
+        }
+    }
+
+    // Work Tracker's visibility is decided later by an async call, so it's detached
+    // separately once that resolves — detaching it early (like the tiles above)
+    // would remove it from the grid before the check could ever show it again.
+    private fun detachWorkTrackerTileIfHidden() {
+        if (_b == null) return
+        if (binding.menuWorkTracker.visibility != View.VISIBLE) {
+            (binding.menuWorkTracker.parent as? ViewGroup)?.removeView(binding.menuWorkTracker)
         }
     }
 

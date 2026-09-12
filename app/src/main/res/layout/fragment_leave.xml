@@ -172,6 +172,57 @@
                 android:background="@color/surface"
                 android:clickable="true"
                 android:focusable="true"/>
+
+            <!-- All Applications — hr/admin/super_admin/accounts -->
+            <TextView
+                android:id="@+id/tabAllLeaves"
+                android:visibility="gone"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="📂 All"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:paddingVertical="8dp"
+                android:textColor="@color/text_secondary"
+                android:background="@color/surface"
+                android:clickable="true"
+                android:focusable="true"/>
+
+            <!-- Leave Summary — hr/super_admin only -->
+            <TextView
+                android:id="@+id/tabLeaveSummary"
+                android:visibility="gone"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="📊 Summary"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:paddingVertical="8dp"
+                android:textColor="@color/text_secondary"
+                android:background="@color/surface"
+                android:clickable="true"
+                android:focusable="true"/>
+
+            <!-- Leave Transactions — hr/super_admin only -->
+            <TextView
+                android:id="@+id/tabLeaveTransactions"
+                android:visibility="gone"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="🔄 Txns"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:paddingVertical="8dp"
+                android:textColor="@color/text_secondary"
+                android:background="@color/surface"
+                android:clickable="true"
+                android:focusable="true"/>
         </LinearLayout>
 
         <!-- Divider -->
@@ -206,6 +257,31 @@
                     android:gravity="center"
                     android:textSize="14sp"
                     android:textColor="@color/text_hint"
+                    android:visibility="gone"/>
+
+                <!-- All Applications (hr/admin/super_admin/accounts) -->
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rvAllLeaves"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:paddingHorizontal="8dp"
+                    android:paddingTop="4dp"
+                    android:paddingBottom="80dp"
+                    android:clipToPadding="false"
+                    android:visibility="gone"/>
+
+                <!-- Leave Summary table (hr/super_admin only) — populated in code -->
+                <FrameLayout
+                    android:id="@+id/containerLeaveSummary"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:visibility="gone"/>
+
+                <!-- Leave Transactions table (hr/super_admin only) — populated in code -->
+                <FrameLayout
+                    android:id="@+id/containerLeaveTransactions"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
                     android:visibility="gone"/>
 
                 <!-- Comp Off Content -->

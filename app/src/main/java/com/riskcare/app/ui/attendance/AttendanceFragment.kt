@@ -183,6 +183,207 @@ class AttendanceTodayFragment : Fragment(), OnMapReadyCallback {
         loadGeofenceMap()
 
         permissionManager.checkAndRequestAll { _ -> /* dot appears via mapLocationRunnable */ }
+
+        setupLateNotice()
+    }
+
+    // ── Coming Late — inserted as extra rows below Punch In/Out, appended in
+    // code rather than the XML so this doesn't touch the punch-button layout. ──
+    private fun setupLateNotice() {
+        val ctx = requireContext(); val dp = ctx.resources.displayMetrics.density
+        val punchRow = binding.btnPunchOut.parent as? android.view.ViewGroup ?: return
+        val mainColumn = punchRow.parent as? android.widget.LinearLayout ?: return
+        val insertAt = mainColumn.indexOfChild(punchRow) + 1
+
+        val btnLate = com.google.android.material.button.MaterialButton(
+            ctx, null, com.google.android.material.R.attr.materialButtonOutlinedStyle
+        ).apply {
+            text = "🕒 Coming Late — Inform Manager & HR"; textSize = 13f
+            layoutParams = android.widget.LinearLayout.LayoutParams(
+                android.widget.LinearLayout.LayoutParams.MATCH_PARENT, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
+            ).also { it.bottomMargin = (12*dp).toInt() }
+        }
+        mainColumn.addView(btnLate, insertAt)
+        btnLate.setOnClickListener { showLateNoticeDialog() }
+
+        // "Late Today" card for manager/HR/admin/super_admin — the API returns
+        // an empty list for anyone else, so this simply stays hidden for them.
+        val lateListCard = LinearLayout(ctx).apply {
+            orientation = LinearLayout.VERTICAL
+            visibility = View.GONE
+            layoutParams = android.widget.LinearLayout.LayoutParams(
+                android.widget.LinearLayout.LayoutParams.MATCH_PARENT, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
+            ).also { it.bottomMargin = (12*dp).toInt() }
+        }
+        mainColumn.addView(lateListCard, insertAt + 1)
+        loadLateNotices(lateListCard)
+    }
+
+    private fun showLateNoticeDialog() {
+        val ctx = requireContext(); val dp = ctx.resources.displayMetrics.density
+
+        fun fieldBg() = android.graphics.drawable.GradientDrawable().apply {
+            setColor(android.graphics.Color.WHITE); cornerRadius = 8*dp
+            setStroke((1*dp).toInt(), ctx.getColor(R.color.primary))
+        }
+        fun label(text: String) = TextView(ctx).apply {
+            this.text = text; textSize = 12f; setTypeface(null, android.graphics.Typeface.BOLD)
+            setTextColor(ctx.getColor(R.color.text_secondary))
+            setPadding(0, (10*dp).toInt(), 0, (4*dp).toInt())
+        }
+
+        // ── Same shell as the Raise-a-Ticket dialog: gradient header + white card body ──
+        val outer = LinearLayout(ctx).apply {
+            orientation = LinearLayout.VERTICAL
+            background = android.graphics.drawable.GradientDrawable().apply { setColor(android.graphics.Color.WHITE); cornerRadius = 16*dp }
+            clipToOutline = true
+        }
+        val header = LinearLayout(ctx).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding((20*dp).toInt(), (18*dp).toInt(), (20*dp).toInt(), (18*dp).toInt())
+            background = android.graphics.drawable.GradientDrawable(
+                android.graphics.drawable.GradientDrawable.Orientation.TL_BR,
+                intArrayOf(ctx.getColor(R.color.primary), ctx.getColor(R.color.accent_red))
+            )
+        }
+        header.addView(TextView(ctx).apply {
+            text = "🕒 Coming Late Today"; textSize = 17f; setTypeface(null, android.graphics.Typeface.BOLD)
+            setTextColor(android.graphics.Color.WHITE)
+        })
+        header.addView(TextView(ctx).apply {
+            text = "Your manager and HR will be informed"; textSize = 12f
+            setTextColor(android.graphics.Color.WHITE); alpha = 0.9f
+            setPadding(0, (2*dp).toInt(), 0, 0)
+        })
+        outer.addView(header)
+
+        val container = LinearLayout(ctx).apply { orientation = LinearLayout.VERTICAL; setPadding((20*dp).toInt(), (14*dp).toInt(), (20*dp).toInt(), (16*dp).toInt()) }
+
+        val cal = Calendar.getInstance()
+        var expectedTime = String.format("%02d:%02d", cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE))
+        val tvTime = TextView(ctx).apply {
+            text = expectedTime; textSize = 15f; setTypeface(null, android.graphics.Typeface.BOLD)
+            setTextColor(ctx.getColor(R.color.text_primary))
+            background = fieldBg()
+            setPadding((10*dp).toInt(), (12*dp).toInt(), (10*dp).toInt(), (12*dp).toInt())
+        }
+        tvTime.setOnClickListener {
+            TimePickerDialog(ctx, { _, h, m ->
+                expectedTime = String.format("%02d:%02d", h, m)
+                tvTime.text = expectedTime
+            }, cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE), true).show()
+        }
+        val etReason = EditText(ctx).apply {
+            hint = "e.g. Doctor's appointment, traffic"; minLines = 2
+            setTextColor(ctx.getColor(R.color.text_primary))
+            setHintTextColor(ctx.getColor(R.color.text_hint))
+            background = fieldBg()
+            setPadding((10*dp).toInt(), (10*dp).toInt(), (10*dp).toInt(), (10*dp).toInt())
+        }
+
+        container.addView(label("Expected Arrival Time *"))
+        container.addView(tvTime)
+        container.addView(label("Reason *"))
+        container.addView(etReason)
+
+        val btnRow = LinearLayout(ctx).apply {
+            orientation = LinearLayout.HORIZONTAL
+            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+                .also { it.topMargin = (18*dp).toInt() }
+        }
+        val btnCancel = com.google.android.material.button.MaterialButton(ctx, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
+            text = "Cancel"; setTextColor(ctx.getColor(R.color.text_secondary))
+            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).also { it.marginEnd = (8*dp).toInt() }
+        }
+        val btnSubmit = com.google.android.material.button.MaterialButton(ctx, null, com.google.android.material.R.attr.materialButtonStyle).apply {
+            text = "🕒 Submit"; setBackgroundColor(ctx.getColor(R.color.primary))
+            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+        }
+        btnRow.addView(btnCancel); btnRow.addView(btnSubmit)
+        container.addView(btnRow)
+        outer.addView(container)
+
+        val scroll = ScrollView(ctx).apply { addView(outer) }
+        val dialog = android.app.AlertDialog.Builder(ctx).setView(scroll).create()
+        dialog.window?.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT))
+
+        btnCancel.setOnClickListener { dialog.dismiss() }
+        btnSubmit.setOnClickListener {
+            val reason = etReason.text.toString().trim()
+            if (reason.isEmpty()) { toast("Enter a reason"); return@setOnClickListener }
+            lifecycleScope.launch {
+                try {
+                    val res = RetrofitClient.instance.createLateNotice(CreateLateNoticeRequest(expectedTime, reason))
+                    if (res.isSuccessful && res.body()?.success == true) {
+                        toast(res.body()?.message ?: "Submitted")
+                        dialog.dismiss()
+                    } else toast(res.body()?.message ?: "Failed to submit")
+                } catch (_: Exception) { toast("Network error") }
+            }
+        }
+        dialog.show()
+    }
+
+    private fun loadLateNotices(container: LinearLayout) {
+        lifecycleScope.launch {
+            try {
+                val res = RetrofitClient.instance.getLateNotices()
+                val notices = res.body()?.data ?: emptyList()
+                if (_b == null || notices.isEmpty()) return@launch
+                val ctx = requireContext(); val dp = ctx.resources.displayMetrics.density
+                container.visibility = View.VISIBLE
+                container.addView(TextView(ctx).apply {
+                    text = "🕒 Coming Late — Today"; textSize = 14f; setTypeface(null, android.graphics.Typeface.BOLD)
+                    setPadding(0, 0, 0, (8*dp).toInt())
+                })
+                notices.forEach { n ->
+                    val card = androidx.cardview.widget.CardView(ctx).apply {
+                        radius = 10*dp; cardElevation = 1*dp
+                        layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).also { it.bottomMargin = (8*dp).toInt() }
+                    }
+                    val row = LinearLayout(ctx).apply { orientation = LinearLayout.VERTICAL; setPadding((12*dp).toInt(), (10*dp).toInt(), (12*dp).toInt(), (10*dp).toInt()) }
+                    row.addView(TextView(ctx).apply {
+                        text = "${n.employeeName} (${n.employeeCode ?: ""})"; textSize = 13f; setTypeface(null, android.graphics.Typeface.BOLD)
+                    })
+                    row.addView(TextView(ctx).apply {
+                        text = "Expected at ${n.expectedTime} — ${n.reason}"; textSize = 12f
+                        setTextColor(ctx.getColor(R.color.text_secondary))
+                        setPadding(0, (2*dp).toInt(), 0, (6*dp).toInt())
+                    })
+                    if (n.status == "pending") {
+                        val btnRow = LinearLayout(ctx).apply { orientation = LinearLayout.HORIZONTAL }
+                        val btnReject = com.google.android.material.button.MaterialButton(ctx, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
+                            text = "Reject"; textSize = 11f
+                            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).also { it.marginEnd = (6*dp).toInt() }
+                        }
+                        val btnApprove = com.google.android.material.button.MaterialButton(ctx).apply {
+                            text = "Approve"; textSize = 11f; setBackgroundColor(Color.parseColor("#2E7D32"))
+                            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+                        }
+                        fun decide(decision: String) {
+                            lifecycleScope.launch {
+                                try {
+                                    val r = RetrofitClient.instance.decideLateNotice(n.id, LateNoticeDecisionRequest(decision))
+                                    if (r.isSuccessful && r.body()?.success == true) { toast(r.body()?.message ?: "Done"); container.removeAllViews(); container.visibility = View.GONE; loadLateNotices(container) }
+                                    else toast(r.body()?.message ?: "Failed")
+                                } catch (_: Exception) { toast("Network error") }
+                            }
+                        }
+                        btnReject.setOnClickListener { decide("rejected") }
+                        btnApprove.setOnClickListener { decide("approved") }
+                        btnRow.addView(btnReject); btnRow.addView(btnApprove)
+                        row.addView(btnRow)
+                    } else {
+                        row.addView(TextView(ctx).apply {
+                            text = n.status.uppercase(); textSize = 10f; setTypeface(null, android.graphics.Typeface.BOLD)
+                            setTextColor(if (n.status == "approved") Color.parseColor("#2E7D32") else Color.parseColor("#C62828"))
+                        })
+                    }
+                    card.addView(row)
+                    container.addView(card)
+                }
+            } catch (_: Exception) {}
+        }
     }
 
     // ── Map init ──────────────────────────────────────────────────────────────
@@ -1013,29 +1214,95 @@ class AttendanceTodayFragment : Fragment(), OnMapReadyCallback {
 }
 
 
-// ── CALENDAR TAB ──────────────────────────────────────────────────────────────
+// ── CALENDAR TAB — ported from KrishiHR-Android's exact layout: title, nav row,
+// Present/Absent/Leave stat chips, a white rounded card with circular day
+// badges, and a two-row legend. Riskcare red in place of KrishiHR green. ──────
 class AttendanceCalendarFragment : Fragment() {
     override fun onCreateView(i: LayoutInflater, c: ViewGroup?, s: Bundle?): View {
         val ctx = requireContext(); val dp = ctx.resources.displayMetrics.density
+        val outer = LinearLayout(ctx).apply { orientation = LinearLayout.VERTICAL; setBackgroundColor(ctx.getColor(R.color.background)) }
+        outer.addView(TextView(ctx).apply {
+            text = "📅 Attendance Calendar"; textSize = 19f; setTypeface(null, android.graphics.Typeface.BOLD); setTextColor(ctx.getColor(R.color.text_primary))
+            setPadding((16*dp).toInt(),(18*dp).toInt(),(16*dp).toInt(),(10*dp).toInt())
+        })
         val sv = androidx.core.widget.NestedScrollView(ctx).apply { setBackgroundColor(ctx.getColor(R.color.background)) }
-        val root = LinearLayout(ctx).apply { orientation = LinearLayout.VERTICAL; setPadding((8*dp).toInt(),(8*dp).toInt(),(8*dp).toInt(),(80*dp).toInt()) }
+        outer.addView(sv, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f))
+        val root = LinearLayout(ctx).apply { orientation = LinearLayout.VERTICAL; setPadding((10*dp).toInt(),(10*dp).toInt(),(10*dp).toInt(),(80*dp).toInt()) }
         sv.addView(root)
         val cal = Calendar.getInstance(); var displayYear = cal.get(Calendar.YEAR); var displayMonth = cal.get(Calendar.MONTH)
-        val tvMonthYear = TextView(ctx).apply { textSize = 18f; setTypeface(null, android.graphics.Typeface.BOLD); gravity = android.view.Gravity.CENTER; setTextColor(ctx.getColor(R.color.text_primary)) }
+        val tvMonthYear = TextView(ctx).apply { textSize = 20f; setTypeface(null, android.graphics.Typeface.BOLD); gravity = android.view.Gravity.CENTER; setTextColor(ctx.getColor(R.color.text_primary)) }
+        val calCard = LinearLayout(ctx).apply {
+            orientation = LinearLayout.VERTICAL
+            background = android.graphics.drawable.GradientDrawable().apply { setColor(android.graphics.Color.WHITE); cornerRadius = 14*dp; setStroke((1*dp).toInt(), 0xFFe5e7eb.toInt()) }
+            setPadding((4*dp).toInt(),0,(4*dp).toInt(),(6*dp).toInt())
+        }
         val calGrid = LinearLayout(ctx).apply { orientation = LinearLayout.VERTICAL }
+        val statsRow = LinearLayout(ctx).apply { orientation = LinearLayout.HORIZONTAL; setPadding(0,(4*dp).toInt(),0,(12*dp).toInt()) }
         var records: List<AttendanceRecord> = emptyList(); var holidays: List<com.riskcare.app.data.models.Holiday> = emptyList()
+
+        fun stColor(st: String?): Int { val s = st?.lowercase() ?: ""; return when {
+            s == "present" || s == "regularized" || s == "od" || s == "wfh" -> ctx.getColor(R.color.primary)
+            s == "absent" -> 0xFFdc2626.toInt()
+            s == "late" -> 0xFFeab308.toInt()
+            s == "missing_punch_out" -> 0xFFec4899.toInt()
+            s == "half-day" || s == "half_day" -> 0xFF2563eb.toInt()
+            s == "on-leave" || s == "leave" -> 0xFF2563eb.toInt()
+            s == "lwp" -> 0xFF6b7280.toInt()
+            s.startsWith("h-") -> 0xFF2563eb.toInt()
+            s == "holiday" -> 0xFFd97706.toInt(); s == "weekend" -> 0xFF9ca3af.toInt(); else -> 0xFFd1d5db.toInt()
+        }}
+        fun tint(color: Int, whiteAmount: Float): Int {
+            val r = (android.graphics.Color.red(color) * (1 - whiteAmount) + 255 * whiteAmount).toInt()
+            val g = (android.graphics.Color.green(color) * (1 - whiteAmount) + 255 * whiteAmount).toInt()
+            val b = (android.graphics.Color.blue(color) * (1 - whiteAmount) + 255 * whiteAmount).toInt()
+            return android.graphics.Color.rgb(r, g, b)
+        }
+        fun stBadge(st: String?): String { val s = st?.lowercase() ?: ""; return when {
+            s == "present" || s == "regularized" || s == "od" || s == "wfh" -> "✓"
+            s == "absent" -> "A"
+            s == "late" -> "L"
+            s == "missing_punch_out" -> "!"
+            s == "lwp" -> "O"
+            s == "on-leave" || s == "leave" || s == "half-day" || s == "half_day" || s.startsWith("h-") -> "E"
+            else -> ""
+        }}
+        fun dayCircle(size: Float, fill: Int, border: Int?, symbol: String, symbolColor: Int, dateText: String, dateColor: Int, showDate: Boolean = true): LinearLayout {
+            return LinearLayout(ctx).apply {
+                orientation = LinearLayout.VERTICAL; gravity = android.view.Gravity.CENTER
+                background = android.graphics.drawable.GradientDrawable().apply {
+                    shape = android.graphics.drawable.GradientDrawable.OVAL; setColor(fill)
+                    if (border != null) setStroke((1.5f*dp).toInt(), border)
+                }
+                layoutParams = LinearLayout.LayoutParams((size*dp).toInt(),(size*dp).toInt())
+                if (symbol.isNotEmpty()) addView(TextView(ctx).apply { text = symbol; textSize = if (showDate) 10f else 12f; setTextColor(symbolColor); setTypeface(null, android.graphics.Typeface.BOLD); gravity = android.view.Gravity.CENTER })
+                if (showDate) addView(TextView(ctx).apply { text = dateText; textSize = if (symbol.isNotEmpty()) 9f else 12f; setTextColor(dateColor); setTypeface(null, android.graphics.Typeface.BOLD); gravity = android.view.Gravity.CENTER })
+            }
+        }
         fun buildCalendar() {
-            calGrid.removeAllViews(); val monthCal = Calendar.getInstance().also { it.set(displayYear, displayMonth, 1) }
-            val monthName = SimpleDateFormat("MMMM yyyy", Locale.getDefault()).format(monthCal.time); tvMonthYear.text = monthName
+            calGrid.removeAllViews(); statsRow.removeAllViews()
+            val monthCal = Calendar.getInstance().also { it.set(displayYear, displayMonth, 1) }
+            tvMonthYear.text = SimpleDateFormat("MMMM yyyy", Locale.getDefault()).format(monthCal.time)
             val sessionMgr = com.riskcare.app.utils.SessionManager(requireContext()); val satPolicy = sessionMgr.getEmployee()?.saturdayPolicy ?: "2nd_4th_off"
             val daysInMonth = monthCal.getActualMaximum(Calendar.DAY_OF_MONTH); val firstDow = monthCal.get(Calendar.DAY_OF_WEEK) - 1
-            val headerRow = LinearLayout(ctx).apply { orientation = LinearLayout.HORIZONTAL }
-            listOf("Su","Mo","Tu","We","Th","Fr","Sa").forEach { d ->
-                headerRow.addView(TextView(ctx).apply { text = d; textSize = 11f; gravity = android.view.Gravity.CENTER; setTextColor(ctx.getColor(if (d == "Su" || d == "Sa") R.color.accent_red else R.color.text_secondary)); setTypeface(null, android.graphics.Typeface.BOLD); layoutParams = LinearLayout.LayoutParams(0, (28*dp).toInt(), 1f) })
+            val headerRow = LinearLayout(ctx).apply {
+                orientation = LinearLayout.HORIZONTAL
+                background = android.graphics.drawable.GradientDrawable().apply {
+                    setColor(0xFFf8fafc.toInt()); cornerRadii = floatArrayOf(14*dp,14*dp,14*dp,14*dp,0f,0f,0f,0f)
+                }
+            }
+            listOf("Sun","Mon","Tue","Wed","Thu","Fri","Sat").forEachIndexed { idx, d ->
+                headerRow.addView(TextView(ctx).apply {
+                    text = d; textSize = 13f; gravity = android.view.Gravity.CENTER
+                    setPadding(0,(12*dp).toInt(),0,(12*dp).toInt())
+                    setTextColor(when (idx) { 0 -> 0xFFdc2626.toInt(); 6 -> ctx.getColor(R.color.primary); else -> 0xFF1e293b.toInt() })
+                    setTypeface(null, android.graphics.Typeface.BOLD); layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+                })
             }
             calGrid.addView(headerRow)
             val recMap = records.associate { r -> (r.displayDate ?: r.date?.take(10) ?: "") to r }
-            val holMap = holidays.associate { h -> h.date to h.name }; val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+            val holMap = holidays.associate { h -> h.date to h.name }
+            val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+            var presentCount = 0; var absentCount = 0; var leaveCount = 0
             var dayOfMonth = 1
             for (week in 0..5) {
                 if (dayOfMonth > daysInMonth) break
@@ -1046,26 +1313,67 @@ class AttendanceCalendarFragment : Fragment() {
                     val rec = recMap[dateStr]; val holName = holMap[dateStr]; val isToday = dateStr == today; val isSunday = dow == 0; val isSaturday = dow == 6
                     val satNum = if (isSaturday && cellDate != null) { var count = 0; for (d in 1..cellDate) { val tmp = Calendar.getInstance(); tmp.set(displayYear, displayMonth, d); if (tmp.get(Calendar.DAY_OF_WEEK) == Calendar.SATURDAY) count++ }; count } else 0
                     val is2nd4thSat = isSaturday && satPolicy == "2nd_4th_off" && (satNum == 2 || satNum == 4)
-                    val cell = LinearLayout(ctx).apply {
-                        orientation = LinearLayout.VERTICAL; gravity = android.view.Gravity.TOP or android.view.Gravity.CENTER_HORIZONTAL; layoutParams = LinearLayout.LayoutParams(0, (70*dp).toInt(), 1f).also { it.setMargins(1,1,1,1) }; setPadding((3*dp).toInt(),(4*dp).toInt(),(3*dp).toInt(),(2*dp).toInt())
-                        val bgColor = when { cellDate == null -> android.graphics.Color.TRANSPARENT; holName != null -> android.graphics.Color.parseColor("#FFF8E1"); isToday -> android.graphics.Color.parseColor("#E8F5E9"); is2nd4thSat -> android.graphics.Color.parseColor("#FFF8E1"); isSunday -> android.graphics.Color.parseColor("#F5F5F5"); rec?.status == "present" || rec?.status == "regularized" -> android.graphics.Color.parseColor("#F1F8F2"); rec?.status == "absent" -> android.graphics.Color.parseColor("#FFEBEE"); rec?.status == "late" -> android.graphics.Color.parseColor("#FFF3E0"); rec?.status == "half-day" || rec?.status == "half_day" -> android.graphics.Color.parseColor("#E3F2FD"); rec?.status == "od" -> android.graphics.Color.parseColor("#E8EAF6"); rec?.status == "wfh" -> android.graphics.Color.parseColor("#F3E5F5"); rec?.status == "missing_punch_out" -> android.graphics.Color.parseColor("#FFF3E0"); rec?.status?.contains("leave") == true -> android.graphics.Color.parseColor("#FCE4EC"); else -> android.graphics.Color.parseColor("#FAFAFA") }
-                        setBackgroundColor(bgColor)
-                        if (isToday) background = android.graphics.drawable.GradientDrawable().apply { setColor(android.graphics.Color.parseColor("#E8F5E9")); setStroke((2*dp).toInt(), android.graphics.Color.parseColor("#2E7D45")); cornerRadius = 8*dp }
+                    val effectiveStatus = when {
+                        holName != null -> "holiday"; isSunday -> "weekend"
+                        is2nd4thSat && (rec == null || rec.status == "absent") -> "weekend"
+                        rec != null -> rec.status; else -> null
                     }
-                    if (cellDate != null) {
-                        cell.addView(TextView(ctx).apply { text = cellDate.toString(); textSize = 13f; setTypeface(null, if (isToday) android.graphics.Typeface.BOLD else android.graphics.Typeface.NORMAL); setTextColor(ctx.getColor(when { isToday -> R.color.primary; is2nd4thSat -> R.color.accent_amber; isSunday -> R.color.accent_red; else -> R.color.text_primary })); gravity = android.view.Gravity.CENTER_HORIZONTAL })
-                        if (holName != null) cell.addView(TextView(ctx).apply { text = holName.take(10); textSize = 7f; setTextColor(android.graphics.Color.parseColor("#E65100")); setTypeface(null, android.graphics.Typeface.BOLD); gravity = android.view.Gravity.CENTER_HORIZONTAL; maxLines = 2 })
-                        val statusLabel = when { is2nd4thSat && rec?.status?.lowercase() == "absent" -> when (satNum) { 2 -> "2nd Sat"; 4 -> "4th Sat"; else -> "Sat Off" }; isSunday && rec?.status?.lowercase() == "absent" -> "Sun"; else -> when (rec?.status?.lowercase()) { "present" -> "P"; "regularized" -> "REG"; "absent" -> "A"; "late" -> "L"; "half-day","half_day" -> "H"; "od" -> "OD"; "wfh" -> "WFH"; "on-leave","leave" -> "LV"; "missing_punch_out" -> "MPO"; else -> when { is2nd4thSat && satNum == 2 -> "2nd Sat"; is2nd4thSat && satNum == 4 -> "4th Sat"; isSunday -> "Sun"; else -> "" } } }
-                        if (statusLabel.isNotEmpty()) {
-                            val pillColor = when { is2nd4thSat && rec?.status?.lowercase() == "absent" -> android.graphics.Color.parseColor("#E65100"); isSunday && rec?.status?.lowercase() == "absent" -> android.graphics.Color.parseColor("#90A4AE"); else -> when (rec?.status?.lowercase()) { "present","regularized" -> android.graphics.Color.parseColor("#2E7D45"); "absent" -> android.graphics.Color.parseColor("#C62828"); "late" -> android.graphics.Color.parseColor("#E65100"); "half-day","half_day" -> android.graphics.Color.parseColor("#1565C0"); "od" -> android.graphics.Color.parseColor("#283593"); "wfh" -> android.graphics.Color.parseColor("#6A1B9A"); "on-leave","leave" -> android.graphics.Color.parseColor("#AD1457"); "missing_punch_out" -> android.graphics.Color.parseColor("#E65100"); else -> when { is2nd4thSat -> android.graphics.Color.parseColor("#E65100"); isSunday -> android.graphics.Color.parseColor("#90A4AE"); else -> android.graphics.Color.parseColor("#90A4AE") } } }
-                            cell.addView(TextView(ctx).apply { text = statusLabel; textSize = 8f; setTextColor(android.graphics.Color.WHITE); setTypeface(null, android.graphics.Typeface.BOLD); setPadding((4*dp).toInt(),(1*dp).toInt(),(4*dp).toInt(),(1*dp).toInt()); background = android.graphics.drawable.GradientDrawable().apply { setColor(pillColor); cornerRadius = 10*dp }; gravity = android.view.Gravity.CENTER_HORIZONTAL; layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).also { it.gravity = android.view.Gravity.CENTER_HORIZONTAL; it.topMargin = (2*dp).toInt() } })
-                        }
-                        if (rec?.displayPunchIn != null && !isSunday && !is2nd4thSat) cell.addView(TextView(ctx).apply { text = rec.displayPunchIn; textSize = 7f; setTextColor(ctx.getColor(R.color.text_hint)); gravity = android.view.Gravity.CENTER_HORIZONTAL })
+                    if (effectiveStatus != null) { val es = effectiveStatus.lowercase(); when {
+                        es in listOf("present","regularized","late","od","wfh") -> presentCount++
+                        es == "absent" -> absentCount++
+                        es in listOf("on-leave","leave","lwp") || es.startsWith("h-") -> leaveCount++
+                        else -> {}
+                    }}
+                    val cellH = (58*dp).toInt()
+                    val isWeekendCell = effectiveStatus == "weekend"
+                    val badge = stBadge(effectiveStatus)
+                    val cell = LinearLayout(ctx).apply {
+                        orientation = LinearLayout.VERTICAL; gravity = android.view.Gravity.CENTER
+                        layoutParams = LinearLayout.LayoutParams(0, cellH, 1f)
+                    }
+                    if (cellDate == null) {
+                        cell.addView(TextView(ctx).apply { text = "–"; textSize = 13f; setTextColor(0xFFcbd5e1.toInt()) })
+                    } else if (isToday) {
+                        val todayFill = if (badge.isNotEmpty()) stColor(effectiveStatus) else android.graphics.Color.WHITE
+                        val todaySymColor = if (badge.isNotEmpty()) android.graphics.Color.WHITE else ctx.getColor(R.color.primary)
+                        val todayDateColor = if (badge.isNotEmpty()) android.graphics.Color.WHITE else ctx.getColor(R.color.primary)
+                        cell.addView(dayCircle(34f, todayFill, ctx.getColor(R.color.primary), badge, todaySymColor, cellDate.toString(), todayDateColor))
+                    } else if (isWeekendCell) {
+                        cell.addView(dayCircle(30f, 0xFFfef3c7.toInt(), 0xFFfbbf24.toInt(), "😊", android.graphics.Color.WHITE, cellDate.toString(), 0xFF92400e.toInt()))
+                    } else if (badge.isNotEmpty()) {
+                        cell.addView(dayCircle(30f, stColor(effectiveStatus), null, badge, android.graphics.Color.WHITE, cellDate.toString(), android.graphics.Color.WHITE))
+                    } else if (effectiveStatus == "holiday") {
+                        cell.addView(dayCircle(30f, 0xFFfed7aa.toInt(), 0xFFea580c.toInt(), "🎉", android.graphics.Color.WHITE, cellDate.toString(), 0xFF9a3412.toInt()))
+                    } else {
+                        val dateColor = if (isSunday) 0xFFdc2626.toInt() else 0xFF1e293b.toInt()
+                        cell.addView(dayCircle(30f, android.graphics.Color.TRANSPARENT, 0xFFe2e8f0.toInt(), "", dateColor, cellDate.toString(), dateColor))
                     }
                     weekRow.addView(cell)
                 }
                 calGrid.addView(weekRow)
             }
+            fun statCard(icon: String, label: String, count: Int, color: Int) {
+                val card = LinearLayout(ctx).apply {
+                    orientation = LinearLayout.HORIZONTAL; gravity = android.view.Gravity.CENTER_VERTICAL
+                    setPadding((8*dp).toInt(),(8*dp).toInt(),(6*dp).toInt(),(8*dp).toInt())
+                    background = android.graphics.drawable.GradientDrawable().apply { cornerRadius = 12*dp; setColor(tint(color, 0.88f)) }
+                    layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).also { it.setMargins((2*dp).toInt(),0,(2*dp).toInt(),0) }
+                }
+                card.addView(TextView(ctx).apply {
+                    text = icon; textSize = 12f; setTextColor(android.graphics.Color.WHITE); setTypeface(null, android.graphics.Typeface.BOLD)
+                    gravity = android.view.Gravity.CENTER
+                    background = android.graphics.drawable.GradientDrawable().apply { shape = android.graphics.drawable.GradientDrawable.OVAL; setColor(color) }
+                    layoutParams = LinearLayout.LayoutParams((26*dp).toInt(),(26*dp).toInt()).also { it.marginEnd = (6*dp).toInt() }
+                })
+                val textCol = LinearLayout(ctx).apply { orientation = LinearLayout.VERTICAL }
+                textCol.addView(TextView(ctx).apply { text = count.toString(); textSize = 16f; setTypeface(null, android.graphics.Typeface.BOLD); setTextColor(0xFF1e293b.toInt()) })
+                textCol.addView(TextView(ctx).apply { text = label; textSize = 9f; setTextColor(0xFF64748b.toInt()) })
+                card.addView(textCol)
+                statsRow.addView(card)
+            }
+            statCard("✓", "Present", presentCount, ctx.getColor(R.color.primary))
+            statCard("A", "Absent", absentCount, 0xFFdc2626.toInt())
+            statCard("E", "Leave", leaveCount, 0xFF2563eb.toInt())
         }
         fun loadData() {
             lifecycleScope.launch {
@@ -1076,19 +1384,38 @@ class AttendanceCalendarFragment : Fragment() {
                 } catch (_: Exception) { buildCalendar() }
             }
         }
-        val navRow = LinearLayout(ctx).apply { orientation = LinearLayout.HORIZONTAL; gravity = android.view.Gravity.CENTER_VERTICAL; setPadding((8*dp).toInt(),(8*dp).toInt(),(8*dp).toInt(),(4*dp).toInt()) }
-        val btnPrev = com.google.android.material.button.MaterialButton(ctx, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply { text = "‹"; textSize = 18f; layoutParams = LinearLayout.LayoutParams((40*dp).toInt(), (40*dp).toInt()); setOnClickListener { if (displayMonth == 0) { displayMonth = 11; displayYear-- } else displayMonth--; loadData() } }
-        val btnNext = com.google.android.material.button.MaterialButton(ctx, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply { text = "›"; textSize = 18f; layoutParams = LinearLayout.LayoutParams((40*dp).toInt(), (40*dp).toInt()); setOnClickListener { if (displayMonth == 11) { displayMonth = 0; displayYear++ } else displayMonth++; loadData() } }
-        tvMonthYear.layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f); navRow.addView(btnPrev); navRow.addView(tvMonthYear); navRow.addView(btnNext); root.addView(navRow); root.addView(calGrid)
-        root.addView(LinearLayout(ctx).apply {
-            orientation = LinearLayout.HORIZONTAL; setPadding((8*dp).toInt(),(8*dp).toInt(),(8*dp).toInt(),0); gravity = android.view.Gravity.CENTER_VERTICAL
-            fun legendItem(label: String, color: String) {
-                addView(View(ctx).apply { layoutParams = LinearLayout.LayoutParams((10*dp).toInt(),(10*dp).toInt()).also { it.marginEnd = (3*dp).toInt() }; background = android.graphics.drawable.GradientDrawable().apply { setColor(android.graphics.Color.parseColor(color)); cornerRadius = 5*dp } })
-                addView(TextView(ctx).apply { text = label; textSize = 10f; setTextColor(ctx.getColor(R.color.text_secondary)); layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).also { it.marginEnd = (8*dp).toInt() } })
-            }
-            legendItem("P", "#2E7D45"); legendItem("A", "#C62828"); legendItem("L", "#E65100"); legendItem("H", "#1565C0"); legendItem("WFH", "#6A1B9A"); legendItem("Hol", "#E65100")
+        fun navBtn(txt: String, onClick: () -> Unit) = TextView(ctx).apply {
+            text = txt; textSize = 16f; setTextColor(0xFF374151.toInt()); gravity = android.view.Gravity.CENTER
+            setTypeface(null, android.graphics.Typeface.BOLD)
+            background = android.graphics.drawable.GradientDrawable().apply { cornerRadius = 10*dp; setColor(android.graphics.Color.WHITE); setStroke((1*dp).toInt(), 0xFFe2e8f0.toInt()) }
+            layoutParams = LinearLayout.LayoutParams((40*dp).toInt(),(40*dp).toInt())
+            setOnClickListener { onClick() }
+        }
+        val navRow = LinearLayout(ctx).apply { orientation = LinearLayout.HORIZONTAL; gravity = android.view.Gravity.CENTER_VERTICAL; setPadding(0,0,0,(12*dp).toInt()) }
+        val btnPrev = navBtn("‹") { if (displayMonth == 0) { displayMonth = 11; displayYear-- } else displayMonth--; loadData() }
+        val btnNext = navBtn("›") { if (displayMonth == 11) { displayMonth = 0; displayYear++ } else displayMonth++; loadData() }
+        tvMonthYear.layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+        navRow.addView(btnPrev); navRow.addView(tvMonthYear); navRow.addView(btnNext)
+        calCard.addView(calGrid)
+        calCard.addView(View(ctx).apply {
+            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, (1*dp).toInt()).also { it.topMargin = (10*dp).toInt(); it.bottomMargin = (10*dp).toInt() }
+            setBackgroundColor(0xFFe5e7eb.toInt())
         })
-        loadData(); return sv
+        fun legendRow() = LinearLayout(ctx).apply { orientation = LinearLayout.HORIZONTAL; gravity = android.view.Gravity.CENTER_VERTICAL; setPadding(0,0,0,(10*dp).toInt()) }
+        fun legendItem(row: LinearLayout, badge: String, label: String, color: Int) {
+            val item = LinearLayout(ctx).apply {
+                orientation = LinearLayout.VERTICAL; gravity = android.view.Gravity.CENTER
+                layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+            }
+            item.addView(dayCircle(22f, color, null, badge, android.graphics.Color.WHITE, "", android.graphics.Color.WHITE, showDate = false))
+            item.addView(TextView(ctx).apply { text = label; textSize = 9f; setTextColor(0xFF475569.toInt()); gravity = android.view.Gravity.CENTER; setPadding(0,(3*dp).toInt(),0,0) })
+            row.addView(item)
+        }
+        val lr1 = legendRow(); legendItem(lr1, "✓", "Present", ctx.getColor(R.color.primary)); legendItem(lr1, "A", "Absent", 0xFFdc2626.toInt()); legendItem(lr1, "L", "Late", 0xFFeab308.toInt()); legendItem(lr1, "!", "Miss Punch", 0xFFec4899.toInt())
+        val lr2 = legendRow().apply { setPadding(0,0,0,0) }; legendItem(lr2, "E", "Leave", 0xFF2563eb.toInt()); legendItem(lr2, "O", "LWP", 0xFF6b7280.toInt()); legendItem(lr2, "H", "Holiday", 0xFFea580c.toInt()); legendItem(lr2, "–", "Weekend", 0xFFfbbf24.toInt())
+        calCard.addView(lr1); calCard.addView(lr2)
+        root.addView(navRow); root.addView(statsRow); root.addView(calCard)
+        loadData(); return outer
     }
 }
 
