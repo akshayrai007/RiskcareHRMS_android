@@ -3104,6 +3104,20 @@ class ChangePasswordFragment : Fragment() {
 // ═══════════════════════════════════════════════════════════════════════════════
 // TEAM TODAY FRAGMENT
 // ═══════════════════════════════════════════════════════════════════════════════
+private fun teamTodayPill(color: Int): android.graphics.drawable.GradientDrawable =
+    android.graphics.drawable.GradientDrawable().apply { shape = android.graphics.drawable.GradientDrawable.RECTANGLE; cornerRadius = 99f; setColor(color) }
+
+// status values bucketed into the 3 tabs — "present" also covers late/regularized/od/wfh
+// (still physically at work), "on-leave" covers leave/half-day/holiday-linked statuses.
+private fun teamTodayBucket(status: String?): String {
+    val s = status?.lowercase() ?: ""
+    return when {
+        s in listOf("present", "late", "regularized", "od", "wfh") -> "present"
+        s in listOf("on-leave", "leave", "half-day", "half_day") || s.startsWith("h-") -> "on-leave"
+        else -> "absent"
+    }
+}
+
 class TeamTodayFragment : Fragment() {
     override fun onCreateView(i: LayoutInflater, c: ViewGroup?, s: Bundle?): View {
         val ctx = requireContext(); val dp = ctx.resources.displayMetrics.density
@@ -3115,12 +3129,56 @@ class TeamTodayFragment : Fragment() {
                 android.view.ViewGroup.LayoutParams.MATCH_PARENT)
         }
         root.addView(TextView(ctx).apply { text = "Team Attendance — Today"; textSize = 20f; setTypeface(null, android.graphics.Typeface.BOLD); setPadding((16*dp).toInt(),(16*dp).toInt(),(16*dp).toInt(),(12*dp).toInt()) })
-        val rv = RecyclerView(ctx).apply { layoutManager = LinearLayoutManager(ctx); setPadding((8*dp).toInt(),0,(8*dp).toInt(),(80*dp).toInt()); clipToPadding = false }
+
+        val tabRow = LinearLayout(ctx).apply {
+            orientation = LinearLayout.HORIZONTAL
+            background = teamTodayPill(ctx.getColor(R.color.surface))
+            setPadding((14*dp).toInt(), (10*dp).toInt(), (14*dp).toInt(), 0)
+        }
+        fun tabBtn(text: String) = TextView(ctx).apply {
+            this.text = text; textSize = 12.5f; setTypeface(null, android.graphics.Typeface.BOLD); gravity = Gravity.CENTER
+            setPadding(0, (10*dp).toInt(), 0, (10*dp).toInt())
+            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+        }
+        val tabPresent = tabBtn("Present"); val tabAbsent = tabBtn("Absent"); val tabOnLeave = tabBtn("On Leave")
+        tabRow.addView(tabPresent); tabRow.addView(tabAbsent); tabRow.addView(tabOnLeave)
+        root.addView(tabRow)
+
+        val rv = RecyclerView(ctx).apply { layoutManager = LinearLayoutManager(ctx); setPadding((8*dp).toInt(),(8*dp).toInt(),(8*dp).toInt(),(80*dp).toInt()); clipToPadding = false }
         root.addView(rv)
+        val tvEmpty = TextView(ctx).apply {
+            textSize = 13f; gravity = Gravity.CENTER; setTextColor(ctx.getColor(R.color.text_hint))
+            setPadding(0, (48*dp).toInt(), 0, 0); visibility = View.GONE
+        }
+        root.addView(tvEmpty)
+
+        var all: List<TeamTodayRecord> = emptyList()
+        var activeTab = "present"
+
+        fun render() {
+            fun style(v: TextView, active: Boolean) {
+                v.background = if (active) teamTodayPill(ctx.getColor(R.color.primary)) else null
+                v.setTextColor(if (active) ctx.getColor(R.color.white) else ctx.getColor(R.color.text_secondary))
+            }
+            style(tabPresent, activeTab == "present"); style(tabAbsent, activeTab == "absent"); style(tabOnLeave, activeTab == "on-leave")
+            val filtered = all.filter { teamTodayBucket(it.status) == activeTab }
+            if (filtered.isEmpty()) {
+                rv.visibility = View.GONE; tvEmpty.visibility = View.VISIBLE
+                tvEmpty.text = when (activeTab) { "present" -> "No one present yet"; "absent" -> "No one absent"; else -> "No one on leave today" }
+            } else {
+                rv.visibility = View.VISIBLE; tvEmpty.visibility = View.GONE
+                rv.adapter = TeamTodayAdapter(filtered)
+            }
+        }
+        tabPresent.setOnClickListener { activeTab = "present"; render() }
+        tabAbsent.setOnClickListener { activeTab = "absent"; render() }
+        tabOnLeave.setOnClickListener { activeTab = "on-leave"; render() }
+
         lifecycleScope.launch {
             try {
                 val res = RetrofitClient.instance.getTeamToday()
-                rv.adapter = TeamTodayAdapter(res.body()?.data ?: emptyList())
+                all = res.body()?.data ?: emptyList()
+                render()
             } catch (_: Exception) {}
         }
         return root
