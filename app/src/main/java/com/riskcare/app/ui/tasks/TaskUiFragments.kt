@@ -512,7 +512,6 @@ class WorkTrackerFragment : Fragment() {
     // Matches KrishiHR's unified progress-log form exactly: Team, % Done Today
     // (% Remaining derived), Today's Task, This Week's Task/Goal, Blockers, Remark.
     private fun buildSubmitSection(ctx: android.content.Context, dp: Float, content: LinearLayout) {
-        val teams = listOf("Survey", "QC", "Development", "Remote Sensing", "Other")
         val card = CardView(ctx).apply {
             radius = 14 * dp; cardElevation = 2 * dp
             layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
@@ -526,9 +525,10 @@ class WorkTrackerFragment : Fragment() {
             this.text = text; textSize = 11f; setTypeface(null, android.graphics.Typeface.BOLD)
             setTextColor(ctx.getColor(R.color.text_secondary)); setPadding(0, (10*dp).toInt(), 0, (4*dp).toInt())
         }
-        inner.addView(label("Team"))
-        val spTeam = Spinner(ctx).apply { adapter = ArrayAdapter(ctx, android.R.layout.simple_spinner_dropdown_item, teams) }
+        inner.addView(label("Team (Department)"))
+        val spTeam = Spinner(ctx).apply { adapter = ArrayAdapter(ctx, android.R.layout.simple_spinner_dropdown_item, listOf("— select —")) }
         inner.addView(spTeam)
+        var departmentNames: List<String> = emptyList()
 
         inner.addView(label("% Done Today"))
         val etDone = EditText(ctx).apply { hint = "e.g. 50"; inputType = android.text.InputType.TYPE_CLASS_NUMBER }
@@ -558,14 +558,21 @@ class WorkTrackerFragment : Fragment() {
         card.addView(inner)
         content.addView(card)
 
-        // Pre-fill from today's entry if one already exists (edit-in-place).
+        // Load real company departments (Marketing, HR, Operations, etc. —
+        // not KrishiHR's agri-survey teams), then pre-fill from today's entry
+        // if one already exists (edit-in-place).
         lifecycleScope.launch {
+            try {
+                val deptRes = RetrofitClient.instance.getDepartments()
+                departmentNames = deptRes.body()?.data?.map { it.name } ?: emptyList()
+                spTeam.adapter = ArrayAdapter(ctx, android.R.layout.simple_spinner_dropdown_item, listOf("— select —") + departmentNames)
+            } catch (_: Exception) {}
             try {
                 val res = RetrofitClient.instance.getMyWorkLogToday()
                 val cur = res.body()?.data
                 if (cur != null) {
-                    val idx = teams.indexOf(cur.team)
-                    if (idx >= 0) spTeam.setSelection(idx)
+                    val idx = departmentNames.indexOf(cur.team)
+                    if (idx >= 0) spTeam.setSelection(idx + 1)
                     etDone.setText(cur.percentDone.toString())
                     etToday.setText(cur.todayTask ?: "")
                     etWeek.setText(cur.weekTask ?: "")
@@ -583,7 +590,7 @@ class WorkTrackerFragment : Fragment() {
                 try {
                     val res = RetrofitClient.instance.submitWorkLog(
                         WorkLogSubmitRequest(
-                            team = spTeam.selectedItem as? String,
+                            team = if (spTeam.selectedItemPosition > 0) spTeam.selectedItem as? String else null,
                             todayTask = todayTask,
                             percentDone = etDone.text.toString().toIntOrNull() ?: 0,
                             weekTask = etWeek.text.toString().trim().ifEmpty { null },
