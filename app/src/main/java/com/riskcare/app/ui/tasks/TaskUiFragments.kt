@@ -467,17 +467,17 @@ class TaskBoardFragment : Fragment() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// WORK TRACKER — submit own daily log; managers/Super Admin also get a
-// required-employee toggle list + everyone's submitted logs
+// WORK TRACKER — 3 tabs: "Fill Work Tracker" (submit own log, everyone),
+// "Team Tracker" (team's submitted logs) and "Compulsory" (required-flag
+// toggle) — the latter two only for HR/Accounts/Admin/Super Admin (everyone)
+// or a real manager (their own reportees only).
 // ═══════════════════════════════════════════════════════════════════════════════
 class WorkTrackerFragment : Fragment() {
     override fun onCreateView(i: LayoutInflater, c: ViewGroup?, s: Bundle?): View {
         val ctx = requireContext(); val dp = ctx.resources.displayMetrics.density
-        val root = ScrollView(ctx).apply { setBackgroundColor(ctx.getColor(R.color.background)) }
-        val content = LinearLayout(ctx).apply { orientation = LinearLayout.VERTICAL; setPadding(0, 0, 0, (80*dp).toInt()) }
-        root.addView(content)
+        val root = LinearLayout(ctx).apply { orientation = LinearLayout.VERTICAL; setBackgroundColor(ctx.getColor(R.color.background)) }
 
-        content.addView(LinearLayout(ctx).apply {
+        root.addView(LinearLayout(ctx).apply {
             orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL
             setBackgroundColor(ctx.getColor(R.color.primary))
             setPadding((16 * dp).toInt(), (16 * dp).toInt(), (16 * dp).toInt(), (16 * dp).toInt())
@@ -487,7 +487,57 @@ class WorkTrackerFragment : Fragment() {
             })
         })
 
-        val progress = loaderProgress(ctx); content.addView(progress)
+        val tabRow = LinearLayout(ctx).apply {
+            orientation = LinearLayout.HORIZONTAL
+            background = pill(ctx, ctx.getColor(R.color.surface))
+            setPadding((10*dp).toInt(), (8*dp).toInt(), (10*dp).toInt(), 0)
+            visibility = View.GONE
+        }
+        fun tabBtn(text: String) = TextView(ctx).apply {
+            this.text = text; textSize = 11.5f; setTypeface(null, android.graphics.Typeface.BOLD); gravity = Gravity.CENTER
+            setPadding((6*dp).toInt(), (9*dp).toInt(), (6*dp).toInt(), (9*dp).toInt())
+            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+        }
+        val tabFill = tabBtn("Fill Tracker")
+        val tabTeam = tabBtn("Team Tracker")
+        val tabComp = tabBtn("Compulsory")
+        tabRow.addView(tabFill); tabRow.addView(tabTeam); tabRow.addView(tabComp)
+        root.addView(tabRow)
+
+        val progress = loaderProgress(ctx); root.addView(progress)
+
+        val scrollFill = ScrollView(ctx)
+        val contentFill = LinearLayout(ctx).apply { orientation = LinearLayout.VERTICAL; setPadding(0, 0, 0, (80*dp).toInt()) }
+        scrollFill.addView(contentFill)
+        val scrollTeam = ScrollView(ctx).apply { visibility = View.GONE }
+        val contentTeam = LinearLayout(ctx).apply { orientation = LinearLayout.VERTICAL; setPadding(0, 0, 0, (80*dp).toInt()) }
+        scrollTeam.addView(contentTeam)
+        val scrollComp = ScrollView(ctx).apply { visibility = View.GONE }
+        val contentComp = LinearLayout(ctx).apply { orientation = LinearLayout.VERTICAL; setPadding(0, 0, 0, (80*dp).toInt()) }
+        scrollComp.addView(contentComp)
+        root.addView(scrollFill); root.addView(scrollTeam); root.addView(scrollComp)
+
+        fun setActive(v: TextView) {
+            listOf(tabFill, tabTeam, tabComp).forEach { t ->
+                val active = t === v
+                t.background = if (active) pill(ctx, ctx.getColor(R.color.primary)) else null
+                t.setTextColor(if (active) ctx.getColor(R.color.white) else ctx.getColor(R.color.text_secondary))
+            }
+        }
+        tabFill.setOnClickListener {
+            setActive(tabFill)
+            scrollFill.visibility = View.VISIBLE; scrollTeam.visibility = View.GONE; scrollComp.visibility = View.GONE
+        }
+        tabTeam.setOnClickListener {
+            setActive(tabTeam)
+            scrollFill.visibility = View.GONE; scrollTeam.visibility = View.VISIBLE; scrollComp.visibility = View.GONE
+            if (contentTeam.childCount == 0) buildTeamTrackerSection(ctx, dp, contentTeam)
+        }
+        tabComp.setOnClickListener {
+            setActive(tabComp)
+            scrollFill.visibility = View.GONE; scrollTeam.visibility = View.GONE; scrollComp.visibility = View.VISIBLE
+            if (contentComp.childCount == 0) buildCompulsorySection(ctx, dp, contentComp)
+        }
 
         lifecycleScope.launch {
             try {
@@ -497,13 +547,14 @@ class WorkTrackerFragment : Fragment() {
                 val canManage = d?.canManageOthers == true
 
                 // Matches KrishiHR exactly: everyone can submit their own log,
-                // always. The manage/view-others panel is admin-tier only
-                // (HR/Accounts/Admin/Super Admin).
-                buildSubmitSection(ctx, dp, content)
-                if (canManage) buildManageSection(ctx, dp, content)
+                // always. Team Tracker / Compulsory show for HR/Accounts/
+                // Admin/Super Admin (everyone) or a real manager (own team).
+                buildSubmitSection(ctx, dp, contentFill)
+                if (canManage) { tabRow.visibility = View.VISIBLE }
+                setActive(tabFill)
             } catch (_: Exception) {
                 progress.visibility = View.GONE
-                content.addView(TextView(ctx).apply { text = "Could not load Work Tracker"; setPadding((16*dp).toInt(), (16*dp).toInt(), 0, 0) })
+                contentFill.addView(TextView(ctx).apply { text = "Could not load Work Tracker"; setPadding((16*dp).toInt(), (16*dp).toInt(), 0, 0) })
             }
         }
         return root
@@ -606,8 +657,8 @@ class WorkTrackerFragment : Fragment() {
         }
     }
 
-    private fun buildManageSection(ctx: android.content.Context, dp: Float, content: LinearLayout) {
-        content.addView(sectionHeader(ctx, dp, "👥 Who Must Fill Work Tracker", ctx.getColor(R.color.accent_blue)))
+    private fun buildCompulsorySection(ctx: android.content.Context, dp: Float, content: LinearLayout) {
+        content.addView(sectionHeader(ctx, dp, "👥 Team Members Who Must Fill Work Tracker", ctx.getColor(R.color.accent_blue)))
         val listContainer = LinearLayout(ctx).apply { orientation = LinearLayout.VERTICAL; setPadding((12*dp).toInt(), (8*dp).toInt(), (12*dp).toInt(), (8*dp).toInt()) }
         content.addView(listContainer)
 
@@ -648,8 +699,10 @@ class WorkTrackerFragment : Fragment() {
                 listContainer.addView(TextView(ctx).apply { text = "Could not load list"; textSize = 12f })
             }
         }
+    }
 
-        content.addView(sectionHeader(ctx, dp, "📋 Submitted Logs", ctx.getColor(R.color.accent_teal)))
+    private fun buildTeamTrackerSection(ctx: android.content.Context, dp: Float, content: LinearLayout) {
+        content.addView(sectionHeader(ctx, dp, "📋 Team Work Tracker Submissions", ctx.getColor(R.color.accent_teal)))
         val logsContainer = LinearLayout(ctx).apply { orientation = LinearLayout.VERTICAL; setPadding((12*dp).toInt(), (8*dp).toInt(), (12*dp).toInt(), (8*dp).toInt()) }
         content.addView(logsContainer)
 
