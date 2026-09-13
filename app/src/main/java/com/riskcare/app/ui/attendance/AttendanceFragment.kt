@@ -86,20 +86,24 @@ class AttendanceFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         binding.viewPager.adapter = AttendancePagerAdapter(this)
         TabLayoutMediator(binding.tabLayout, binding.viewPager) { tab, pos ->
-            tab.text = when (pos) { 0 -> "Today"; 1 -> "History"; 2 -> "Regularize"; else -> "OD/WFH" }
+            tab.text = when (pos) { 0 -> "Today"; 1 -> "History"; 2 -> "Regularize"; 3 -> "OD/WFH"; else -> "Late Approvals" }
         }.attach()
     }
 
     override fun onDestroyView() { super.onDestroyView(); _b = null }
 }
 
+// "Late Approvals" tab is always present (like Regularize) — the API itself
+// returns an empty list for anyone who isn't that employee's manager or
+// HR/admin/super_admin, so a plain employee just sees an empty state there.
 class AttendancePagerAdapter(f: Fragment) : FragmentStateAdapter(f) {
-    override fun getItemCount() = 4
+    override fun getItemCount() = 5
     override fun createFragment(pos: Int) = when (pos) {
         0    -> AttendanceTodayFragment()
         1    -> AttendanceHistoryFragment()
         2    -> RegularizationFragment()
-        else -> ODWFHFragment()
+        3    -> ODWFHFragment()
+        else -> LateApprovalsFragment()
     }
 }
 
@@ -205,18 +209,6 @@ class AttendanceTodayFragment : Fragment(), OnMapReadyCallback {
         }
         mainColumn.addView(btnLate, insertAt)
         btnLate.setOnClickListener { showLateNoticeDialog() }
-
-        // "Late Today" card for manager/HR/admin/super_admin — the API returns
-        // an empty list for anyone else, so this simply stays hidden for them.
-        val lateListCard = LinearLayout(ctx).apply {
-            orientation = LinearLayout.VERTICAL
-            visibility = View.GONE
-            layoutParams = android.widget.LinearLayout.LayoutParams(
-                android.widget.LinearLayout.LayoutParams.MATCH_PARENT, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
-            ).also { it.bottomMargin = (12*dp).toInt() }
-        }
-        mainColumn.addView(lateListCard, insertAt + 1)
-        loadLateNotices(lateListCard)
     }
 
     private fun showLateNoticeDialog() {
@@ -322,68 +314,6 @@ class AttendanceTodayFragment : Fragment(), OnMapReadyCallback {
             }
         }
         dialog.show()
-    }
-
-    private fun loadLateNotices(container: LinearLayout) {
-        lifecycleScope.launch {
-            try {
-                val res = RetrofitClient.instance.getLateNotices()
-                val notices = res.body()?.data ?: emptyList()
-                if (_b == null || notices.isEmpty()) return@launch
-                val ctx = requireContext(); val dp = ctx.resources.displayMetrics.density
-                container.visibility = View.VISIBLE
-                container.addView(TextView(ctx).apply {
-                    text = "🕒 Coming Late — Today"; textSize = 14f; setTypeface(null, android.graphics.Typeface.BOLD)
-                    setPadding(0, 0, 0, (8*dp).toInt())
-                })
-                notices.forEach { n ->
-                    val card = androidx.cardview.widget.CardView(ctx).apply {
-                        radius = 10*dp; cardElevation = 1*dp
-                        layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).also { it.bottomMargin = (8*dp).toInt() }
-                    }
-                    val row = LinearLayout(ctx).apply { orientation = LinearLayout.VERTICAL; setPadding((12*dp).toInt(), (10*dp).toInt(), (12*dp).toInt(), (10*dp).toInt()) }
-                    row.addView(TextView(ctx).apply {
-                        text = "${n.employeeName} (${n.employeeCode ?: ""})"; textSize = 13f; setTypeface(null, android.graphics.Typeface.BOLD)
-                    })
-                    row.addView(TextView(ctx).apply {
-                        text = "Expected at ${n.expectedTime} — ${n.reason}"; textSize = 12f
-                        setTextColor(ctx.getColor(R.color.text_secondary))
-                        setPadding(0, (2*dp).toInt(), 0, (6*dp).toInt())
-                    })
-                    if (n.status == "pending") {
-                        val btnRow = LinearLayout(ctx).apply { orientation = LinearLayout.HORIZONTAL }
-                        val btnReject = com.google.android.material.button.MaterialButton(ctx, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
-                            text = "Reject"; textSize = 11f
-                            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).also { it.marginEnd = (6*dp).toInt() }
-                        }
-                        val btnApprove = com.google.android.material.button.MaterialButton(ctx).apply {
-                            text = "Approve"; textSize = 11f; setBackgroundColor(Color.parseColor("#2E7D32"))
-                            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
-                        }
-                        fun decide(decision: String) {
-                            lifecycleScope.launch {
-                                try {
-                                    val r = RetrofitClient.instance.decideLateNotice(n.id, LateNoticeDecisionRequest(decision))
-                                    if (r.isSuccessful && r.body()?.success == true) { toast(r.body()?.message ?: "Done"); container.removeAllViews(); container.visibility = View.GONE; loadLateNotices(container) }
-                                    else toast(r.body()?.message ?: "Failed")
-                                } catch (_: Exception) { toast("Network error") }
-                            }
-                        }
-                        btnReject.setOnClickListener { decide("rejected") }
-                        btnApprove.setOnClickListener { decide("approved") }
-                        btnRow.addView(btnReject); btnRow.addView(btnApprove)
-                        row.addView(btnRow)
-                    } else {
-                        row.addView(TextView(ctx).apply {
-                            text = n.status.uppercase(); textSize = 10f; setTypeface(null, android.graphics.Typeface.BOLD)
-                            setTextColor(if (n.status == "approved") Color.parseColor("#2E7D32") else Color.parseColor("#C62828"))
-                        })
-                    }
-                    card.addView(row)
-                    container.addView(card)
-                }
-            } catch (_: Exception) {}
-        }
     }
 
     // ── Map init ──────────────────────────────────────────────────────────────
@@ -1505,6 +1435,113 @@ class RegularizationAdapter(private val items: List<RegularizationItem>, private
         val stColor2 = when(it.status?.lowercase()) { "approved" -> android.graphics.Color.parseColor("#2E7D45"); "rejected" -> android.graphics.Color.parseColor("#C62828"); else -> android.graphics.Color.parseColor("#E65100") }
         ll.addView(TextView(ctx).apply { text = it.status?.replaceFirstChar { c -> c.uppercase() } ?: "Pending"; textSize = 11f; setPadding((10*h.root.context.resources.displayMetrics.density).toInt(),(3*h.root.context.resources.displayMetrics.density).toInt(),(10*h.root.context.resources.displayMetrics.density).toInt(),(3*h.root.context.resources.displayMetrics.density).toInt()); setTextColor(android.graphics.Color.WHITE); setTypeface(null, android.graphics.Typeface.BOLD); background = android.graphics.drawable.GradientDrawable().apply { setColor(stColor2); cornerRadius = 20*h.root.context.resources.displayMetrics.density } })
     }
+}
+
+// ── LATE APPROVALS TAB — manager/HR/admin/super_admin review Coming Late
+// notices raised by their team (or everyone, for HR/admin/super_admin). The
+// API itself scopes the list, so a plain employee just sees an empty state. ──
+class LateApprovalsFragment : Fragment() {
+    private lateinit var listWrap: LinearLayout
+    private lateinit var tvEmpty: TextView
+    private lateinit var progress: ProgressBar
+
+    override fun onCreateView(i: LayoutInflater, c: ViewGroup?, s: Bundle?): View {
+        val ctx = requireContext(); val dp = ctx.resources.displayMetrics.density
+        val sv = androidx.core.widget.NestedScrollView(ctx).apply { setBackgroundColor(ctx.getColor(R.color.background)) }
+        val root = LinearLayout(ctx).apply { orientation = LinearLayout.VERTICAL; setPadding((16*dp).toInt(), (16*dp).toInt(), (16*dp).toInt(), (80*dp).toInt()) }
+        sv.addView(root)
+
+        root.addView(TextView(ctx).apply {
+            text = "🕒 Coming Late — Approvals"; textSize = 17f; setTypeface(null, android.graphics.Typeface.BOLD)
+            setTextColor(ctx.getColor(R.color.text_primary))
+        })
+        root.addView(TextView(ctx).apply {
+            text = "Requests from your team today"; textSize = 12f
+            setTextColor(ctx.getColor(R.color.text_secondary))
+            setPadding(0, (2*dp).toInt(), 0, (14*dp).toInt())
+        })
+
+        progress = ProgressBar(ctx).apply {
+            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+                .also { it.gravity = Gravity.CENTER_HORIZONTAL }
+        }
+        root.addView(progress)
+        tvEmpty = TextView(ctx).apply {
+            text = "No coming-late requests today."; textSize = 13f; gravity = Gravity.CENTER
+            setTextColor(ctx.getColor(R.color.text_hint))
+            setPadding(0, (32*dp).toInt(), 0, 0); visibility = View.GONE
+        }
+        root.addView(tvEmpty)
+        listWrap = LinearLayout(ctx).apply { orientation = LinearLayout.VERTICAL }
+        root.addView(listWrap)
+
+        load()
+        return sv
+    }
+
+    private fun load() {
+        val ctx = requireContext(); val dp = ctx.resources.displayMetrics.density
+        progress.visibility = View.VISIBLE; tvEmpty.visibility = View.GONE; listWrap.removeAllViews()
+        lifecycleScope.launch {
+            try {
+                val res = RetrofitClient.instance.getLateNotices()
+                val notices = res.body()?.data ?: emptyList()
+                if (_bDestroyed()) return@launch
+                progress.visibility = View.GONE
+                if (notices.isEmpty()) { tvEmpty.visibility = View.VISIBLE; return@launch }
+                notices.forEach { n ->
+                    val card = androidx.cardview.widget.CardView(ctx).apply {
+                        radius = 12*dp; cardElevation = 2*dp
+                        layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).also { it.bottomMargin = (10*dp).toInt() }
+                    }
+                    val row = LinearLayout(ctx).apply { orientation = LinearLayout.VERTICAL; setPadding((14*dp).toInt(), (12*dp).toInt(), (14*dp).toInt(), (12*dp).toInt()) }
+                    row.addView(TextView(ctx).apply {
+                        text = "${n.employeeName} (${n.employeeCode ?: ""})"; textSize = 14f; setTypeface(null, android.graphics.Typeface.BOLD)
+                    })
+                    row.addView(TextView(ctx).apply {
+                        text = "Expected at ${n.expectedTime} — ${n.reason}"; textSize = 12.5f
+                        setTextColor(ctx.getColor(R.color.text_secondary))
+                        setPadding(0, (4*dp).toInt(), 0, (8*dp).toInt())
+                    })
+                    if (n.status == "pending") {
+                        val btnRow = LinearLayout(ctx).apply { orientation = LinearLayout.HORIZONTAL }
+                        val btnReject = com.google.android.material.button.MaterialButton(ctx, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
+                            text = "Reject"; textSize = 12f
+                            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).also { it.marginEnd = (8*dp).toInt() }
+                        }
+                        val btnApprove = com.google.android.material.button.MaterialButton(ctx).apply {
+                            text = "Approve"; textSize = 12f; setBackgroundColor(Color.parseColor("#2E7D32"))
+                            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+                        }
+                        fun decide(decision: String) {
+                            lifecycleScope.launch {
+                                try {
+                                    val r = RetrofitClient.instance.decideLateNotice(n.id, LateNoticeDecisionRequest(decision))
+                                    if (r.isSuccessful && r.body()?.success == true) { toast(r.body()?.message ?: "Done"); load() }
+                                    else toast(r.body()?.message ?: "Failed")
+                                } catch (_: Exception) { toast("Network error") }
+                            }
+                        }
+                        btnReject.setOnClickListener { decide("rejected") }
+                        btnApprove.setOnClickListener { decide("approved") }
+                        btnRow.addView(btnReject); btnRow.addView(btnApprove)
+                        row.addView(btnRow)
+                    } else {
+                        row.addView(TextView(ctx).apply {
+                            text = n.status.uppercase(); textSize = 11f; setTypeface(null, android.graphics.Typeface.BOLD)
+                            setTextColor(if (n.status == "approved") Color.parseColor("#2E7D32") else Color.parseColor("#C62828"))
+                        })
+                    }
+                    card.addView(row)
+                    listWrap.addView(card)
+                }
+            } catch (_: Exception) {
+                if (!_bDestroyed()) { progress.visibility = View.GONE; tvEmpty.text = "Could not load"; tvEmpty.visibility = View.VISIBLE }
+            }
+        }
+    }
+
+    private fun _bDestroyed() = view == null
 }
 
 // ── OD/WFH TAB ────────────────────────────────────────────────────────────────
