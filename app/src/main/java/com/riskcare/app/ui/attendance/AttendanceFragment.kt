@@ -86,7 +86,7 @@ class AttendanceFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         binding.viewPager.adapter = AttendancePagerAdapter(this)
         TabLayoutMediator(binding.tabLayout, binding.viewPager) { tab, pos ->
-            tab.text = when (pos) { 0 -> "Today"; 1 -> "History"; 2 -> "Regularize"; 3 -> "OD/WFH"; else -> "Late Approvals" }
+            tab.text = when (pos) { 0 -> "Today"; 1 -> "History"; 2 -> "Regularize"; 3 -> "OD/WFH"; else -> "Late" }
         }.attach()
     }
 
