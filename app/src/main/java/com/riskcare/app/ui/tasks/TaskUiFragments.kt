@@ -535,19 +535,19 @@ class WorkTrackerFragment : Fragment() {
         inner.addView(etDone)
 
         inner.addView(label("Today's Task — what are you working on? *"))
-        val etToday = EditText(ctx).apply { hint = "e.g. QC of 200 acreage records for the dataset"; minLines = 3 }
+        val etToday = EditText(ctx).apply { hint = "e.g. Followed up on 15 pending motor insurance claims"; minLines = 3 }
         inner.addView(etToday)
 
         inner.addView(label("This Week's Task / Goal (optional)"))
-        val etWeek = EditText(ctx).apply { hint = "e.g. Finish QC by Friday"; minLines = 2 }
+        val etWeek = EditText(ctx).apply { hint = "e.g. Close all pending renewal quotes by Friday"; minLines = 2 }
         inner.addView(etWeek)
 
         inner.addView(label("Blockers (optional)"))
-        val etBlockers = EditText(ctx).apply { hint = "e.g. Waiting on missing data"; minLines = 2 }
+        val etBlockers = EditText(ctx).apply { hint = "e.g. Waiting on client documents"; minLines = 2 }
         inner.addView(etBlockers)
 
         inner.addView(label("Remark (optional)"))
-        val etRemark = EditText(ctx).apply { hint = "e.g. Internet issues today"; minLines = 2 }
+        val etRemark = EditText(ctx).apply { hint = "e.g. Client meeting ran long today"; minLines = 2 }
         inner.addView(etRemark)
 
         val btnSubmit = MaterialButton(ctx).apply {
