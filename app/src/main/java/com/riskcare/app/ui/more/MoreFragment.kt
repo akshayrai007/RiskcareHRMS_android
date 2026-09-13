@@ -1233,8 +1233,8 @@ class ApprovalsFragment : Fragment() {
             setPadding((16*dp).toInt(),(16*dp).toInt(),(16*dp).toInt(),(8*dp).toInt())
         })
 
-        // Tab buttons — fixed to fit all 4 in one line
-        val tabs = listOf("Leave", "OD/WFH", "Regularize", "Advance")
+        // Tab buttons — fixed to fit all 5 in one line
+        val tabs = listOf("Leave", "OD/WFH", "Regularize", "Advance", "Late")
         val tabRow = LinearLayout(ctx).apply {
             orientation = LinearLayout.HORIZONTAL
             setPadding((8*dp).toInt(), 0, (8*dp).toInt(), (8*dp).toInt())
@@ -1391,13 +1391,27 @@ class ApprovalsFragment : Fragment() {
             }
         }
 
+        fun loadLateNotices() {
+            setActiveTab(4)
+            lifecycleScope.launch {
+                try {
+                    val res = RetrofitClient.instance.getLateNotices()
+                    val items = (res.body()?.data ?: emptyList()).filter { it.status == "pending" }
+                    tvEmpty.visibility = if (items.isEmpty()) View.VISIBLE else View.GONE
+                    tvEmpty.text = "No coming-late requests today"
+                    rv.adapter = LateNoticeApprovalAdapter(items) { loadLateNotices() }
+                } catch (e: Exception) { tvEmpty.text = "Error: ${e.message}"; tvEmpty.visibility = View.VISIBLE }
+            }
+        }
+
         tabBtns[0].setOnClickListener { loadLeaves() }
         tabBtns[1].setOnClickListener { loadODWFH() }
         tabBtns[2].setOnClickListener { loadRegularizations() }
         tabBtns[3].setOnClickListener { loadAdvances() }
+        tabBtns[4].setOnClickListener { loadLateNotices() }
 
         // Store loader functions for external navigation (notification taps)
-        _tabLoaders = listOf(::loadLeaves, ::loadODWFH, ::loadRegularizations, ::loadAdvances)
+        _tabLoaders = listOf(::loadLeaves, ::loadODWFH, ::loadRegularizations, ::loadAdvances, ::loadLateNotices)
         _tabBtns    = tabBtns
 
         // Load correct tab — from notification arg, or default to Leave (0)
@@ -1523,6 +1537,56 @@ class RegularizationApprovalAdapter(
             })
             ll.addView(br)
         }
+        card.addView(ll)
+    }
+}
+
+class LateNoticeApprovalAdapter(
+    private val items: List<LateNotice>,
+    private val onRefresh: () -> Unit
+) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+    override fun getItemCount() = items.size
+    override fun onCreateViewHolder(p: ViewGroup, t: Int): RecyclerView.ViewHolder {
+        val ctx = p.context; val dp = ctx.resources.displayMetrics.density
+        val card = androidx.cardview.widget.CardView(ctx).apply {
+            radius = 14*dp; cardElevation = 2*dp; setCardBackgroundColor(ctx.getColor(R.color.surface))
+            layoutParams = RecyclerView.LayoutParams(RecyclerView.LayoutParams.MATCH_PARENT, RecyclerView.LayoutParams.WRAP_CONTENT).also { it.setMargins(0,0,0,(8*dp).toInt()) }
+        }
+        return object : RecyclerView.ViewHolder(card) {}
+    }
+    override fun onBindViewHolder(h: RecyclerView.ViewHolder, pos: Int) {
+        val it = items[pos]; val ctx = h.itemView.context; val dp = ctx.resources.displayMetrics.density
+        val card = h.itemView as androidx.cardview.widget.CardView; card.removeAllViews()
+        val ll = LinearLayout(ctx).apply { orientation = LinearLayout.VERTICAL; setPadding((14*dp).toInt(),(12*dp).toInt(),(14*dp).toInt(),(12*dp).toInt()) }
+        ll.addView(TextView(ctx).apply { text = "${it.employeeName ?: "—"} (${it.employeeCode ?: ""})"; textSize = 14f; setTypeface(null, android.graphics.Typeface.BOLD) })
+        ll.addView(TextView(ctx).apply { text = "Expected at ${it.expectedTime} — ${it.reason}"; textSize = 12f; setTextColor(ctx.getColor(R.color.text_secondary)) })
+        val noticeId = it.id
+        val br = LinearLayout(ctx).apply { orientation = LinearLayout.HORIZONTAL; layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).also { m -> m.topMargin = (8*dp).toInt() } }
+        br.addView(MaterialButton(ctx, null, com.google.android.material.R.attr.materialButtonStyle).apply {
+            text = "Approve"; setBackgroundColor(ctx.getColor(R.color.primary)); textSize = 12f
+            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).also { m -> m.marginEnd = (8*dp).toInt() }
+            setOnClickListener {
+                approvalConfirm(ctx, "✅ Approve Coming Late") {
+                    val res = RetrofitClient.instance.decideLateNotice(noticeId, LateNoticeDecisionRequest("approved"))
+                    val ok = res.isSuccessful && res.body()?.success == true
+                    if (ok) onRefresh()
+                    Pair(ok, res.body()?.message ?: if (ok) "Approved" else "Error ${res.code()}")
+                }
+            }
+        })
+        br.addView(MaterialButton(ctx, null, com.google.android.material.R.attr.materialButtonStyle).apply {
+            text = "Reject"; setBackgroundColor(ctx.getColor(R.color.accent_red)); textSize = 12f
+            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+            setOnClickListener {
+                approvalConfirm(ctx, "❌ Reject Coming Late") {
+                    val res = RetrofitClient.instance.decideLateNotice(noticeId, LateNoticeDecisionRequest("rejected"))
+                    val ok = res.isSuccessful && res.body()?.success == true
+                    if (ok) onRefresh()
+                    Pair(ok, res.body()?.message ?: if (ok) "Rejected" else "Error ${res.code()}")
+                }
+            }
+        })
+        ll.addView(br)
         card.addView(ll)
     }
 }
