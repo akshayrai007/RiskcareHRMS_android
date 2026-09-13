@@ -190,21 +190,12 @@ class DashboardFragment : Fragment() {
         // Work Tickets — every employee can raise/track a support ticket.
         binding.menuWorkTickets.setOnClickListener { nav(com.riskcare.app.ui.tickets.TicketsFragment()) }
 
-        // Work Tracker — only if this employee has been flagged required, OR
-        // they manage others (to toggle who's required / view submitted logs).
+        // Work Tracker — always visible to everyone (matches KrishiHR exactly:
+        // any employee can submit their own daily log). Inside the screen,
+        // the manage/view-others panel additionally shows for HR/Accounts/
+        // Admin/Super Admin only.
+        binding.menuWorkTracker.visibility = View.VISIBLE
         binding.menuWorkTracker.setOnClickListener { nav(com.riskcare.app.ui.tasks.WorkTrackerFragment()) }
-        lifecycleScope.launch {
-            try {
-                val res = RetrofitClient.instance.getWorkTrackerMyStatus()
-                val d = res.body()?.data
-                if (_b != null && (d?.required == true || d?.canManageOthers == true)) {
-                    binding.menuWorkTracker.visibility = View.VISIBLE
-                }
-            } catch (_: Exception) {
-            } finally {
-                detachWorkTrackerTileIfHidden()
-            }
-        }
     }
 
     // GridLayout (unlike LinearLayout) still auto-assigns an implicit row/
@@ -216,16 +207,6 @@ class DashboardFragment : Fragment() {
         if (_b == null) return
         listOf(binding.menuEmployees, binding.menuApprovals, binding.menuGeofence).forEach { tile ->
             if (tile.visibility != View.VISIBLE) (tile.parent as? ViewGroup)?.removeView(tile)
-        }
-    }
-
-    // Work Tracker's visibility is decided later by an async call, so it's detached
-    // separately once that resolves — detaching it early (like the tiles above)
-    // would remove it from the grid before the check could ever show it again.
-    private fun detachWorkTrackerTileIfHidden() {
-        if (_b == null) return
-        if (binding.menuWorkTracker.visibility != View.VISIBLE) {
-            (binding.menuWorkTracker.parent as? ViewGroup)?.removeView(binding.menuWorkTracker)
         }
     }
 

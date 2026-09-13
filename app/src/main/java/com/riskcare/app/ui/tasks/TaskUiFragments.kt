@@ -494,19 +494,12 @@ class WorkTrackerFragment : Fragment() {
                 val res = RetrofitClient.instance.getWorkTrackerMyStatus()
                 progress.visibility = View.GONE
                 val d = res.body()?.data
-                val required = d?.required == true
                 val canManage = d?.canManageOthers == true
 
-                if (!required && !canManage) {
-                    content.addView(TextView(ctx).apply {
-                        text = "You have not been asked to fill a Work Tracker log."
-                        textSize = 14f; gravity = Gravity.CENTER; setTextColor(ctx.getColor(R.color.text_hint))
-                        setPadding((16*dp).toInt(), (48*dp).toInt(), (16*dp).toInt(), 0)
-                    })
-                    return@launch
-                }
-
-                if (required) buildSubmitSection(ctx, dp, content)
+                // Matches KrishiHR exactly: everyone can submit their own log,
+                // always. The manage/view-others panel is admin-tier only
+                // (HR/Accounts/Admin/Super Admin).
+                buildSubmitSection(ctx, dp, content)
                 if (canManage) buildManageSection(ctx, dp, content)
             } catch (_: Exception) {
                 progress.visibility = View.GONE
