@@ -509,37 +509,94 @@ class WorkTrackerFragment : Fragment() {
         return root
     }
 
+    // Matches KrishiHR's unified progress-log form exactly: Team, % Done Today
+    // (% Remaining derived), Today's Task, This Week's Task/Goal, Blockers, Remark.
     private fun buildSubmitSection(ctx: android.content.Context, dp: Float, content: LinearLayout) {
+        val teams = listOf("Survey", "QC", "Development", "Remote Sensing", "Other")
         val card = CardView(ctx).apply {
             radius = 14 * dp; cardElevation = 2 * dp
             layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
                 .also { it.setMargins((14*dp).toInt(), (14*dp).toInt(), (14*dp).toInt(), (14*dp).toInt()) }
         }
         val inner = LinearLayout(ctx).apply { orientation = LinearLayout.VERTICAL; setPadding((16*dp).toInt(), (16*dp).toInt(), (16*dp).toInt(), (16*dp).toInt()) }
-        inner.addView(TextView(ctx).apply { text = "📝 Submit Today's Work Log"; textSize = 15f; setTypeface(null, android.graphics.Typeface.BOLD) })
-        val etHours = EditText(ctx).apply { hint = "Hours spent (optional)"; inputType = android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL }
-        val etSummary = EditText(ctx).apply { hint = "What did you work on today? *"; minLines = 3 }
-        inner.addView(etSummary); inner.addView(etHours)
-        inner.addView(MaterialButton(ctx).apply {
-            text = "Submit Log"
-            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).also { it.topMargin = (8*dp).toInt() }
-            setOnClickListener {
-                val summary = etSummary.text.toString().trim()
-                if (summary.isEmpty()) { ctx.toast("Please enter a summary"); return@setOnClickListener }
-                lifecycleScope.launch {
-                    try {
-                        val res = RetrofitClient.instance.submitWorkLog(
-                            WorkLogSubmitRequest(summary = summary, hoursSpent = etHours.text.toString().toDoubleOrNull())
-                        )
-                        if (res.isSuccessful && res.body()?.success == true) {
-                            ctx.toast("Log submitted"); etSummary.setText(""); etHours.setText("")
-                        } else ctx.toast(res.body()?.message ?: "Failed to submit")
-                    } catch (_: Exception) { ctx.toast("Network error") }
-                }
-            }
-        })
+        val tvTitle = TextView(ctx).apply { text = "📝 Submit Today's Work Report"; textSize = 15f; setTypeface(null, android.graphics.Typeface.BOLD) }
+        inner.addView(tvTitle)
+
+        fun label(text: String) = TextView(ctx).apply {
+            this.text = text; textSize = 11f; setTypeface(null, android.graphics.Typeface.BOLD)
+            setTextColor(ctx.getColor(R.color.text_secondary)); setPadding(0, (10*dp).toInt(), 0, (4*dp).toInt())
+        }
+        inner.addView(label("Team"))
+        val spTeam = Spinner(ctx).apply { adapter = ArrayAdapter(ctx, android.R.layout.simple_spinner_dropdown_item, teams) }
+        inner.addView(spTeam)
+
+        inner.addView(label("% Done Today"))
+        val etDone = EditText(ctx).apply { hint = "e.g. 50"; inputType = android.text.InputType.TYPE_CLASS_NUMBER }
+        inner.addView(etDone)
+
+        inner.addView(label("Today's Task — what are you working on? *"))
+        val etToday = EditText(ctx).apply { hint = "e.g. QC of 200 acreage records for the dataset"; minLines = 3 }
+        inner.addView(etToday)
+
+        inner.addView(label("This Week's Task / Goal (optional)"))
+        val etWeek = EditText(ctx).apply { hint = "e.g. Finish QC by Friday"; minLines = 2 }
+        inner.addView(etWeek)
+
+        inner.addView(label("Blockers (optional)"))
+        val etBlockers = EditText(ctx).apply { hint = "e.g. Waiting on missing data"; minLines = 2 }
+        inner.addView(etBlockers)
+
+        inner.addView(label("Remark (optional)"))
+        val etRemark = EditText(ctx).apply { hint = "e.g. Internet issues today"; minLines = 2 }
+        inner.addView(etRemark)
+
+        val btnSubmit = MaterialButton(ctx).apply {
+            text = "✅ Submit Today's Progress"
+            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).also { it.topMargin = (12*dp).toInt() }
+        }
+        inner.addView(btnSubmit)
         card.addView(inner)
         content.addView(card)
+
+        // Pre-fill from today's entry if one already exists (edit-in-place).
+        lifecycleScope.launch {
+            try {
+                val res = RetrofitClient.instance.getMyWorkLogToday()
+                val cur = res.body()?.data
+                if (cur != null) {
+                    val idx = teams.indexOf(cur.team)
+                    if (idx >= 0) spTeam.setSelection(idx)
+                    etDone.setText(cur.percentDone.toString())
+                    etToday.setText(cur.todayTask ?: "")
+                    etWeek.setText(cur.weekTask ?: "")
+                    etBlockers.setText(cur.blockers ?: "")
+                    etRemark.setText(cur.remark ?: "")
+                    btnSubmit.text = "✅ Update Today's Progress"
+                }
+            } catch (_: Exception) {}
+        }
+
+        btnSubmit.setOnClickListener {
+            val todayTask = etToday.text.toString().trim()
+            if (todayTask.isEmpty()) { ctx.toast("Describe today's task"); return@setOnClickListener }
+            lifecycleScope.launch {
+                try {
+                    val res = RetrofitClient.instance.submitWorkLog(
+                        WorkLogSubmitRequest(
+                            team = spTeam.selectedItem as? String,
+                            todayTask = todayTask,
+                            percentDone = etDone.text.toString().toIntOrNull() ?: 0,
+                            weekTask = etWeek.text.toString().trim().ifEmpty { null },
+                            blockers = etBlockers.text.toString().trim().ifEmpty { null },
+                            remark = etRemark.text.toString().trim().ifEmpty { null }
+                        )
+                    )
+                    if (res.isSuccessful && res.body()?.success == true) {
+                        ctx.toast("Progress submitted"); btnSubmit.text = "✅ Update Today's Progress"
+                    } else ctx.toast(res.body()?.message ?: "Failed to submit")
+                } catch (_: Exception) { ctx.toast("Network error") }
+            }
+        }
     }
 
     private fun buildManageSection(ctx: android.content.Context, dp: Float, content: LinearLayout) {
@@ -609,9 +666,14 @@ class WorkTrackerFragment : Fragment() {
                                 textSize = 12f; setTypeface(null, android.graphics.Typeface.BOLD)
                                 layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
                             })
-                            l.hoursSpent?.let { addView(TextView(ctx).apply { text = "${it}h"; textSize = 11f; setTextColor(ctx.getColor(R.color.text_hint)) }) }
+                            addView(TextView(ctx).apply {
+                                text = "${l.percentDone}% done"; textSize = 11f; setTypeface(null, android.graphics.Typeface.BOLD)
+                                setTextColor(if (l.percentDone >= 100) android.graphics.Color.parseColor("#16a34a") else if (l.percentDone >= 50) android.graphics.Color.parseColor("#2563eb") else android.graphics.Color.parseColor("#dc2626"))
+                            })
                         })
-                        inner.addView(TextView(ctx).apply { text = l.summary; textSize = 12f; setTextColor(ctx.getColor(R.color.text_secondary)); setPadding(0, (4*dp).toInt(), 0, 0) })
+                        l.team?.let { inner.addView(TextView(ctx).apply { text = "Team: $it"; textSize = 11f; setTextColor(ctx.getColor(R.color.text_hint)); setPadding(0, (2*dp).toInt(), 0, 0) }) }
+                        inner.addView(TextView(ctx).apply { text = l.todayTask ?: ""; textSize = 12f; setTextColor(ctx.getColor(R.color.text_secondary)); setPadding(0, (4*dp).toInt(), 0, 0) })
+                        l.blockers?.let { inner.addView(TextView(ctx).apply { text = "Blockers: $it"; textSize = 11f; setTextColor(android.graphics.Color.parseColor("#dc2626")); setPadding(0, (4*dp).toInt(), 0, 0) }) }
                         card.addView(inner)
                         logsContainer.addView(card)
                     }

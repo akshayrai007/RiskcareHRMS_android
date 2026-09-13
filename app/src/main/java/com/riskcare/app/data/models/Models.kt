@@ -1529,17 +1529,29 @@ data class WorkTrackerStatusData(
     @SerializedName("can_manage_others") val canManageOthers: Boolean = false
 )
 data class WorkTrackerStatusResponse(val success: Boolean, val data: WorkTrackerStatusData? = null)
+// Matches KrishiHR's unified progress-log form exactly.
 data class WorkLogSubmitRequest(
     @SerializedName("log_date") val logDate: String? = null, // defaults server-side to today
-    val summary: String,
-    @SerializedName("hours_spent") val hoursSpent: Double? = null
+    val team: String? = null,
+    @SerializedName("today_task") val todayTask: String,
+    @SerializedName("percent_done") val percentDone: Int = 0,
+    @SerializedName("week_task") val weekTask: String? = null,
+    @SerializedName("est_finish_date") val estFinishDate: String? = null,
+    val blockers: String? = null,
+    val remark: String? = null
 )
 data class WorkLog(
     val id: Int,
     @SerializedName("employee_id") val employeeId: Int,
     @SerializedName("log_date") val logDate: String,
-    val summary: String,
-    @SerializedName("hours_spent") val hoursSpent: Double? = null,
+    val team: String? = null,
+    @SerializedName("today_task") val todayTask: String? = null,
+    @SerializedName("percent_done") val percentDone: Int = 0,
+    @SerializedName("percent_remaining") val percentRemaining: Int = 100,
+    @SerializedName("week_task") val weekTask: String? = null,
+    @SerializedName("est_finish_date") val estFinishDate: String? = null,
+    val blockers: String? = null,
+    val remark: String? = null,
     @SerializedName("employee_code") val employeeCode: String? = null,
     @SerializedName("employee_name") val employeeName: String? = null,
     @SerializedName("department_name") val departmentName: String? = null

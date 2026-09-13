@@ -776,6 +776,12 @@ interface ApiService {
     @GET("work-tracker/my-logs")
     suspend fun getMyWorkLogs(): Response<WorkLogListResponse>
 
+    @GET("work-tracker/today")
+    suspend fun getMyWorkLogToday(): Response<ApiResponse<WorkLog?>>
+
+    @DELETE("work-tracker/{id}")
+    suspend fun deleteWorkLog(@Path("id") id: Int): Response<ApiResponse<Unit>>
+
     @GET("work-tracker/logs")
     suspend fun getWorkTrackerLogs(
         @Query("employee_id") employeeId: Int? = null,
