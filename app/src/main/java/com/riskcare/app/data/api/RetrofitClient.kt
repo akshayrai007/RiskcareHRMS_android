@@ -37,6 +37,10 @@ object RetrofitClient {
         val builder  = chain.request().newBuilder()
         if (!token.isNullOrEmpty())    builder.addHeader("Authorization", "Bearer $token")
         if (!deviceId.isNullOrEmpty()) builder.addHeader("X-Device-ID", deviceId)
+        // Lets the backend tell "punched in from the phone app" apart from a
+        // desktop browser — OkHttp's default User-Agent doesn't reliably
+        // contain "Android", so this is explicit rather than sniffed.
+        builder.addHeader("X-Client-Platform", "android")
         chain.proceed(builder.build())
     }
 
