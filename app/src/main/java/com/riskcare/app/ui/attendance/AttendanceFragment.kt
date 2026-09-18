@@ -1433,7 +1433,13 @@ class RegularizationAdapter(private val items: List<RegularizationItem>, private
         // so a "pending" request shows which bucket it's currently waiting in.
         val stColor2 = when(it.status?.lowercase()) { "approved" -> android.graphics.Color.parseColor("#2E7D45"); "rejected" -> android.graphics.Color.parseColor("#C62828"); else -> android.graphics.Color.parseColor("#E65100") }
         val stLabel2 = when { it.status?.lowercase() == "approved" -> "Approved"; it.status?.lowercase() == "rejected" -> "Rejected"; it.stage == "hr" -> "Pending HR"; else -> "Pending Manager" }
-        ll.addView(TextView(ctx).apply { text = stLabel2; textSize = 11f; setPadding((10*h.root.context.resources.displayMetrics.density).toInt(),(3*h.root.context.resources.displayMetrics.density).toInt(),(10*h.root.context.resources.displayMetrics.density).toInt(),(3*h.root.context.resources.displayMetrics.density).toInt()); setTextColor(android.graphics.Color.WHITE); setTypeface(null, android.graphics.Typeface.BOLD); background = android.graphics.drawable.GradientDrawable().apply { setColor(stColor2); cornerRadius = 20*h.root.context.resources.displayMetrics.density } })
+        ll.addView(TextView(ctx).apply {
+            text = stLabel2; textSize = 12f; gravity = android.view.Gravity.CENTER
+            setPadding(0,(8*h.root.context.resources.displayMetrics.density).toInt(),0,(8*h.root.context.resources.displayMetrics.density).toInt())
+            setTextColor(android.graphics.Color.WHITE); setTypeface(null, android.graphics.Typeface.BOLD)
+            background = android.graphics.drawable.GradientDrawable().apply { setColor(stColor2); cornerRadius = 10*h.root.context.resources.displayMetrics.density }
+            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).also { m -> m.topMargin = (6*h.root.context.resources.displayMetrics.density).toInt() }
+        })
         // Lets the requester withdraw their own pending request — visible only
         // while it's still pending (either step).
         if (it.status?.lowercase() == "pending") {
@@ -1442,7 +1448,7 @@ class RegularizationAdapter(private val items: List<RegularizationItem>, private
                 text = "✕ Cancel Request"; textSize = 12f
                 setTextColor(android.graphics.Color.parseColor("#C62828"))
                 strokeColor = android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#C62828"))
-                layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).also { m -> m.topMargin = (8*ctx.resources.displayMetrics.density).toInt() }
+                layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).also { m -> m.topMargin = (8*ctx.resources.displayMetrics.density).toInt() }
                 setOnClickListener {
                     android.app.AlertDialog.Builder(ctx)
                         .setTitle("Cancel Request").setMessage("Cancel this regularization request?")
