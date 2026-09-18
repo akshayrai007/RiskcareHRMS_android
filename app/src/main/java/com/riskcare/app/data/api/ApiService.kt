@@ -139,6 +139,9 @@ interface ApiService {
     @POST("attendance/regularize/action")
     suspend fun actionRegularization(@Body body: Map<String, @JvmSuppressWildcards Any>): Response<ApiResponse<Unit>>
 
+    @POST("attendance/regularize/cancel")
+    suspend fun cancelRegularization(@Body body: Map<String, @JvmSuppressWildcards Any>): Response<ApiResponse<Unit>>
+
     @POST("attendance/od")
     suspend fun applyOD(@Body request: ODRequest): Response<ApiResponse<Unit>>
 
