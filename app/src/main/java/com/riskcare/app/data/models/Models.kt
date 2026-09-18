@@ -217,7 +217,11 @@ data class RegularizationItem(
     // 2-step approval: Reporting Manager first, then HR ("manager" | "hr").
     // Lets user/manager/HR all see which bucket a request is currently in.
     val stage: String? = null,
-    @SerializedName("regularization_manager_remarks") val managerRemarks: String? = null
+    @SerializedName("regularization_manager_remarks") val managerRemarks: String? = null,
+    // Only ever set when the manager APPROVES (moves it to HR) — its absence
+    // on a rejected request means the manager rejected it directly, not HR.
+    // Needed to know which of the 2 pipeline steps to mark rejected.
+    @SerializedName("regularization_manager_actioned_at") val managerActionedAt: String? = null
 ) : Parcelable
 
 data class TeamTodayRecord(

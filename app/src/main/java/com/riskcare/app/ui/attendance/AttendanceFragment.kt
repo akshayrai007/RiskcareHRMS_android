@@ -1406,6 +1406,53 @@ class AttendanceHistoryAdapter(private val items: List<AttendanceRecord>) : Recy
     }
 }
 
+// 2-step approval pipeline (Manager -> HR) as two numbered circles joined by
+// an arrow — same visual language as the web app's regPipelineHTML(), shown
+// to the requester, the manager, and HR so all three see the same picture.
+fun regPipelineView(ctx: android.content.Context, it: RegularizationItem): LinearLayout {
+    val dp = ctx.resources.displayMetrics.density
+    val managerApproved = !it.managerActionedAt.isNullOrBlank()
+    val rejected = it.status?.lowercase() == "rejected"
+    val approved = it.status?.lowercase() == "approved"
+    val rejectedAtManager = rejected && !managerApproved
+    val rejectedAtHR      = rejected && managerApproved
+
+    fun bubble(label: Int, done: Boolean, active: Boolean, reject: Boolean): LinearLayout {
+        val col = LinearLayout(ctx).apply { orientation = LinearLayout.VERTICAL; gravity = android.view.Gravity.CENTER }
+        val (bg, fg, txt) = when {
+            reject -> Triple("#FEE2E2", "#DC2626", "✗")
+            done   -> Triple("#D1FAE5", "#16A34A", "✓")
+            active -> Triple("#FEF9C3", "#B45309", label.toString())
+            else   -> Triple("#F1F5F9", "#94A3B8", label.toString())
+        }
+        col.addView(TextView(ctx).apply {
+            text = txt; textSize = 13f; setTypeface(null, android.graphics.Typeface.BOLD)
+            gravity = android.view.Gravity.CENTER; setTextColor(android.graphics.Color.parseColor(fg))
+            layoutParams = LinearLayout.LayoutParams((26*dp).toInt(), (26*dp).toInt())
+            background = android.graphics.drawable.GradientDrawable().apply {
+                shape = android.graphics.drawable.GradientDrawable.OVAL
+                setColor(android.graphics.Color.parseColor(bg))
+                setStroke((1.5*dp).toInt(), android.graphics.Color.parseColor(fg))
+            }
+        })
+        col.addView(TextView(ctx).apply {
+            text = if (label == 1) "Manager" else "HR"; textSize = 10f
+            setTextColor(ctx.getColor(R.color.text_secondary)); gravity = android.view.Gravity.CENTER
+            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).also { m -> m.topMargin = (2*dp).toInt() }
+        })
+        return col
+    }
+
+    val row = LinearLayout(ctx).apply {
+        orientation = LinearLayout.HORIZONTAL; gravity = android.view.Gravity.CENTER_VERTICAL
+        layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).also { m -> m.topMargin = (8*dp).toInt() }
+    }
+    row.addView(bubble(1, done = managerApproved || approved, active = it.status?.lowercase() == "pending" && it.stage != "hr", reject = rejectedAtManager))
+    row.addView(TextView(ctx).apply { text = "→"; textSize = 14f; setTextColor(ctx.getColor(R.color.text_hint)); setPadding((6*dp).toInt(), 0, (6*dp).toInt(), (14*dp).toInt()) })
+    row.addView(bubble(2, done = approved, active = it.status?.lowercase() == "pending" && it.stage == "hr", reject = rejectedAtHR))
+    return row
+}
+
 // ── REGULARIZE TAB ────────────────────────────────────────────────────────────
 class RegularizationFragment : Fragment() {
     override fun onCreateView(i: LayoutInflater, c: ViewGroup?, s: Bundle?): View {
@@ -1452,6 +1499,7 @@ class RegularizationAdapter(private val items: List<RegularizationItem>, private
             background = android.graphics.drawable.GradientDrawable().apply { setColor(stColor2); cornerRadius = 10*h.root.context.resources.displayMetrics.density }
             layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).also { m -> m.topMargin = (6*h.root.context.resources.displayMetrics.density).toInt() }
         })
+        ll.addView(regPipelineView(ctx, it))
         // Lets the requester withdraw their own pending request — visible only
         // while it's still pending (either step).
         if (it.status?.lowercase() == "pending") {

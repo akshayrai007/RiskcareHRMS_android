@@ -13,6 +13,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.button.MaterialButton
 import com.riskcare.app.AndroidMain
 import com.riskcare.app.R
+import com.riskcare.app.ui.attendance.regPipelineView
 import com.riskcare.app.data.api.RetrofitClient
 import com.riskcare.app.data.models.*
 import com.riskcare.app.ui.MainActivity
@@ -1517,6 +1518,7 @@ class RegularizationApprovalAdapter(
             val stageColor = if (it.stage == "hr") android.graphics.Color.parseColor("#1565C0") else android.graphics.Color.parseColor("#E65100")
             ll.addView(TextView(ctx).apply { text = stageLabel; textSize = 11f; setTypeface(null, android.graphics.Typeface.BOLD); setTextColor(stageColor); setPadding(0, (4*dp).toInt(), 0, 0) })
             if (!it.managerRemarks.isNullOrBlank()) ll.addView(TextView(ctx).apply { text = "👤 Manager: ${it.managerRemarks}"; textSize = 11f; setTextColor(android.graphics.Color.parseColor("#0369A1")) })
+            ll.addView(regPipelineView(ctx, it))
         }
         if (it.status?.lowercase() == "pending") {
             val regId = it.id  // capture before click listeners (avoids `it` shadowing)
