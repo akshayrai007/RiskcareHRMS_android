@@ -185,6 +185,7 @@ object AndroidMain {
     const val GEOFENCE_LOCATION_REQUEST_MS  = 5000L
     const val PUNCH_TOAST_DELAY_MS          = 3000L
     const val PUNCH_RETRY_DELAY_MS          = 15_000L
+    const val PUNCH_OUT_LOCK_MS             = 5 * 60 * 1000L  // backend blocks punch-out for 5 min after punch-in
 
 
     // ══════════════════════════════════════════════════════════════════

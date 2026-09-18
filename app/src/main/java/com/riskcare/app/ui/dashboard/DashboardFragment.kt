@@ -51,6 +51,9 @@ class DashboardFragment : Fragment() {
     private var hasPunchedIn  = false
     private var hasPunchedOut = false
     private var isPunching    = false
+    // 5-minute Punch Out lock (mirrors the backend cooldown in punchOut()).
+    private var punchInEpochMs = 0L
+    private var punchBtnJob: Job? = null
     // Today's attendance status from the server (present/late/half-day/absent),
     // used to color/label the punch tile after punch-out.
     private var todayStatus: String? = null
@@ -227,16 +230,58 @@ class DashboardFragment : Fragment() {
     }
 
     // Drives the single action tile through its lifecycle:
-    //   not punched in → green power icon "Punch In"
-    //   punched in     → red   power icon "Punch Out"
-    //   punched out    → attendance outcome: Present/Half Day/Absent (read-only)
+    //   not punched in      → green power icon  "Punch In"           (enabled)
+    //   punched in, < 5 min → grey  lock icon   "Punch Out"          (locked, no timer)
+    //   punched in, ≥ 5 min → red   power icon  "Punch Out"          (enabled)
+    //   punched out         → attendance outcome: Present/Half Day/Absent
     private fun updatePunchButton() {
         if (_b == null) return
+        punchBtnJob?.cancel()
         when {
             hasPunchedOut -> showOutcomeTile()
-            hasPunchedIn  -> setPunchTile("#C62828", R.drawable.ic_power, "Punch Out", true)
+            hasPunchedIn  -> startPunchOutCountdown()
             else          -> setPunchTile("#2E7D45", R.drawable.ic_power, "Punch In", true)
         }
+    }
+
+    // Locks the tile (grey padlock) until the 5-minute cooldown elapses, then
+    // flips it to an enabled red "Punch Out" — no visible countdown.
+    private fun startPunchOutCountdown() {
+        punchBtnJob?.cancel()
+        val remaining = if (punchInEpochMs > 0L)
+            AndroidMain.PUNCH_OUT_LOCK_MS - (System.currentTimeMillis() - punchInEpochMs)
+        else 0L
+        if (remaining <= 0L) {
+            setPunchTile("#C62828", R.drawable.ic_power, "Punch Out", true)
+            return
+        }
+        setPunchTile("#9E9E9E", R.drawable.ic_lock, "Punch Out", false)
+        punchBtnJob = lifecycleScope.launch {
+            delay(remaining)
+            if (_b != null) setPunchTile("#C62828", R.drawable.ic_power, "Punch Out", true)
+        }
+    }
+
+    // Parse a server punch-in value (IST) to epoch millis. Handles full
+    // datetimes and time-only values ("11:11:00"), which are anchored to today.
+    private fun parseIstEpoch(punchInStr: String?): Long {
+        if (punchInStr.isNullOrBlank()) return 0L
+        val ist = java.util.TimeZone.getTimeZone("Asia/Kolkata")
+        val raw = punchInStr.trim()
+        return try {
+            if (raw.contains("T") || raw.contains(" ")) {
+                val clean = raw.replace(" ", "T").substringBefore(".")
+                java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", java.util.Locale.getDefault())
+                    .apply { timeZone = ist }.parse(clean)?.time ?: 0L
+            } else {
+                val t = raw.substringBefore(".")
+                val fmt = if (t.length >= 8) "HH:mm:ss" else "HH:mm"
+                val todayStr = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
+                    .apply { timeZone = ist }.format(java.util.Date())
+                java.text.SimpleDateFormat("yyyy-MM-dd'T'$fmt", java.util.Locale.getDefault())
+                    .apply { timeZone = ist }.parse("${todayStr}T$t")?.time ?: 0L
+            }
+        } catch (e: Exception) { 0L }
     }
 
     private fun showOutcomeTile() {
@@ -266,6 +311,7 @@ class DashboardFragment : Fragment() {
                     val hasPunchOut = att?.punchOut != null
                     hasPunchedIn  = hasPunchIn
                     hasPunchedOut = hasPunchOut
+                    if (hasPunchIn) punchInEpochMs = parseIstEpoch(att?.punchIn)
                     todayStatus   = att?.status
                     updatePunchButton()
 
@@ -736,6 +782,16 @@ class DashboardFragment : Fragment() {
 
     private fun startDashboardPunch() {
         if (isPunching) { Toast.makeText(requireContext(), "⏳ Already processing, please wait...", Toast.LENGTH_SHORT).show(); return }
+        // Belt-and-suspenders: the tile is already disabled while locked, but
+        // guard the actual trigger too in case of a stale tap.
+        if (hasPunchedIn && !hasPunchedOut && punchInEpochMs > 0L) {
+            val remaining = AndroidMain.PUNCH_OUT_LOCK_MS - (System.currentTimeMillis() - punchInEpochMs)
+            if (remaining > 0L) {
+                val mins = (remaining + 59_999L) / 60_000L
+                Toast.makeText(requireContext(), "You can punch out in $mins more minute${if (mins > 1) "s" else ""}", Toast.LENGTH_SHORT).show()
+                return
+            }
+        }
         showPunchMap()
         permissionManager.checkAndRequestAll { granted ->
             if (granted) checkGpsAndDashboardPunch() else hidePunchMap()
@@ -846,6 +902,9 @@ class DashboardFragment : Fragment() {
                             // does exactly what the web app does: record the
                             // punch and its one-time lat/lng, nothing ongoing.
                             hasPunchedIn = true
+                            // Anchor the 5-min lock immediately so Punch Out locks
+                            // right away rather than waiting for the next reload.
+                            punchInEpochMs = System.currentTimeMillis()
                         } else {
                             ctx.getSharedPreferences(AndroidMain.PREFS_LEAVE_CACHE, android.content.Context.MODE_PRIVATE)
                                 .edit().putBoolean("balance_stale", true).apply()

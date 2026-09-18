@@ -110,6 +110,9 @@ class AttendanceTodayFragment : Fragment(), OnMapReadyCallback {
     private var hasPunchedIn  = false
     private var hasPunchedOut = false
     private var isPunching    = false
+    // 5-minute Punch Out lock (mirrors the backend cooldown in punchOut()).
+    private var punchInEpochMs = 0L
+    private var punchBtnJob: kotlinx.coroutines.Job? = null
 
     // ── Google Maps geofence ──────────────────────────────────────────────────
     private var googleMap: GoogleMap? = null
@@ -864,6 +867,7 @@ class AttendanceTodayFragment : Fragment(), OnMapReadyCallback {
             val cachedStatus  = prefs.getString("status", null)
             if (cachedDate == todayIST && cachedPunchIn != null) {
                 hasPunchedIn  = true; hasPunchedOut = cachedPunchOut != null
+                punchInEpochMs = parseIstEpoch(cachedPunchIn)
                 binding.tvPunchInTime.text  = AttendanceRecord.parseTime(cachedPunchIn)  ?: "--:--"
                 binding.tvPunchOutTime.text = if (cachedPunchOut != null) AttendanceRecord.parseTime(cachedPunchOut) ?: "--:--" else "--:--"
                 if (cachedPunchIn != null && cachedPunchOut != null && cachedHours > 0) {
@@ -898,6 +902,7 @@ class AttendanceTodayFragment : Fragment(), OnMapReadyCallback {
         if (_b == null) return
         if (att != null) {
             hasPunchedIn  = att.punchIn  != null; hasPunchedOut = att.punchOut != null
+            punchInEpochMs = parseIstEpoch(att.punchIn)
             binding.tvPunchInTime.text  = att.displayPunchIn  ?: "--:--"
             binding.tvPunchOutTime.text = att.displayPunchOut ?: "--:--"
             val todayIST = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).also { it.timeZone = TimeZone.getTimeZone(AndroidMain.TIMEZONE) }.format(Date())
@@ -927,6 +932,8 @@ class AttendanceTodayFragment : Fragment(), OnMapReadyCallback {
 
     private fun updatePunchButtons() {
         if (_b == null) return
+        punchBtnJob?.cancel()
+        binding.btnPunchOut.icon = null   // cleared here; re-set only while locked
         when {
             hasPunchedOut -> {
                 binding.btnPunchIn.isEnabled  = false; binding.btnPunchOut.isEnabled = false
@@ -935,10 +942,12 @@ class AttendanceTodayFragment : Fragment(), OnMapReadyCallback {
                 binding.btnPunchOut.backgroundTintList = android.content.res.ColorStateList.valueOf(requireContext().getColor(R.color.text_secondary))
             }
             hasPunchedIn -> {
-                binding.btnPunchIn.isEnabled  = false; binding.btnPunchOut.isEnabled = true
-                binding.btnPunchIn.text  = "✅ Punched In"; binding.btnPunchOut.text = "Punch Out"
+                binding.btnPunchIn.isEnabled  = false
+                binding.btnPunchIn.text  = "✅ Punched In"
                 binding.btnPunchIn.backgroundTintList  = android.content.res.ColorStateList.valueOf(requireContext().getColor(R.color.text_secondary))
-                binding.btnPunchOut.backgroundTintList = android.content.res.ColorStateList.valueOf(Color.parseColor("#C62828"))
+                // Punch Out stays locked for 5 min after punch-in, then unlocks —
+                // matches the backend cooldown in punchOut().
+                startPunchOutCountdown()
             }
             else -> {
                 binding.btnPunchIn.isEnabled  = true; binding.btnPunchOut.isEnabled = false
@@ -947,6 +956,57 @@ class AttendanceTodayFragment : Fragment(), OnMapReadyCallback {
                 binding.btnPunchOut.backgroundTintList = android.content.res.ColorStateList.valueOf(requireContext().getColor(R.color.text_secondary))
             }
         }
+    }
+
+    // Locks Punch Out for the 5-minute cooldown — greyed with a padlock icon and
+    // no visible countdown — then unlocks into an enabled red button.
+    private fun startPunchOutCountdown() {
+        punchBtnJob?.cancel()
+        val remaining = if (punchInEpochMs > 0L)
+            AndroidMain.PUNCH_OUT_LOCK_MS - (System.currentTimeMillis() - punchInEpochMs)
+        else 0L
+        if (remaining <= 0L) { setPunchOutReady(); return }
+        binding.btnPunchOut.isEnabled = false
+        binding.btnPunchOut.text = "Punch Out"
+        binding.btnPunchOut.setIconResource(R.drawable.ic_lock)
+        binding.btnPunchOut.iconTint = android.content.res.ColorStateList.valueOf(Color.WHITE)
+        binding.btnPunchOut.backgroundTintList =
+            android.content.res.ColorStateList.valueOf(requireContext().getColor(R.color.text_secondary))
+        punchBtnJob = lifecycleScope.launch {
+            delay(remaining)
+            if (_b != null) setPunchOutReady()
+        }
+    }
+
+    private fun setPunchOutReady() {
+        if (_b == null) return
+        binding.btnPunchOut.isEnabled = true
+        binding.btnPunchOut.text = "Punch Out"
+        binding.btnPunchOut.icon = null
+        binding.btnPunchOut.backgroundTintList =
+            android.content.res.ColorStateList.valueOf(Color.parseColor("#C62828"))
+    }
+
+    // Parse a server punch-in value (IST) to epoch millis. Handles full
+    // datetimes and time-only values ("11:11:00"), which are anchored to today.
+    private fun parseIstEpoch(punchInStr: String?): Long {
+        if (punchInStr.isNullOrBlank()) return 0L
+        val ist = TimeZone.getTimeZone("Asia/Kolkata")
+        val raw = punchInStr.trim()
+        return try {
+            if (raw.contains("T") || raw.contains(" ")) {
+                val clean = raw.replace(" ", "T").substringBefore(".")
+                SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
+                    .apply { timeZone = ist }.parse(clean)?.time ?: 0L
+            } else {
+                val t = raw.substringBefore(".")
+                val fmt = if (t.length >= 8) "HH:mm:ss" else "HH:mm"
+                val todayStr = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                    .apply { timeZone = ist }.format(Date())
+                SimpleDateFormat("yyyy-MM-dd'T'$fmt", Locale.getDefault())
+                    .apply { timeZone = ist }.parse("${todayStr}T$t")?.time ?: 0L
+            }
+        } catch (e: Exception) { 0L }
     }
 
     private fun doPunch() {
@@ -1008,6 +1068,9 @@ class AttendanceTodayFragment : Fragment(), OnMapReadyCallback {
                     if (res.isSuccessful && res.body()?.success == true) {
                         toast("✅ ${res.body()?.message ?: if (!hasPunchedIn) "Punched In" else "Punched Out"}")
                         if (!hasPunchedIn) {
+                            // Anchor the 5-min lock immediately so Punch Out locks
+                            // right away rather than waiting for the next reload.
+                            punchInEpochMs = System.currentTimeMillis()
                             val todayStr = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(java.util.Date())
                             val isOnOD = try {
                                 val odRes = RetrofitClient.instance.getMyODRequests(status = "approved")
