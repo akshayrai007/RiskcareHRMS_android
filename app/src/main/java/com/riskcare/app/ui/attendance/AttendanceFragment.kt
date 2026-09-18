@@ -1418,14 +1418,26 @@ class RegularizationFragment : Fragment() {
 }
 
 class RegularizationAdapter(private val items: List<RegularizationItem>, private val onRefresh: () -> Unit) : RecyclerView.Adapter<RegularizationAdapter.VH>() {
-    inner class VH(val root: LinearLayout) : RecyclerView.ViewHolder(root)
+    // VH.root IS the CardView directly — no pointless wrapping LinearLayout.
+    // That wrapper used to get RecyclerView's default WRAP_CONTENT layout
+    // params (LinearLayoutManager doesn't override generateDefaultLayoutParams),
+    // which shrank it to content width — so the card's own MATCH_PARENT only
+    // matched that already-shrunk wrapper, not the actual row width, leaving
+    // a gap on the right.
+    inner class VH(val root: androidx.cardview.widget.CardView) : RecyclerView.ViewHolder(root)
     override fun onCreateViewHolder(p: ViewGroup, t: Int): VH {
-        val ctx = p.context; val dp = ctx.resources.displayMetrics.density; val card = androidx.cardview.widget.CardView(ctx).apply { radius = 12 * dp; cardElevation = 2 * dp; setCardBackgroundColor(ctx.getColor(R.color.surface)); layoutParams = RecyclerView.LayoutParams(RecyclerView.LayoutParams.MATCH_PARENT, RecyclerView.LayoutParams.WRAP_CONTENT).also { it.setMargins(0, 0, 0, (8*dp).toInt()) } }
-        val ll = LinearLayout(ctx).apply { orientation = LinearLayout.VERTICAL; setPadding((14*dp).toInt(), (12*dp).toInt(), (14*dp).toInt(), (12*dp).toInt()) }; card.addView(ll); return VH(LinearLayout(ctx).apply { addView(card) })
+        val ctx = p.context; val dp = ctx.resources.displayMetrics.density
+        val card = androidx.cardview.widget.CardView(ctx).apply {
+            radius = 12 * dp; cardElevation = 2 * dp; setCardBackgroundColor(ctx.getColor(R.color.surface))
+            layoutParams = RecyclerView.LayoutParams(RecyclerView.LayoutParams.MATCH_PARENT, RecyclerView.LayoutParams.WRAP_CONTENT).also { it.setMargins(0, 0, 0, (8*dp).toInt()) }
+        }
+        val ll = LinearLayout(ctx).apply { orientation = LinearLayout.VERTICAL; setPadding((14*dp).toInt(), (12*dp).toInt(), (14*dp).toInt(), (12*dp).toInt()) }
+        card.addView(ll)
+        return VH(card)
     }
     override fun getItemCount() = items.size
     override fun onBindViewHolder(h: VH, pos: Int) {
-        val it = items[pos]; val ctx = h.root.context; val card = (h.root.getChildAt(0) as androidx.cardview.widget.CardView); val ll = card.getChildAt(0) as LinearLayout; ll.removeAllViews()
+        val it = items[pos]; val ctx = h.root.context; val card = h.root; val ll = card.getChildAt(0) as LinearLayout; ll.removeAllViews()
         fun tv(t: String, size: Float = 13f, bold: Boolean = false, color: Int = ctx.getColor(R.color.text_primary)) = TextView(ctx).apply { text = t; textSize = size; if (bold) setTypeface(null, android.graphics.Typeface.BOLD); setTextColor(color) }
         ll.addView(tv(it.date?.toDisplayDate() ?: "—", 14f, true)); ll.addView(tv("In: ${it.requestedPunchIn?.take(5) ?: "--"}  Out: ${it.requestedPunchOut?.take(5) ?: "--"}", 12f, color = ctx.getColor(R.color.text_secondary))); ll.addView(tv(it.reason ?: "—", 12f, color = ctx.getColor(R.color.text_hint)))
         if (!it.managerRemarks.isNullOrBlank()) ll.addView(tv("👤 Manager: ${it.managerRemarks}", 11f, color = android.graphics.Color.parseColor("#0369A1")))
