@@ -1508,6 +1508,16 @@ class RegularizationApprovalAdapter(
         ll.addView(TextView(ctx).apply { text = "Date: ${it.date?.toDisplayDate() ?: "—"}"; textSize = 12f; setTextColor(ctx.getColor(R.color.text_secondary)) })
         ll.addView(TextView(ctx).apply { text = "In: ${it.requestedPunchIn?.take(5) ?: "--"}  Out: ${it.requestedPunchOut?.take(5) ?: "--"}"; textSize = 12f; setTextColor(ctx.getColor(R.color.text_secondary)) })
         ll.addView(TextView(ctx).apply { text = it.reason ?: "—"; textSize = 11f; setTextColor(ctx.getColor(R.color.text_hint)) })
+        // 2-step chain: Reporting Manager approves first, then HR gives the final
+        // approval — both see this queue from the moment it's raised, so show
+        // which bucket it's currently in (manager already sent their remarks on
+        // approval, visible to HR when the request reaches their step).
+        if (it.status?.lowercase() == "pending") {
+            val stageLabel = if (it.stage == "hr") "⏳ Pending HR (manager approved)" else "⏳ Pending Manager"
+            val stageColor = if (it.stage == "hr") android.graphics.Color.parseColor("#1565C0") else android.graphics.Color.parseColor("#E65100")
+            ll.addView(TextView(ctx).apply { text = stageLabel; textSize = 11f; setTypeface(null, android.graphics.Typeface.BOLD); setTextColor(stageColor); setPadding(0, (4*dp).toInt(), 0, 0) })
+            if (!it.managerRemarks.isNullOrBlank()) ll.addView(TextView(ctx).apply { text = "👤 Manager: ${it.managerRemarks}"; textSize = 11f; setTextColor(android.graphics.Color.parseColor("#0369A1")) })
+        }
         if (it.status?.lowercase() == "pending") {
             val regId = it.id  // capture before click listeners (avoids `it` shadowing)
             val br = LinearLayout(ctx).apply { orientation = LinearLayout.HORIZONTAL; layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).also { m -> m.topMargin = (8*dp).toInt() } }
@@ -1519,7 +1529,10 @@ class RegularizationApprovalAdapter(
                         val res = RetrofitClient.instance.actionRegularization(mapOf("attendance_id" to regId, "action" to "approve"))
                         val ok = res.isSuccessful && res.body()?.success == true
                         if (ok) onRefresh()
-                        Pair(ok, if (ok) "Regularization approved" else res.body()?.message ?: "Error ${res.code()}")
+                        // Backend's own message distinguishes "forwarded to HR" (manager
+                        // step) from the final approval, so surface it instead of a
+                        // generic string.
+                        Pair(ok, res.body()?.message ?: if (ok) "Regularization approved" else "Error ${res.code()}")
                     }
                 }
             })

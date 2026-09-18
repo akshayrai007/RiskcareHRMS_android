@@ -210,7 +210,11 @@ data class RegularizationItem(
     @SerializedName("requested_punch_out") val requestedPunchOut: String? = null,
     val reason: String? = null,
     val status: String? = null,
-    @SerializedName("created_at") val createdAt: String? = null
+    @SerializedName("created_at") val createdAt: String? = null,
+    // 2-step approval: Reporting Manager first, then HR ("manager" | "hr").
+    // Lets user/manager/HR all see which bucket a request is currently in.
+    val stage: String? = null,
+    @SerializedName("regularization_manager_remarks") val managerRemarks: String? = null
 ) : Parcelable
 
 data class TeamTodayRecord(
