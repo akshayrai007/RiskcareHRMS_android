@@ -206,8 +206,11 @@ data class RegularizationItem(
     @SerializedName("employee_name") val employeeName: String? = null,
     @SerializedName("employee_code") val employeeCode: String? = null,
     val date: String? = null,
-    @SerializedName("requested_punch_in") val requestedPunchIn: String? = null,
-    @SerializedName("requested_punch_out") val requestedPunchOut: String? = null,
+    // Backend's /attendance/regularizations returns these as "punch_in"/"punch_out"
+    // (aliased from regularization_punch_in/out) — was "requested_punch_in/out"
+    // here, which matched nothing, so times always showed as "--".
+    @SerializedName("punch_in") val requestedPunchIn: String? = null,
+    @SerializedName("punch_out") val requestedPunchOut: String? = null,
     val reason: String? = null,
     val status: String? = null,
     @SerializedName("created_at") val createdAt: String? = null,
