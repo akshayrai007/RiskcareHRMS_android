@@ -940,7 +940,17 @@ class ApplyLeaveBottomSheet(private val onSuccess: () -> Unit) : BottomSheetDial
         halfDayRow.addView(switchHalfDay); halfDayRow.addView(tvHalfDayNote)
         root.addView(halfDayRow)
 
+        // Which half is taken — drives the late rule: 1st half off = late only after 2:00 PM,
+        // 2nd half off = you work the morning (can't punch out before 2:00 PM).
+        val rgHalf = RadioGroup(ctx).apply {
+            orientation = RadioGroup.VERTICAL; visibility = View.GONE
+            addView(RadioButton(ctx).apply { id = View.generateViewId(); text = "1st half off (come in after lunch — late after 2:00 PM)"; textSize = 12f; isChecked = true; tag = "first" })
+            addView(RadioButton(ctx).apply { id = View.generateViewId(); text = "2nd half off (work morning — punch-out from 2:00 PM)"; textSize = 12f; tag = "second" })
+        }
+        root.addView(rgHalf)
+
         switchHalfDay.setOnCheckedChangeListener { _, isChecked ->
+            rgHalf.visibility = if (isChecked) View.VISIBLE else View.GONE
             if (isChecked) {
                 btnToDate.isEnabled = false; btnToDate.alpha = 0.4f
                 if (fromDate.isNotEmpty()) {
@@ -987,7 +997,8 @@ class ApplyLeaveBottomSheet(private val onSuccess: () -> Unit) : BottomSheetDial
                         val isHalf = switchHalfDay.isChecked
                         val finalToDate = if (isHalf) fromDate else toDate
                         val res = RetrofitClient.instance.applyLeave(
-                            LeaveRequest(lt.id, fromDate, finalToDate, reason, lt.code, isHalf))
+                            LeaveRequest(lt.id, fromDate, finalToDate, reason, lt.code, isHalf,
+                                if (isHalf) (rgHalf.findViewById<RadioButton>(rgHalf.checkedRadioButtonId)?.tag as? String ?: "first") else null))
                         if (res.isSuccessful && res.body()?.success == true) {
                             toast("Leave applied ✅"); onSuccess(); dismiss()
                         } else toast(res.body()?.message ?: "Failed")

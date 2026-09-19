@@ -277,7 +277,8 @@ data class LeaveRequest(
     @SerializedName("to_date") val toDate: String? = null,
     val reason: String,
     @SerializedName("leave_type") val leaveType: String? = null,
-    @SerializedName("is_half_day") val isHalfDay: Boolean = false
+    @SerializedName("is_half_day") val isHalfDay: Boolean = false,
+    @SerializedName("half_day_type") val halfDayType: String? = null   // "first" | "second"
 )
 
 @Parcelize
