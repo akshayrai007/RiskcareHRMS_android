@@ -1681,7 +1681,10 @@ data class LateNotice(
     val reason: String,
     val status: String = "pending",
     @SerializedName("approved_by_name") val approvedByName: String? = null,
-    @SerializedName("created_at")    val createdAt: String? = null
+    @SerializedName("created_at")    val createdAt: String? = null,
+    // Only the employee's reporting manager can approve/reject; others (HR) just view.
+    @SerializedName("can_decide") val canDecide: Boolean = true,
+    @SerializedName("reporting_manager_name") val reportingManagerName: String? = null
 )
 data class LateNoticeListResponse(val success: Boolean, val data: List<LateNotice>? = null)
 data class CreateLateNoticeRequest(@SerializedName("expected_time") val expectedTime: String, val reason: String)

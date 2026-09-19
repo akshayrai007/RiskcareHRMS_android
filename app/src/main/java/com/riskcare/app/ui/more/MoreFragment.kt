@@ -1576,6 +1576,14 @@ class LateNoticeApprovalAdapter(
         ll.addView(TextView(ctx).apply { text = "${it.employeeName ?: "—"} (${it.employeeCode ?: ""})"; textSize = 14f; setTypeface(null, android.graphics.Typeface.BOLD) })
         ll.addView(TextView(ctx).apply { text = "Expected at ${it.expectedTime} — ${it.reason}"; textSize = 12f; setTextColor(ctx.getColor(R.color.text_secondary)) })
         val noticeId = it.id
+        if (!it.canDecide || it.status != "pending") {
+            // HR (notified only) and already-decided notices: no actions
+            val label = if (it.status != "pending") it.status.replaceFirstChar { c -> c.uppercase() }
+                        else "⏳ Awaiting ${it.reportingManagerName?.trim().takeUnless { n -> n.isNullOrBlank() } ?: "reporting manager"} (you're notified only)"
+            ll.addView(TextView(ctx).apply { text = label; textSize = 11f; setTypeface(null, android.graphics.Typeface.BOLD); setTextColor(ctx.getColor(R.color.text_secondary)); setPadding(0, (6*dp).toInt(), 0, 0) })
+            card.addView(ll)
+            return
+        }
         val br = LinearLayout(ctx).apply { orientation = LinearLayout.HORIZONTAL; layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).also { m -> m.topMargin = (8*dp).toInt() } }
         br.addView(MaterialButton(ctx, null, com.google.android.material.R.attr.materialButtonStyle).apply {
             text = "Approve"; setBackgroundColor(ctx.getColor(R.color.primary)); textSize = 12f
