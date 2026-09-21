@@ -240,22 +240,19 @@ class PayrollFragment : Fragment() {
         }
 
         // Leave balance table — matches web payslip.html's leave table exactly
-        val leaveTypeNames = mapOf("EL" to "Earned Leave", "SL" to "Sick or Casual Leave", "CL" to "Casual Leave", "PL" to "Privilege Leave")
+        val leaveTypeNames = mapOf("EL" to "Earned Leave (EL)", "SL" to "Sick Leave (SL)", "CL" to "Casual Leave (CL)", "PL" to "Privilege Leave (PL)")
         val leaveRowsHtml = (slip.leaveBalances ?: emptyList()).joinToString("") { l ->
             val name = leaveTypeNames[l.code] ?: (l.name ?: "")
-            val alloc = l.allocated ?: 0.0
-            val used = l.used ?: 0.0
             val avail = l.available ?: 0.0
-            val cf = l.carryForward ?: 0.0
-            val opening = if (cf > 0) "%.2f".format(cf) else if (alloc - used > 0) "%.2f".format(alloc - used) else "0.00"
+            val credit = l.creditMonth ?: 0.0
+            val used = l.utilizedMonth ?: 0.0
+            val opening = "%.2f".format(maxOf(0.0, avail - credit + used))
             """<tr>
               <td style='padding:4px 10px;border:1px solid #ccc;font-size:12px'>$name</td>
               <td style='padding:4px 8px;border:1px solid #ccc;font-size:12px;text-align:right'>$opening</td>
-              <td style='padding:4px 8px;border:1px solid #ccc;font-size:12px;text-align:right'>0.00</td>
-              <td style='padding:4px 8px;border:1px solid #ccc;font-size:12px;text-align:right'>0.00</td>
+              <td style='padding:4px 8px;border:1px solid #ccc;font-size:12px;text-align:right'>${"%.2f".format(credit)}</td>
               <td style='padding:4px 8px;border:1px solid #ccc;font-size:12px;text-align:right'>${"%.2f".format(used)}</td>
               <td style='padding:4px 8px;border:1px solid #ccc;font-size:12px;text-align:right'>${"%.2f".format(avail)}</td>
-              <td style='padding:4px 8px;border:1px solid #ccc;font-size:12px;text-align:right'>0.00</td>
             </tr>"""
         }
         val leaveTableHtml = if (leaveRowsHtml.isNotEmpty()) """
@@ -264,10 +261,8 @@ class PayrollFragment : Fragment() {
     <th style="padding:5px 10px;border:1px solid #ccc;font-size:11px;font-weight:700;text-align:left">Leave Type</th>
     <th style="padding:5px 8px;border:1px solid #ccc;font-size:11px;font-weight:700;text-align:right">Opening<br>Balance</th>
     <th style="padding:5px 8px;border:1px solid #ccc;font-size:11px;font-weight:700;text-align:right">Current Month<br>Credit</th>
-    <th style="padding:5px 8px;border:1px solid #ccc;font-size:11px;font-weight:700;text-align:right">Leaves Withdrawn<br>/Rejected of<br>previous month</th>
     <th style="padding:5px 8px;border:1px solid #ccc;font-size:11px;font-weight:700;text-align:right">Leaves<br>Utilized</th>
     <th style="padding:5px 8px;border:1px solid #ccc;font-size:11px;font-weight:700;text-align:right">Available<br>Balance</th>
-    <th style="padding:5px 8px;border:1px solid #ccc;font-size:11px;font-weight:700;text-align:right">Leave<br>Lapsed</th>
   </tr>
   $leaveRowsHtml
 </table>""" else ""

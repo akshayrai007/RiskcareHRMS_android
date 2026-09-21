@@ -394,7 +394,9 @@ data class PayslipLeaveBalance(
     val allocated: Double? = null,
     val used: Double? = null,
     @SerializedName("carry_forward") val carryForward: Double? = null,
-    val available: Double? = null
+    val available: Double? = null,
+    @SerializedName("credit_month") val creditMonth: Double? = null,
+    @SerializedName("utilized_month") val utilizedMonth: Double? = null
 )
 data class Payslip(
     val id: Int? = null, val month: Int? = null, val year: Int? = null, val status: String? = null,
