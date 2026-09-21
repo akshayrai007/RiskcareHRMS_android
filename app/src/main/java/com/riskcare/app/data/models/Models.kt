@@ -455,7 +455,19 @@ data class Payslip(
     @SerializedName("fixed_conveyance")         val fixedConveyance: Double? = null,
     @SerializedName("fixed_special_allowance")  val fixedSpecialAllowance: Double? = null,
     @SerializedName("fixed_gratuity")           val fixedGratuity: Double? = null,
-    @SerializedName("leave_balances") val leaveBalances: List<PayslipLeaveBalance>? = null
+    @SerializedName("leave_balances") val leaveBalances: List<PayslipLeaveBalance>? = null,
+    // one-time monthly items + LOP reversal + location (web payslip parity)
+    @SerializedName("extra_working_salary") val extraWorkingSalary: Double? = null,
+    val bonus: Double? = null,
+    val incentive: Double? = null,
+    @SerializedName("other_earning") val otherEarning: Double? = null,
+    @SerializedName("performance_bonus") val performanceBonus: Double? = null,
+    @SerializedName("gtl_deduction") val gtlDeduction: Double? = null,
+    @SerializedName("late_mark_deduction") val lateMarkDeduction: Double? = null,
+    @SerializedName("lop_reversal") val lopReversal: Double? = null,
+    val location: String? = null,
+    val city: String? = null,
+    val state: String? = null
 ) {
     val effectiveNet   get() = netSalaryDisplay ?: netSalary
     val effectiveGross get() = grossSalary

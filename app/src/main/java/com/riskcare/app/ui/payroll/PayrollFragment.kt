@@ -170,102 +170,112 @@ class PayrollFragment : Fragment() {
         val session = SessionManager(requireContext())
         val e       = emp ?: session.getEmployee()
         val logoB64 = logoAsBase64(requireContext())
-        // Build logo tag exactly like the web version - img with base64 src
         val logoTag = if (logoB64.isNotEmpty())
-            """<img src="data:image/png;base64,$logoB64" alt="${AndroidMain.COMPANY_SHORT_NAME}" style="height:88px;width:88px;object-fit:contain;display:block;background:transparent;">"""
-        else
-            """<div style="width:88px;height:88px;background:#2E7D32;border-radius:8px;display:flex;align-items:center;justify-content:center;text-align:center;"><span style="color:#fff;font-weight:800;font-size:11px;">RISK<br>CARE</span></div>"""
+            """<img src="data:image/png;base64,$logoB64" alt="${AndroidMain.COMPANY_SHORT_NAME}" style="max-width:80px;max-height:64px;object-fit:contain;display:block">"""
+        else ""
 
-        // Employee info fields (prefer payslip JOIN, fall back to session)
-        val name   = slip.employeeName  ?: e?.fullName         ?: "—"
-        val empId  = slip.employeeCode  ?: e?.employeeCode     ?: "—"
-        val desig  = slip.designationTitle ?: e?.designationTitle ?: e?.designation ?: "—"
-        val dept   = slip.departmentName   ?: e?.departmentName   ?: e?.department  ?: "—"
-        val doj    = (slip.slipDoj ?: e?.effectiveJoiningDate)?.toDisplayDate() ?: "—"
-        val dob    = (slip.slipDob ?: e?.dateOfBirth)?.toDisplayDate()          ?: "—"
-        val uan    = slip.uanNumber?.takeIf { it.isNotBlank() } ?: "—"
-        val pfNo   = slip.pfNumber?.takeIf  { it.isNotBlank() } ?: "—"
-        val pan    = slip.panNumber?.takeIf  { it.isNotBlank() } ?: "—"
-        val acct   = slip.bankAccount?.takeIf { it.isNotBlank() } ?: "—"
-        val bank   = slip.bankName?.takeIf    { it.isNotBlank() } ?: "—"
-        val ifsc   = slip.bankIfsc?.takeIf    { it.isNotBlank() } ?: "—"
+        // ── Employee info (same fields/order as the web payslip) ──
+        val name  = slip.employeeName  ?: e?.fullName ?: "—"
+        val empId = slip.employeeCode  ?: e?.employeeCode ?: "—"
+        val desig = slip.designationTitle?.takeIf { it.isNotBlank() } ?: e?.designationTitle ?: e?.designation ?: "—"
+        val dept  = slip.departmentName ?: e?.departmentName ?: e?.department ?: "—"
+        val doj   = (slip.slipDoj ?: e?.effectiveJoiningDate)?.toDisplayDate() ?: "—"
+        val bank  = slip.bankName?.takeIf    { it.isNotBlank() } ?: "—"
+        val acct  = slip.bankAccount?.takeIf { it.isNotBlank() } ?: "—"
+        val pan   = slip.panNumber?.takeIf   { it.isNotBlank() } ?: "—"
+        val uan   = slip.uanNumber?.takeIf   { it.isNotBlank() } ?: "—"
+        val loc   = slip.location?.takeIf { it.isNotBlank() }
+            ?: listOfNotNull(slip.city, slip.state).filter { it.isNotBlank() }.joinToString(", ").ifBlank { AndroidMain.PAYSLIP_LOCATION_CITY }
 
-        val pd  = (slip.presentDays ?: slip.daysPresent?.toDouble())?.toInt()?.toString() ?: "—"
-        // FIX: "Days in Month" must be CALENDAR days (e.g. 31 for January), not working days.
-        // Web uses: new Date(year, month, 0).getDate() — last day of the month.
-        // Android was incorrectly showing slip.workingDays (e.g. 26) here.
-        val wd  = Calendar.getInstance().apply { set(year, month - 1, 1) }
-            .getActualMaximum(Calendar.DAY_OF_MONTH).toString()
-        val lwp = if ((slip.lopDays ?: 0.0) > 0) slip.lopDays!!.toInt().toString() else "-"
+        fun money(v: Double): String = if (v > 0) "%,.2f".format(v) else ""
+        fun moneyZero(v: Double): String = if (v > 0) "%,.2f".format(v) else "0.00"
 
-        // Earnings list
-        val earnings = buildEarnings(slip)
-        // Deductions list
-        val deductions = buildDeductions(slip)
-
-        val tableRows = maxOf(earnings.size, deductions.size)
-        val grossPay     = slip.effectiveGross
-        val totalEarning = slip.effectiveGross + (slip.pfEmployer ?: 0.0)
-        val totalDed     = slip.effectiveDed
-        val netSalary    = slip.effectiveNet
-
-        fun fmt(v: Double): String {
-            if (v == 0.0) return "—"
-            val l = v.toLong()
-            return if (v == l.toDouble()) "%,d".format(l) else "%,.2f".format(v)
+        // ── Earnings: Fixed Amount vs Earning Amount (prorated) ──
+        data class Earn(val label: String, val fixed: Double, val earned: Double)
+        val basic = slip.basic ?: slip.basicSalary ?: 0.0
+        val hra = slip.hra ?: 0.0
+        val grat = slip.gratuity ?: 0.0
+        val spec = slip.specialAllowance ?: 0.0
+        val food = slip.foodCoupon ?: 0.0
+        val earnList = mutableListOf(
+            Earn("Basic", slip.fixedBasic ?: basic, basic),
+            Earn("House Rent Allowance", slip.fixedHra ?: hra, hra),
+            Earn("Fixed Gratuity", slip.fixedGratuity ?: grat, grat),
+            Earn("Defray Allowance", slip.fixedSpecialAllowance ?: spec, spec),
+            Earn("Food Coupon", food, food)
+        ).filter { it.fixed > 0 }.toMutableList()
+        listOf("Extra Working Salary" to slip.extraWorkingSalary, "Bonus" to slip.bonus, "Incentive" to slip.incentive,
+               "Other Earning" to slip.otherEarning, "Performance Bonus" to slip.performanceBonus).forEach { (l, v) ->
+            if ((v ?: 0.0) > 0) earnList += Earn(l, 0.0, v!!)
         }
 
-        // Build earnings/deductions table rows HTML — matching web payslip.html exactly
+        // ── Deductions: PT, PF, ESI always listed; the rest only when > 0 ──
+        val pfEmp = slip.pfEmployee ?: 0.0
+        val esiEmp = slip.esiEmployee ?: 0.0
+        val pt = slip.professionalTax ?: 0.0
+        val tds = slip.tds ?: 0.0
+        val gtl = slip.gtlDeduction ?: 0.0
+        val late = slip.lateMarkDeduction ?: 0.0
+        val emi = slip.emiRecovery ?: 0.0
+        val dedList = mutableListOf<Triple<String, Double, Boolean>>(
+            Triple("Professional Tax", pt, true),
+            Triple("Provident Fund", pfEmp, true),
+            Triple("ESI (Employee)", esiEmp, true),
+            Triple("TDS", tds, false),
+            Triple("GTL Deduction", gtl, false),
+            Triple("Late Mark Deduction", late, false),
+            Triple("Salary Advance Recovery", emi, false)
+        ).filter { it.third || it.second > 0 }
+
+        val gross = slip.effectiveGross
+        val totalDed = pfEmp + esiEmp + pt + tds + gtl + late + emi
+        val net = gross - totalDed
+
+        val cell = "padding:5px 10px;border:1px solid #999;font-size:12px"
         val rowsHtml = buildString {
-            for (i in 0 until tableRows) {
-                val earn = earnings.getOrNull(i)
-                val ded  = deductions.getOrNull(i)
+            for (i in 0 until maxOf(earnList.size, dedList.size)) {
+                val en = earnList.getOrNull(i); val d = dedList.getOrNull(i)
                 append("<tr>")
-                if (earn != null) {
-                    append("<td style='padding:6px 10px;font-size:14px;border:1px solid #ccc'>${earn.first}</td>")
-                    append("<td style='padding:6px 10px;font-size:14px;border:1px solid #ccc;text-align:center'>${fmt(earn.second)}</td>")
-                } else {
-                    append("<td style='padding:6px 10px;font-size:14px;border:1px solid #ccc'></td>")
-                    append("<td style='padding:6px 10px;font-size:14px;border:1px solid #ccc;text-align:center'></td>")
-                }
-                if (ded != null) {
-                    append("<td style='padding:6px 10px;font-size:14px;border:1px solid #ccc'>${ded.first}</td>")
-                    append("<td style='padding:6px 10px;font-size:14px;border:1px solid #ccc;text-align:center'>${fmt(ded.second)}</td>")
-                } else {
-                    append("<td style='padding:6px 10px;font-size:14px;border:1px solid #ccc'></td>")
-                    append("<td style='padding:6px 10px;font-size:14px;border:1px solid #ccc;text-align:center'></td>")
-                }
+                append("<td style='$cell'>${en?.label ?: ""}</td>")
+                append("<td style='$cell;text-align:right'>${en?.let { money(it.fixed) } ?: ""}</td>")
+                append("<td style='$cell;text-align:right'>${en?.let { money(it.earned) } ?: ""}</td>")
+                append("<td style='$cell'>${d?.first ?: ""}</td>")
+                append("<td style='$cell;text-align:right'>${d?.let { moneyZero(it.second) } ?: ""}</td>")
                 append("</tr>")
             }
         }
 
-        // Leave balance table — matches web payslip.html's leave table exactly
-        val leaveTypeNames = mapOf("EL" to "Earned Leave (EL)", "SL" to "Sick Leave (SL)", "CL" to "Casual Leave (CL)", "PL" to "Privilege Leave (PL)")
-        val leaveRowsHtml = (slip.leaveBalances ?: emptyList()).joinToString("") { l ->
-            val name = leaveTypeNames[l.code] ?: (l.name ?: "")
+        // ── Leave table: Opening / Credit / Utilized / Available (no lapsed / withdrawn) ──
+        val leaveNames = mapOf("EL" to "Earned Leave (EL)", "SL" to "Sick Leave (SL)", "CL" to "Casual Leave (CL)", "PL" to "Privilege Leave (PL)")
+        val leaveRows = (slip.leaveBalances ?: emptyList()).joinToString("") { l ->
             val avail = l.available ?: 0.0
             val credit = l.creditMonth ?: 0.0
             val used = l.utilizedMonth ?: 0.0
-            val opening = "%.2f".format(maxOf(0.0, avail - credit + used))
-            """<tr>
-              <td style='padding:4px 10px;border:1px solid #ccc;font-size:12px'>$name</td>
-              <td style='padding:4px 8px;border:1px solid #ccc;font-size:12px;text-align:right'>$opening</td>
-              <td style='padding:4px 8px;border:1px solid #ccc;font-size:12px;text-align:right'>${"%.2f".format(credit)}</td>
-              <td style='padding:4px 8px;border:1px solid #ccc;font-size:12px;text-align:right'>${"%.2f".format(used)}</td>
-              <td style='padding:4px 8px;border:1px solid #ccc;font-size:12px;text-align:right'>${"%.2f".format(avail)}</td>
-            </tr>"""
+            val opening = maxOf(0.0, avail - credit + used)
+            """<tr><td style='$cell'>${leaveNames[l.code] ?: (l.name ?: "")}</td>
+              <td style='$cell;text-align:right'>${"%.2f".format(opening)}</td>
+              <td style='$cell;text-align:right'>${"%.2f".format(credit)}</td>
+              <td style='$cell;text-align:right'>${"%.2f".format(used)}</td>
+              <td style='$cell;text-align:right'>${"%.2f".format(avail)}</td></tr>"""
         }
-        val leaveTableHtml = if (leaveRowsHtml.isNotEmpty()) """
+        val leaveTable = if (leaveRows.isNotEmpty()) """
 <table style="width:100%;border-collapse:collapse;margin-top:12px">
-  <tr style="background:#E3F2FD">
-    <th style="padding:5px 10px;border:1px solid #ccc;font-size:11px;font-weight:700;text-align:left">Leave Type</th>
-    <th style="padding:5px 8px;border:1px solid #ccc;font-size:11px;font-weight:700;text-align:right">Opening<br>Balance</th>
-    <th style="padding:5px 8px;border:1px solid #ccc;font-size:11px;font-weight:700;text-align:right">Current Month<br>Credit</th>
-    <th style="padding:5px 8px;border:1px solid #ccc;font-size:11px;font-weight:700;text-align:right">Leaves<br>Utilized</th>
-    <th style="padding:5px 8px;border:1px solid #ccc;font-size:11px;font-weight:700;text-align:right">Available<br>Balance</th>
-  </tr>
-  $leaveRowsHtml
+  <tr style="background:#e3f2fd">
+    <th style="$cell;text-align:left">Leave Type</th>
+    <th style="$cell;text-align:right">Opening Balance</th>
+    <th style="$cell;text-align:right">Current Month Credit</th>
+    <th style="$cell;text-align:right">Leaves Utilized</th>
+    <th style="$cell;text-align:right">Available Balance</th>
+  </tr>$leaveRows
 </table>""" else ""
+
+        fun infoRow(label: String, value: String) =
+            "<tr><td style='padding:4px 8px 4px 0;font-size:12px;font-weight:700;white-space:nowrap;width:38%;color:#37474f'>$label</td>" +
+            "<td style='padding:4px 0;font-size:12px;border-bottom:1px dotted #cfd8dc'>${value.ifBlank { "—" }}</td></tr>"
+
+        val lopDays = slip.lopDays ?: 0.0
+        val lopRev = slip.lopReversal ?: 0.0
+        val strip = "padding:6px;border:1px solid #cfd8dc;text-align:center"
 
         return """<!DOCTYPE html>
 <html>
@@ -273,130 +283,104 @@ class PayrollFragment : Fragment() {
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: Arial, 'Helvetica Neue', sans-serif; font-size: 12px; background: #fff; color: #111; }
+  body { font-family: Arial, Helvetica, sans-serif; font-size: 12px; background: #fff; color: #000; }
   * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 </style>
 </head>
 <body>
+<div style="max-width:794px;margin:0 auto;padding:14px 18px 18px;background:#fff">
 
-<div style="font-family:Arial,'Helvetica Neue',sans-serif;background:#fff !important;color:#111 !important;max-width:794px;margin:0 auto;border:2px solid #2E7D32 !important;padding:0;box-shadow:0 2px 12px rgba(0,0,0,.08)">
-
-<!-- COMPANY HEADER -->
-<table style="width:100%;border-collapse:collapse;border-bottom:2px solid #2E7D32 !important">
-  <tr>
-    <td style="padding:16px 20px;width:15%;vertical-align:middle;background:#F1F8E9 !important;border:none;">
-        $logoTag
-    </td>
-    <td style="padding:16px 20px;text-align:center;vertical-align:middle;background:#F1F8E9 !important;">
-      <div style="font-size:19px;font-weight:800;color:#000;letter-spacing:0.2px;text-align:center;">${AndroidMain.COMPANY_NAME}</div>
-      <div style="font-size:13px;margin-top:6px;color:#222;text-align:center;">${AndroidMain.PAYSLIP_ADDR_LINE1.removePrefix("Office Address: ")}</div>
-      <div style="font-size:13px;color:#222;text-align:center;">${AndroidMain.PAYSLIP_ADDR_LINE2}</div>
-    </td>
-  </tr>
-</table>
+<!-- HEADER -->
+<table style="width:100%;border-collapse:collapse"><tr>
+  <td style="padding:8px 10px;width:90px;vertical-align:top">$logoTag</td>
+  <td style="padding:8px 10px;text-align:center;vertical-align:middle">
+    <div style="font-size:17px;font-weight:700;color:#1a237e">${AndroidMain.COMPANY_NAME}</div>
+    <div style="font-size:10px;color:#333;margin-top:4px">${AndroidMain.PAYSLIP_ADDR_LINE1.removePrefix("Office Address: ")}</div>
+    <div style="font-size:10px;color:#333">${AndroidMain.PAYSLIP_ADDR_LINE2}</div>
+  </td>
+</tr></table>
 
 <!-- TITLE -->
-<div style="text-align:center;padding:10px;border-bottom:2px solid #2E7D32;font-size:15px;font-weight:700;background:#E8F5E9;color:#000;">
-  Pay Slip For The Month Of - ${months[month-1]} $year
+<div style="text-align:center;padding:8px;font-size:14px;font-weight:700;color:#1a237e;border-top:2px solid #1565c0;border-bottom:2px solid #1565c0;background:#e3f2fd">
+  Payslip for ${months[month-1]} $year
 </div>
 
-<!-- EMPLOYEE INFO TABLE -->
-<table style="width:100%;border-collapse:collapse;border-bottom:1.5px solid #bbb">
-  <tr>
-    <td style="padding:5px 10px;width:16%;font-size:14px;font-weight:700;border:1px solid #ccc;background:#F1F8E9 !important;color:#1B5E20">Name</td>
-    <td style="padding:5px 10px;width:34%;font-size:14px;border:1px solid #ccc;text-align:center">$name</td>
-    <td style="padding:5px 10px;width:16%;font-size:14px;font-weight:700;border:1px solid #ccc;background:#F1F8E9 !important;color:#1B5E20">Designation</td>
-    <td style="padding:5px 10px;width:34%;font-size:14px;border:1px solid #ccc;text-align:center">$desig</td>
+<!-- EMPLOYEE INFO -->
+<table style="width:100%;border-collapse:collapse;margin:12px 0"><tr>
+  <td style="width:50%;vertical-align:top;padding:0 14px 0 0"><table style="width:100%;border-collapse:collapse">
+    ${infoRow("Employee Code", empId)}${infoRow("Name", name)}${infoRow("Designation", desig)}${infoRow("Department", dept)}${infoRow("Date of Joining", doj)}
+  </table></td>
+  <td style="width:50%;vertical-align:top;padding:0 0 0 14px"><table style="width:100%;border-collapse:collapse">
+    ${infoRow("Bank Name", bank)}${infoRow("Bank A/C No.", acct)}${infoRow("Location", loc)}${infoRow("PAN", pan)}${infoRow("UAN", uan)}
+  </table></td>
+</tr></table>
+
+<!-- LOP -->
+<table style="width:100%;border-collapse:collapse;margin-bottom:12px">
+  <tr style="background:#f1f8ff">
+    <td style="$strip;font-size:11px;color:#546e7a;font-weight:700">LOP Days</td>
+    <td style="$strip;font-size:11px;color:#546e7a;font-weight:700">LOP Reversal (Days)</td>
   </tr>
   <tr>
-    <td style="padding:5px 10px;font-size:14px;font-weight:700;border:1px solid #ccc;background:#F1F8E9 !important;color:#1B5E20">EMP ID</td>
-    <td style="padding:5px 10px;font-size:14px;font-family:monospace;border:1px solid #ccc;text-align:center">$empId</td>
-    <td style="padding:5px 10px;font-size:14px;font-weight:700;border:1px solid #ccc;background:#F1F8E9 !important;color:#1B5E20">Department</td>
-    <td style="padding:5px 10px;font-size:14px;border:1px solid #ccc;text-align:center">$dept</td>
-  </tr>
-  <tr>
-    <td style="padding:5px 10px;font-size:14px;font-weight:700;border:1px solid #ccc;background:#F1F8E9 !important;color:#1B5E20">U.A.N</td>
-    <td style="padding:5px 10px;font-size:14px;font-family:monospace;border:1px solid #ccc;text-align:center">$uan</td>
-    <td style="padding:5px 10px;font-size:14px;font-weight:700;border:1px solid #ccc;background:#F1F8E9 !important;color:#1B5E20">EMP D.O.J</td>
-    <td style="padding:5px 10px;font-size:14px;border:1px solid #ccc;text-align:center">$doj</td>
-  </tr>
-  <tr>
-    <td style="padding:5px 10px;font-size:14px;font-weight:700;border:1px solid #ccc;background:#F1F8E9 !important;color:#1B5E20">PF No.</td>
-    <td style="padding:5px 10px;font-size:14px;font-family:monospace;border:1px solid #ccc;text-align:center">$pfNo</td>
-    <td style="padding:5px 10px;font-size:14px;font-weight:700;border:1px solid #ccc;background:#F1F8E9 !important;color:#1B5E20">Location</td>
-    <td style="padding:5px 10px;font-size:14px;border:1px solid #ccc;text-align:center">Mumbai</td>
-  </tr>
-  <tr>
-    <td style="padding:5px 10px;font-size:14px;font-weight:700;border:1px solid #ccc;background:#F1F8E9 !important;color:#1B5E20">EMP Pan</td>
-    <td style="padding:5px 10px;font-size:14px;font-family:monospace;border:1px solid #ccc;text-align:center">$pan</td>
-    <td style="padding:5px 10px;font-size:14px;font-weight:700;border:1px solid #ccc;background:#F1F8E9 !important;color:#1B5E20">Day's Worked</td>
-    <td style="padding:5px 10px;font-size:14px;border:1px solid #ccc;text-align:center">$pd</td>
-  </tr>
-  <tr>
-    <td style="padding:5px 10px;font-size:14px;font-weight:700;border:1px solid #ccc;background:#F1F8E9 !important;color:#1B5E20">EMP D.O.B</td>
-    <td style="padding:5px 10px;font-size:14px;border:1px solid #ccc;text-align:center">$dob</td>
-    <td style="padding:5px 10px;font-size:14px;font-weight:700;border:1px solid #ccc;background:#F1F8E9 !important;color:#1B5E20">Days in Month</td>
-    <td style="padding:5px 10px;font-size:14px;border:1px solid #ccc;text-align:center">$wd</td>
-  </tr>
-  <tr>
-    <td style="padding:5px 10px;font-size:14px;font-weight:700;border:1px solid #ccc;background:#F1F8E9 !important;color:#1B5E20">A/C Number</td>
-    <td style="padding:5px 10px;font-size:14px;font-family:monospace;border:1px solid #ccc;text-align:center">$acct</td>
-    <td style="padding:5px 10px;font-size:14px;font-weight:700;border:1px solid #ccc;background:#F1F8E9 !important;color:#1B5E20">LWP</td>
-    <td style="padding:5px 10px;font-size:14px;border:1px solid #ccc;text-align:center">$lwp</td>
-  </tr>
-  <tr>
-    <td style="padding:5px 10px;font-size:14px;font-weight:700;border:1px solid #ccc;background:#F1F8E9 !important;color:#1B5E20">Bank</td>
-    <td style="padding:5px 10px;font-size:14px;border:1px solid #ccc;text-align:center">$bank</td>
-    <td style="padding:5px 10px;font-size:14px;font-weight:700;border:1px solid #ccc;background:#F1F8E9 !important;color:#1B5E20">IFSC</td>
-    <td style="padding:5px 10px;font-size:14px;font-family:monospace;border:1px solid #ccc;text-align:center">$ifsc</td>
+    <td style="$strip;font-size:13px;font-weight:700">${"%.1f".format(lopDays)}</td>
+    <td style="$strip;font-size:13px;font-weight:700">${"%.1f".format(lopRev)}</td>
   </tr>
 </table>
 
 <!-- EARNINGS & DEDUCTIONS -->
 <table style="width:100%;border-collapse:collapse">
-  <tr style="background:#f5f5f5">
-    <td colspan="2" style="padding:7px 10px;font-size:13px;font-weight:700;text-align:center;border:1px solid #ccc;width:50%;background:#C8E6C9 !important;color:#1B5E20 !important">Earnings</td>
-    <td colspan="2" style="padding:7px 10px;font-size:13px;font-weight:700;text-align:center;border:1px solid #ccc;width:50%;background:#FFCDD2 !important;color:#B71C1C !important">Deductions</td>
-  </tr>
-  <tr style="background:#F9FBE7">
-    <td style="padding:7px 10px;font-size:14px;font-weight:700;border:1px solid #ccc;width:34%">Particulars</td>
-    <td style="padding:7px 10px;font-size:14px;font-weight:700;border:1px solid #ccc;width:16%;text-align:center">Rs.</td>
-    <td style="padding:7px 10px;font-size:14px;font-weight:700;border:1px solid #ccc;width:34%">Particulars</td>
-    <td style="padding:7px 10px;font-size:14px;font-weight:700;border:1px solid #ccc;width:16%;text-align:center">Rs.</td>
+  <tr style="background:#e3f2fd">
+    <th style="$cell;text-align:left;width:28%">Earnings</th>
+    <th style="$cell;text-align:right;width:14%">Fixed Amount</th>
+    <th style="$cell;text-align:right;width:14%">Earning Amount</th>
+    <th style="$cell;text-align:left;width:28%">Deductions</th>
+    <th style="$cell;text-align:right;width:16%">Amount</th>
   </tr>
   $rowsHtml
-  <tr style="background:#E8F5E9 !important">
-    <td style="padding:7px 10px;font-size:14px;font-weight:700;border:1px solid #ccc;color:#000 !important">Gross Pay</td>
-    <td style="padding:6px 10px;font-size:14px;font-weight:700;border:1px solid #ccc;text-align:center">${fmt(grossPay)}</td>
-    <td style="padding:6px 10px;font-size:14px;border:1px solid #ccc"></td>
-    <td style="padding:6px 10px;font-size:14px;border:1px solid #ccc"></td>
-  </tr>
-  <tr><td style="padding:3px 10px;border:1px solid #ccc" colspan="4"></td></tr>
-  <tr style="background:#f5f5f5">
-    <td style="padding:7px 10px;font-size:14px;font-weight:700;border:1px solid #ccc;background:#F1F8E9 !important;color:#1B5E20 !important">Total Earning</td>
-    <td style="padding:6px 10px;font-size:14px;font-weight:700;border:1px solid #ccc;text-align:center">${fmt(totalEarning)}</td>
-    <td style="padding:7px 10px;font-size:14px;font-weight:700;border:1px solid #ccc;background:#FFEBEE !important;color:#B71C1C !important">Total Deductions</td>
-    <td style="padding:6px 10px;font-size:14px;font-weight:700;border:1px solid #ccc;text-align:center">${fmt(totalDed)}</td>
+  <tr style="background:#e8f5e9;font-weight:700">
+    <td style="$cell;font-weight:700">Total Earnings</td>
+    <td style="$cell;text-align:right;font-weight:700">${money(gross)}</td>
+    <td style="$cell;text-align:right;font-weight:700">${money(gross)}</td>
+    <td style="$cell;font-weight:700">Total Deductions</td>
+    <td style="$cell;text-align:right;font-weight:700">${moneyZero(totalDed)}</td>
   </tr>
 </table>
 
 <!-- NET SALARY -->
-<table style="width:100%;border-collapse:collapse;border-top:1.5px solid #bbb">
-  <tr>
-    <td style="padding:9px 10px;font-size:13px;font-weight:700;border:2px solid #2E7D32 !important;width:34%;background:#2E7D32 !important;color:#fff !important">Net Salary (Rs.)</td>
-    <td style="padding:9px 10px;font-size:14px;font-weight:800;border:2px solid #2E7D32 !important;text-align:center;background:#E8F5E9 !important;color:#1B5E20 !important" colspan="3">${fmt(netSalary)}</td>
-  </tr>
-</table>
-
-$leaveTableHtml
-
-<div style="padding:10px 12px;font-size:11px;color:#555;font-style:italic">
-  It is computer generated statement signature is not required.
-</div>
+<div style="padding:8px 4px;font-size:13px;font-weight:700;border-top:2px solid #1565c0">
+  Net Salary : ${"%,.2f".format(net)} <span style="font-style:italic">(${rupeesInWords(net)})</span>
 </div>
 
+$leaveTable
+
+<div style="padding:10px 0 0;font-size:10px;color:#c62828;font-weight:700">Note : Payslip is system generated hence signature is not required</div>
+</div>
 </body>
 </html>"""
+    }
+
+    /** Indian-system amount in words, e.g. 142466.67 -> "One Lakh Forty Two Thousand ... Rupees Only". */
+    private fun rupeesInWords(amount: Double): String {
+        val n = Math.round(amount).toLong()
+        if (n <= 0) return "Zero Rupees Only"
+        val a = arrayOf("", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve",
+            "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen")
+        val b = arrayOf("", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety")
+        fun two(x: Int) = if (x < 20) a[x] else b[x / 10] + (if (x % 10 > 0) " " + a[x % 10] else "")
+        fun three(x: Int): String {
+            val h = x / 100; val r = x % 100
+            return listOf(if (h > 0) a[h] + " Hundred" else "", if (r > 0) two(r) else "").filter { it.isNotEmpty() }.joinToString(" ")
+        }
+        var rest = n
+        val parts = mutableListOf<String>()
+        val crore = (rest / 10000000).toInt(); rest %= 10000000
+        val lakh = (rest / 100000).toInt(); rest %= 100000
+        val thou = (rest / 1000).toInt(); rest %= 1000
+        if (crore > 0) parts += two(crore) + " Crore"
+        if (lakh > 0) parts += two(lakh) + " Lakh"
+        if (thou > 0) parts += two(thou) + " Thousand"
+        if (rest > 0) parts += three(rest.toInt())
+        return parts.joinToString(" ") + " Rupees Only"
     }
 
     // ─────────────────────────────────────────────────────────────────────────
