@@ -796,9 +796,7 @@ $leaveTableHtml
         val desig = slip.designationTitle ?: e?.designationTitle ?: e?.designation ?: "—"
         val dept  = slip.departmentName   ?: e?.departmentName   ?: e?.department  ?: "—"
         val doj   = (slip.slipDoj ?: e?.effectiveJoiningDate)?.toDisplayDate() ?: "—"
-        val dob   = (slip.slipDob ?: e?.dateOfBirth)?.toDisplayDate()          ?: "—"
         val uan   = slip.uanNumber?.takeIf { it.isNotBlank() } ?: "—"
-        val pfNo  = slip.pfNumber?.takeIf  { it.isNotBlank() } ?: "—"
         val pan   = slip.panNumber?.takeIf  { it.isNotBlank() } ?: "—"
         val acct  = slip.bankAccount?.takeIf { it.isNotBlank() } ?: "—"
         val bank  = slip.bankName?.takeIf    { it.isNotBlank() } ?: "—"
@@ -807,11 +805,10 @@ $leaveTableHtml
             arrayOf("Name",       name,  "Designation",   desig),
             arrayOf("EMP ID",     empId, "Department",    dept),
             arrayOf("U.A.N",      uan,   "EMP D.O.J",    doj),
-            arrayOf("PF No.",     pfNo,  "Location",     AndroidMain.PAYSLIP_LOCATION_CITY),
-            arrayOf("EMP Pan",    pan,   "Day's Worked", pd),
-            arrayOf("EMP D.O.B",  dob,   "Days in Month",wd),
-            arrayOf("A/C Number", acct,  "LWP",          lwp),
-            arrayOf("Bank",       bank,  "IFSC",         ifsc)
+            arrayOf("EMP Pan",    pan,   "Location",     AndroidMain.PAYSLIP_LOCATION_CITY),
+            arrayOf("A/C Number", acct,  "Day's Worked", pd),
+            arrayOf("Bank Name",  bank,  "Days in Month",wd),
+            arrayOf("IFSC",       ifsc,  "LWP",          lwp)
         )
     }
 
