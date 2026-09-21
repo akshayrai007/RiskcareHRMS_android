@@ -116,7 +116,7 @@ class Form16Fragment : Fragment() {
         addSectionHeader(containerB, "5. Statutory Deductions (For Reference)")
         addRow(containerB, "PF Employee Contribution", money(d.partB.pfEmployeeTotal)); addRow(containerB, "PF Employer Contribution", money(d.partB.pfEmployerTotal))
         addRow(containerB, "ESI Employee Contribution", money(d.partB.esiEmployeeTotal)); addRow(containerB, "Professional Tax", money(d.partB.professionalTaxTotal))
-        addRow(containerB, "Labour Welfare Fund (LWF)", money(d.partB.lwfTotal)); addRow(containerB, "Net Salary Paid (Annual)", money(d.partB.netSalaryTotal), isTotal = true)
+        addRow(containerB, "Net Salary Paid (Annual)", money(d.partB.netSalaryTotal), isTotal = true)
 
         containerM.removeAllViews(); addMonthHeader(containerM)
         var tB=0.0;var tH=0.0;var tG=0.0;var tP=0.0;var tE=0.0;var tPt=0.0;var tT=0.0;var tN=0.0
@@ -305,7 +305,6 @@ table.mo td:first-child{text-align:left}table.mo tr.tot td{background:#e8f5e9;fo
     <tr><td>PF Employer Contribution</td><td>${m(B.pfEmployerTotal)}</td></tr>
     <tr><td>ESI Employee Contribution</td><td>${m(B.esiEmployeeTotal)}</td></tr>
     <tr><td>Professional Tax</td><td>${m(B.professionalTaxTotal)}</td></tr>
-    <tr><td>Labour Welfare Fund (LWF)</td><td>${m(B.lwfTotal)}</td></tr>
     <tr class="tot"><td>Net Salary Paid (Annual)</td><td>${m(B.netSalaryTotal)}</td></tr>
   </table>
 </div>
