@@ -100,7 +100,7 @@ class Form16Fragment : Fragment() {
         containerB.removeAllViews()
         addSectionHeader(containerB, "1. Gross Salary")
         addRow(containerB, "(a) Basic Salary", money(d.partB.basic)); addRow(containerB, "(b) HRA", money(d.partB.hra))
-        addRow(containerB, "(c) Conveyance Allowance", money(d.partB.conveyance)); addRow(containerB, "(d) Special Allowance", money(d.partB.specialAllowance))
+        addRow(containerB, "(c) Special Allowance", money(d.partB.specialAllowance))
         addRow(containerB, "Total Gross Salary", money(d.partB.grossSalary), isTotal = true)
         addSectionHeader(containerB, "2. Less: Deductions u/s 16")
         addRow(containerB, "Standard Deduction u/s 16(ia)", "- ${money(d.partB.standardDeduction)}")
@@ -291,7 +291,7 @@ table.mo td:first-child{text-align:left}table.mo tr.tot td{background:#e8f5e9;fo
 <div class="sec">
   <div class="st b">📑 Part B — Details of Salary Paid and Any Other Income and Tax Deducted</div>
   <div class="subt">1. Gross Salary</div>
-  <table class="d"><tr><td>(a) Basic Salary</td><td>${m(B.basic)}</td></tr><tr><td>(b) House Rent Allowance (HRA)</td><td>${m(B.hra)}</td></tr><tr><td>(c) Conveyance Allowance</td><td>${m(B.conveyance)}</td></tr><tr><td>(d) Special Allowance</td><td>${m(B.specialAllowance)}</td></tr><tr class="tot"><td>Total Gross Salary</td><td>${m(B.grossSalary)}</td></tr></table>
+  <table class="d"><tr><td>(a) Basic Salary</td><td>${m(B.basic)}</td></tr><tr><td>(b) House Rent Allowance (HRA)</td><td>${m(B.hra)}</td></tr><tr><td>(c) Special Allowance</td><td>${m(B.specialAllowance)}</td></tr><tr class="tot"><td>Total Gross Salary</td><td>${m(B.grossSalary)}</td></tr></table>
   <div class="subt">2. Less: Deduction u/s 16</div>
   <table class="d"><tr><td>Standard Deduction u/s 16(ia)</td><td>- ${m(B.standardDeduction)}</td></tr><tr class="tot"><td>Income Chargeable under Head "Salaries"</td><td>${m(B.incomeChargeable)}</td></tr></table>
   <div class="subt">3. Deductions under Chapter VI-A</div>

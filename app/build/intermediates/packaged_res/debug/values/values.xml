@@ -1,0 +1,271 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:ns1="http://schemas.android.com/tools">
+    <color name="accent_amber">#E8303A</color>
+    <color name="accent_amber_light">#FFEBEE</color>
+    <color name="accent_blue">#1A2B5A</color>
+    <color name="accent_blue_light">#E8EEF8</color>
+    <color name="accent_cyan">#00AEEF</color>
+    <color name="accent_cyan_light">#EAF7FC</color>
+    <color name="accent_indigo">#1A2B5A</color>
+    <color name="accent_indigo_light">#E8EEF8</color>
+    <color name="accent_navy">#1A2B5A</color>
+    <color name="accent_navy_light">#E8EEF8</color>
+    <color name="accent_orange">#E8303A</color>
+    <color name="accent_orange_light">#FFEBEE</color>
+    <color name="accent_pink">#AD1457</color>
+    <color name="accent_pink_light">#FCE4EC</color>
+    <color name="accent_purple">#6A1B9A</color>
+    <color name="accent_purple_light">#F3E5F5</color>
+    <color name="accent_red">#C0272D</color>
+    <color name="accent_red_light">#FFEBEE</color>
+    <color name="accent_teal">#00AEEF</color>
+    <color name="accent_teal_light">#EAF7FC</color>
+    <color name="accent_yellow">#F59E0B</color>
+    <color name="background">#F5F8FB</color>
+    <color name="black">#1A1A1A</color>
+    <color name="card_blue_end">#B8E4F5</color>
+    <color name="card_blue_start">#EAF7FC</color>
+    <color name="card_green_end">#C8E6C9</color>
+    <color name="card_green_start">#E8F5E9</color>
+    <color name="card_orange_end">#FFCDD2</color>
+    <color name="card_orange_start">#FFEBEE</color>
+    <color name="card_purple_end">#E1BEE7</color>
+    <color name="card_purple_start">#F3E5F5</color>
+    <color name="card_red_end">#FFCDD2</color>
+    <color name="card_red_start">#FFEBEE</color>
+    <color name="card_shadow">#08000000</color>
+    <color name="card_teal_end">#B8E4F5</color>
+    <color name="card_teal_start">#EAF7FC</color>
+    <color name="divider">#EEEEEE</color>
+    <color name="gradient_overlay">#40000000</color>
+    <color name="nav_selected">#E8303A</color>
+    <color name="nav_unselected">#90A4AE</color>
+    <color name="primary">#E8303A</color>
+    <color name="primary_dark">#C0272D</color>
+    <color name="primary_light">#FF5252</color>
+    <color name="primary_ultra_light">#FFEBEE</color>
+    <color name="shimmer_base">#F5DEDE</color>
+    <color name="shimmer_highlight">#FFF5F5</color>
+    <color name="status_absent">#C0272D</color>
+    <color name="status_approved">#E8303A</color>
+    <color name="status_halfday">#00AEEF</color>
+    <color name="status_late">#F59E0B</color>
+    <color name="status_pending">#F59E0B</color>
+    <color name="status_present">#E8303A</color>
+    <color name="status_rejected">#C0272D</color>
+    <color name="status_wfh">#1A2B5A</color>
+    <color name="surface">#FFFFFF</color>
+    <color name="text_hint">#90A4AE</color>
+    <color name="text_on_primary">#FFFFFF</color>
+    <color name="text_primary">#1A2B5A</color>
+    <color name="text_secondary">#4A5568</color>
+    <color name="white">#FFFFFF</color>
+    <dimen name="avatar_hero">100dp</dimen>
+    <dimen name="avatar_lg">80dp</dimen>
+    <dimen name="avatar_md">48dp</dimen>
+    <dimen name="avatar_sm">36dp</dimen>
+    <dimen name="bottom_nav_height">65dp</dimen>
+    <dimen name="button_corner_radius">12dp</dimen>
+    <dimen name="button_height">52dp</dimen>
+    <dimen name="card_corner_radius">16dp</dimen>
+    <dimen name="card_elevation">6dp</dimen>
+    <dimen name="card_padding">16dp</dimen>
+    <dimen name="dashboard_card_height">120dp</dimen>
+    <dimen name="elevation_high">8dp</dimen>
+    <dimen name="elevation_low">2dp</dimen>
+    <dimen name="elevation_md">4dp</dimen>
+    <dimen name="icon_hero">64dp</dimen>
+    <dimen name="icon_lg">32dp</dimen>
+    <dimen name="icon_md">24dp</dimen>
+    <dimen name="icon_sm">20dp</dimen>
+    <dimen name="icon_xl">48dp</dimen>
+    <dimen name="input_corner_radius">12dp</dimen>
+    <dimen name="mini_card_height">90dp</dimen>
+    <dimen name="spacing_lg">24dp</dimen>
+    <dimen name="spacing_md">16dp</dimen>
+    <dimen name="spacing_sm">8dp</dimen>
+    <dimen name="spacing_xl">32dp</dimen>
+    <dimen name="spacing_xs">4dp</dimen>
+    <dimen name="spacing_xxl">48dp</dimen>
+    <dimen name="text_display">28sp</dimen>
+    <dimen name="text_hero">36sp</dimen>
+    <dimen name="text_lg">16sp</dimen>
+    <dimen name="text_md">14sp</dimen>
+    <dimen name="text_sm">12sp</dimen>
+    <dimen name="text_xl">18sp</dimen>
+    <dimen name="text_xs">10sp</dimen>
+    <dimen name="text_xxl">22sp</dimen>
+    <item name="beat_map_container" type="id"/>
+    <item name="map_container" type="id"/>
+    <string name="absent">Absent</string>
+    <string name="absent_days">Absent Days</string>
+    <string name="advance">Advance Salary</string>
+    <string name="advance_reason">Reason for Advance</string>
+    <string name="allowances">Allowances</string>
+    <string name="already_punched_in">Already Punched In</string>
+    <string name="amount">Amount</string>
+    <string name="announcements">Announcements</string>
+    <string name="app_name">RiskCare-HRMS</string>
+    <string name="app_tagline">Servicing All Risks</string>
+    <string name="apply">Apply</string>
+    <string name="apply_advance">Apply Advance</string>
+    <string name="apply_leave">Apply Leave</string>
+    <string name="apply_od">Apply OD</string>
+    <string name="apply_wfh">Apply WFH</string>
+    <string name="approved">Approved</string>
+    <string name="attendance">Attendance</string>
+    <string name="basic_salary">Basic Salary</string>
+    <string name="cancel">Cancel</string>
+    <string name="change_password">Change Password</string>
+    <string name="close">Close</string>
+    <string name="company_full_name">Risk Care Insurance Broking Pvt. Ltd.</string>
+    <string name="confirm">Confirm</string>
+    <string name="confirm_password">Confirm Password</string>
+    <string name="copyright_text">© 2026 RiskcareHRMS</string>
+    <string name="dashboard">Dashboard</string>
+    <string name="deductions">Deductions</string>
+    <string name="department">Department</string>
+    <string name="designation">Designation</string>
+    <string name="download">Download</string>
+    <string name="edit_profile">Edit Profile</string>
+    <string name="email">Email</string>
+    <string name="email_hint">you@riskcare.in</string>
+    <string name="employee_code">Employee Code</string>
+    <string name="employee_id">Employee ID</string>
+    <string name="employees">Employees</string>
+    <string name="error">Error</string>
+    <string name="filter">Filter</string>
+    <string name="forgot_password">Forgot Password?</string>
+    <string name="from_date">From Date</string>
+    <string name="gcm_defaultSenderId" translatable="false">146485432836</string>
+    <string name="gk_quiz">GK Quiz</string>
+    <string name="good_afternoon">Good Afternoon</string>
+    <string name="good_evening">Good Evening</string>
+    <string name="good_morning">Good Morning</string>
+    <string name="google_api_key" translatable="false">AIzaSyAczPrUWMfZyx9LWn2Vmsb6y4q_Jr6Si2E</string>
+    <string name="google_app_id" translatable="false">1:146485432836:android:44c1b547432054e34e9b51</string>
+    <string name="google_crash_reporting_api_key" translatable="false">AIzaSyAczPrUWMfZyx9LWn2Vmsb6y4q_Jr6Si2E</string>
+    <string name="google_storage_bucket" translatable="false">riskcarehr-a6afb.firebasestorage.app</string>
+    <string name="gross_salary">Gross Salary</string>
+    <string name="half_day">Half Day</string>
+    <string name="late">Late</string>
+    <string name="leaderboard">Leaderboard</string>
+    <string name="leave">Leave</string>
+    <string name="leave_balance">Leave Balance</string>
+    <string name="leave_type">Leave Type</string>
+    <string name="loading">Loading…</string>
+    <string name="login">Login</string>
+    <string name="logout">Logout</string>
+    <string name="manager">Reporting Manager</string>
+    <string name="monthly_summary">Monthly Summary</string>
+    <string name="my_applications">My Applications</string>
+    <string name="my_payslip">My Payslip</string>
+    <string name="nav_attendance">Attendance</string>
+    <string name="nav_dashboard">Dashboard</string>
+    <string name="nav_leave">Leave</string>
+    <string name="nav_more">More</string>
+    <string name="nav_payroll">Payslip</string>
+    <string name="net_salary">Net Salary</string>
+    <string name="network_error">Network error. Please check your connection.</string>
+    <string name="new_password">New Password</string>
+    <string name="no_announcements">No announcements yet</string>
+    <string name="no_data">No data available</string>
+    <string name="notifications">Notifications</string>
+    <string name="ok">OK</string>
+    <string name="pan_number">PAN Number</string>
+    <string name="password">Password</string>
+    <string name="payroll">Payroll</string>
+    <string name="payslip">Payslip</string>
+    <string name="pending">Pending</string>
+    <string name="pending_approvals">Pending Approvals</string>
+    <string name="present">Present</string>
+    <string name="present_days">Present Days</string>
+    <string name="profile">Profile</string>
+    <string name="project_id" translatable="false">riskcarehr-a6afb</string>
+    <string name="punch_in">Punch In</string>
+    <string name="punch_in_time">Punch In Time</string>
+    <string name="punch_out">Punch Out</string>
+    <string name="punch_out_time">Punch Out Time</string>
+    <string name="reason">Reason</string>
+    <string name="refresh">Refresh</string>
+    <string name="regularize">Regularize</string>
+    <string name="rejected">Rejected</string>
+    <string name="reset_password">Reset Password</string>
+    <string name="retry">Retry</string>
+    <string name="save">Save</string>
+    <string name="search">Search</string>
+    <string name="separation">Separation</string>
+    <string name="server_error">Server error. Please try again later.</string>
+    <string name="session_expired">Session expired. Please login again.</string>
+    <string name="settings">Settings</string>
+    <string name="sign_in_continue">Sign in to continue</string>
+    <string name="status">Status</string>
+    <string name="submit">Submit</string>
+    <string name="success">Success</string>
+    <string name="to_date">To Date</string>
+    <string name="today_attendance">Today\'s Attendance</string>
+    <string name="total_hours">Total Hours</string>
+    <string name="verify">Verify</string>
+    <string name="view_all">View All</string>
+    <string name="warning">Warning</string>
+    <string name="welcome_back">Welcome Back!</string>
+    <string name="working_hours">Working Hours</string>
+    <style name="RiskcareHRMS.BottomNav" parent="Widget.MaterialComponents.BottomNavigationView">
+        <item name="itemIconTint">@color/nav_selector</item>
+        <item name="itemTextColor">@color/nav_selector</item>
+        <item name="backgroundTint">@color/white</item>
+    </style>
+    <style name="RiskcareHRMS.Button.Primary" parent="Widget.MaterialComponents.Button">
+        <item name="android:textSize">15sp</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="cornerRadius">12dp</item>
+        <item name="android:paddingTop">14dp</item>
+        <item name="android:paddingBottom">14dp</item>
+        <item name="backgroundTint">@color/primary</item>
+        <item name="android:textColor">@color/white</item>
+    </style>
+    <style name="RiskcareHRMS.CardView" parent="Widget.MaterialComponents.CardView">
+        <item name="cardElevation">2dp</item>
+        <item name="cardCornerRadius">16dp</item>
+        <item name="cardBackgroundColor">@color/surface</item>
+    </style>
+    <style name="RiskcareHRMS.Dialog" parent="ThemeOverlay.MaterialComponents.Dialog.Alert">
+        <item name="colorPrimary">@color/primary</item>
+    </style>
+    <style name="RiskcareHRMS.NavIndicator" parent="">
+        <item name="android:background">@color/primary_ultra_light</item>
+    </style>
+    <style name="ShapeAppearance.RiskcareHRMS.LargeComponent" parent="ShapeAppearance.MaterialComponents.LargeComponent">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">20dp</item>
+    </style>
+    <style name="ShapeAppearance.RiskcareHRMS.MediumComponent" parent="ShapeAppearance.MaterialComponents.MediumComponent">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">12dp</item>
+    </style>
+    <style name="Theme.RiskcareHRMS" parent="Theme.MaterialComponents.Light.NoActionBar">
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorPrimaryVariant">@color/primary_dark</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorSecondary">@color/accent_orange</item>
+        <item name="colorSecondaryVariant">@color/accent_orange</item>
+        <item name="colorOnSecondary">@color/white</item>
+        <item name="android:colorBackground">@color/background</item>
+        <item name="colorSurface">@color/surface</item>
+        <item name="colorOnSurface">@color/text_primary</item>
+        <item name="android:statusBarColor">#FFFFFF</item>
+        <item name="android:windowLightStatusBar" ns1:targetApi="m">true</item>
+        <item name="android:navigationBarColor">@color/white</item>
+        <item name="android:windowLightNavigationBar" ns1:targetApi="o_mr1">true</item>
+        <item name="materialCardViewStyle">@style/RiskcareHRMS.CardView</item>
+        <item name="shapeAppearanceMediumComponent">@style/ShapeAppearance.RiskcareHRMS.MediumComponent</item>
+        <item name="shapeAppearanceLargeComponent">@style/ShapeAppearance.RiskcareHRMS.LargeComponent</item>
+    </style>
+    <style name="Theme.RiskcareHRMS.Splash" parent="Theme.MaterialComponents.Light.NoActionBar">
+        <item name="android:statusBarColor">#FFFFFF</item>
+        <item name="android:navigationBarColor">#FFFFFF</item>
+        <item name="android:windowLightStatusBar" ns1:targetApi="m">true</item>
+        <item name="android:windowLightNavigationBar" ns1:targetApi="o_mr1">true</item>
+        <item name="android:windowBackground">#FFFFFF</item>
+    </style>
+</resources>

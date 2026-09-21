@@ -490,7 +490,6 @@ data class Payslip(
         // Earnings
         (basic ?: basicSalary)?.let { if (it > 0) list.add(PayComponent("Basic Salary",       it, "earning")) }
         hra?.let                     { if (it > 0) list.add(PayComponent("HRA",                it, "earning")) }
-        conveyance?.let              { if (it > 0) list.add(PayComponent("Conveyance",         it, "earning")) }
         specialAllowance?.let        { if (it > 0) list.add(PayComponent("Other Allowance",    it, "earning")) }
         gratuity?.let                { if (it > 0) list.add(PayComponent("Gratuity",           it, "earning")) }
         if (list.isNotEmpty()) list.add(PayComponent("Gross Pay", effectiveGross, "total"))

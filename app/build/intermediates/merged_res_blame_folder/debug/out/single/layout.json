@@ -1,0 +1,122 @@
+[
+    {
+        "merged": "C:\\Users\\akshay\\.gradle\\daemon\\8.2\\com.riskcare.app-mergeDebugResources-57:\\layout\\bottom_sheet_edit_employee_rule.xml",
+        "source": "C:\\Users\\akshay\\.gradle\\daemon\\8.2\\com.riskcare.app-main-60:\\layout\\bottom_sheet_edit_employee_rule.xml"
+    },
+    {
+        "merged": "C:\\Users\\akshay\\.gradle\\daemon\\8.2\\com.riskcare.app-mergeDebugResources-57:\\layout\\fragment_it_declaration.xml",
+        "source": "C:\\Users\\akshay\\.gradle\\daemon\\8.2\\com.riskcare.app-main-60:\\layout\\fragment_it_declaration.xml"
+    },
+    {
+        "merged": "C:\\Users\\akshay\\.gradle\\daemon\\8.2\\com.riskcare.app-mergeDebugResources-57:\\layout\\fragment_punch_map.xml",
+        "source": "C:\\Users\\akshay\\.gradle\\daemon\\8.2\\com.riskcare.app-main-60:\\layout\\fragment_punch_map.xml"
+    },
+    {
+        "merged": "C:\\Users\\akshay\\.gradle\\daemon\\8.2\\com.riskcare.app-mergeDebugResources-57:\\layout\\fragment_advance.xml",
+        "source": "C:\\Users\\akshay\\.gradle\\daemon\\8.2\\com.riskcare.app-main-60:\\layout\\fragment_advance.xml"
+    },
+    {
+        "merged": "C:\\Users\\akshay\\.gradle\\daemon\\8.2\\com.riskcare.app-mergeDebugResources-57:\\layout\\fragment_change_password.xml",
+        "source": "C:\\Users\\akshay\\.gradle\\daemon\\8.2\\com.riskcare.app-main-60:\\layout\\fragment_change_password.xml"
+    },
+    {
+        "merged": "C:\\Users\\akshay\\.gradle\\daemon\\8.2\\com.riskcare.app-mergeDebugResources-57:\\layout\\item_profile_detail.xml",
+        "source": "C:\\Users\\akshay\\.gradle\\daemon\\8.2\\com.riskcare.app-main-60:\\layout\\item_profile_detail.xml"
+    },
+    {
+        "merged": "C:\\Users\\akshay\\.gradle\\daemon\\8.2\\com.riskcare.app-mergeDebugResources-57:\\layout\\fragment_leave.xml",
+        "source": "C:\\Users\\akshay\\.gradle\\daemon\\8.2\\com.riskcare.app-main-60:\\layout\\fragment_leave.xml"
+    },
+    {
+        "merged": "C:\\Users\\akshay\\.gradle\\daemon\\8.2\\com.riskcare.app-mergeDebugResources-57:\\layout\\fragment_reimbursement.xml",
+        "source": "C:\\Users\\akshay\\.gradle\\daemon\\8.2\\com.riskcare.app-main-60:\\layout\\fragment_reimbursement.xml"
+    },
+    {
+        "merged": "C:\\Users\\akshay\\.gradle\\daemon\\8.2\\com.riskcare.app-mergeDebugResources-57:\\layout\\fragment_employees.xml",
+        "source": "C:\\Users\\akshay\\.gradle\\daemon\\8.2\\com.riskcare.app-main-60:\\layout\\fragment_employees.xml"
+    },
+    {
+        "merged": "C:\\Users\\akshay\\.gradle\\daemon\\8.2\\com.riskcare.app-mergeDebugResources-57:\\layout\\bottom_sheet_reimbursement_detail.xml",
+        "source": "C:\\Users\\akshay\\.gradle\\daemon\\8.2\\com.riskcare.app-main-60:\\layout\\bottom_sheet_reimbursement_detail.xml"
+    },
+    {
+        "merged": "C:\\Users\\akshay\\.gradle\\daemon\\8.2\\com.riskcare.app-mergeDebugResources-57:\\layout\\fragment_dashboard.xml",
+        "source": "C:\\Users\\akshay\\.gradle\\daemon\\8.2\\com.riskcare.app-main-60:\\layout\\fragment_dashboard.xml"
+    },
+    {
+        "merged": "C:\\Users\\akshay\\.gradle\\daemon\\8.2\\com.riskcare.app-mergeDebugResources-57:\\layout\\activity_splash.xml",
+        "source": "C:\\Users\\akshay\\.gradle\\daemon\\8.2\\com.riskcare.app-main-60:\\layout\\activity_splash.xml"
+    },
+    {
+        "merged": "C:\\Users\\akshay\\.gradle\\daemon\\8.2\\com.riskcare.app-mergeDebugResources-57:\\layout\\item_reimbursement.xml",
+        "source": "C:\\Users\\akshay\\.gradle\\daemon\\8.2\\com.riskcare.app-main-60:\\layout\\item_reimbursement.xml"
+    },
+    {
+        "merged": "C:\\Users\\akshay\\.gradle\\daemon\\8.2\\com.riskcare.app-mergeDebugResources-57:\\layout\\fragment_payroll.xml",
+        "source": "C:\\Users\\akshay\\.gradle\\daemon\\8.2\\com.riskcare.app-main-60:\\layout\\fragment_payroll.xml"
+    },
+    {
+        "merged": "C:\\Users\\akshay\\.gradle\\daemon\\8.2\\com.riskcare.app-mergeDebugResources-57:\\layout\\bottom_sheet_reimbursement_action.xml",
+        "source": "C:\\Users\\akshay\\.gradle\\daemon\\8.2\\com.riskcare.app-main-60:\\layout\\bottom_sheet_reimbursement_action.xml"
+    },
+    {
+        "merged": "C:\\Users\\akshay\\.gradle\\daemon\\8.2\\com.riskcare.app-mergeDebugResources-57:\\layout\\activity_main.xml",
+        "source": "C:\\Users\\akshay\\.gradle\\daemon\\8.2\\com.riskcare.app-main-60:\\layout\\activity_main.xml"
+    },
+    {
+        "merged": "C:\\Users\\akshay\\.gradle\\daemon\\8.2\\com.riskcare.app-mergeDebugResources-57:\\layout\\fragment_form16.xml",
+        "source": "C:\\Users\\akshay\\.gradle\\daemon\\8.2\\com.riskcare.app-main-60:\\layout\\fragment_form16.xml"
+    },
+    {
+        "merged": "C:\\Users\\akshay\\.gradle\\daemon\\8.2\\com.riskcare.app-mergeDebugResources-57:\\layout\\fragment_geofence_admin.xml",
+        "source": "C:\\Users\\akshay\\.gradle\\daemon\\8.2\\com.riskcare.app-main-60:\\layout\\fragment_geofence_admin.xml"
+    },
+    {
+        "merged": "com.riskcare.app-mergeDebugResources-57:/layout/fragment_attendance.xml",
+        "source": "com.riskcare.app-main-60:/layout/fragment_attendance.xml"
+    },
+    {
+        "merged": "C:\\Users\\akshay\\.gradle\\daemon\\8.2\\com.riskcare.app-mergeDebugResources-57:\\layout\\bottom_sheet_apply_leave.xml",
+        "source": "C:\\Users\\akshay\\.gradle\\daemon\\8.2\\com.riskcare.app-main-60:\\layout\\bottom_sheet_apply_leave.xml"
+    },
+    {
+        "merged": "C:\\Users\\akshay\\.gradle\\daemon\\8.2\\com.riskcare.app-mergeDebugResources-57:\\layout\\item_geofence_employee.xml",
+        "source": "C:\\Users\\akshay\\.gradle\\daemon\\8.2\\com.riskcare.app-main-60:\\layout\\item_geofence_employee.xml"
+    },
+    {
+        "merged": "C:\\Users\\akshay\\.gradle\\daemon\\8.2\\com.riskcare.app-mergeDebugResources-57:\\layout\\bottom_sheet_apply_reimbursement.xml",
+        "source": "C:\\Users\\akshay\\.gradle\\daemon\\8.2\\com.riskcare.app-main-60:\\layout\\bottom_sheet_apply_reimbursement.xml"
+    },
+    {
+        "merged": "C:\\Users\\akshay\\.gradle\\daemon\\8.2\\com.riskcare.app-mergeDebugResources-57:\\layout\\fragment_attendance.xml",
+        "source": "C:\\Users\\akshay\\.gradle\\daemon\\8.2\\com.riskcare.app-main-60:\\layout\\fragment_attendance.xml"
+    },
+    {
+        "merged": "C:\\Users\\akshay\\.gradle\\daemon\\8.2\\com.riskcare.app-mergeDebugResources-57:\\layout\\fragment_attendance_today.xml",
+        "source": "C:\\Users\\akshay\\.gradle\\daemon\\8.2\\com.riskcare.app-main-60:\\layout\\fragment_attendance_today.xml"
+    },
+    {
+        "merged": "C:\\Users\\akshay\\.gradle\\daemon\\8.2\\com.riskcare.app-mergeDebugResources-57:\\layout\\activity_login.xml",
+        "source": "C:\\Users\\akshay\\.gradle\\daemon\\8.2\\com.riskcare.app-main-60:\\layout\\activity_login.xml"
+    },
+    {
+        "merged": "C:\\Users\\akshay\\.gradle\\daemon\\8.2\\com.riskcare.app-mergeDebugResources-57:\\layout\\fragment_gk_quiz.xml",
+        "source": "C:\\Users\\akshay\\.gradle\\daemon\\8.2\\com.riskcare.app-main-60:\\layout\\fragment_gk_quiz.xml"
+    },
+    {
+        "merged": "C:\\Users\\akshay\\.gradle\\daemon\\8.2\\com.riskcare.app-mergeDebugResources-57:\\layout\\bottom_sheet_forgot_password.xml",
+        "source": "C:\\Users\\akshay\\.gradle\\daemon\\8.2\\com.riskcare.app-main-60:\\layout\\bottom_sheet_forgot_password.xml"
+    },
+    {
+        "merged": "C:\\Users\\akshay\\.gradle\\daemon\\8.2\\com.riskcare.app-mergeDebugResources-57:\\layout\\fragment_profile.xml",
+        "source": "C:\\Users\\akshay\\.gradle\\daemon\\8.2\\com.riskcare.app-main-60:\\layout\\fragment_profile.xml"
+    },
+    {
+        "merged": "C:\\Users\\akshay\\.gradle\\daemon\\8.2\\com.riskcare.app-mergeDebugResources-57:\\layout\\fragment_more.xml",
+        "source": "C:\\Users\\akshay\\.gradle\\daemon\\8.2\\com.riskcare.app-main-60:\\layout\\fragment_more.xml"
+    },
+    {
+        "merged": "C:\\Users\\akshay\\.gradle\\daemon\\8.2\\com.riskcare.app-mergeDebugResources-57:\\layout\\item_more_row.xml",
+        "source": "C:\\Users\\akshay\\.gradle\\daemon\\8.2\\com.riskcare.app-main-60:\\layout\\item_more_row.xml"
+    }
+]

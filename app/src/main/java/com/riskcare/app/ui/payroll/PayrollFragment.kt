@@ -821,7 +821,6 @@ $leaveTableHtml
         slip.hra?.let                           { if (it > 0) list += "HRA"             to it }
         slip.gratuity?.let                      { if (it > 0) list += "Gratuity"        to it }
         slip.specialAllowance?.let              { if (it > 0) list += "Defray Allowance" to it }
-        slip.conveyance?.let                    { if (it > 0) list += "Conveyance"      to it }
         slip.foodCoupon?.let                    { if (it > 0) list += "Food Coupon"     to it }
         slip.components
             ?.filter { it.type.lowercase() in listOf("earning","earnings","allowance") }

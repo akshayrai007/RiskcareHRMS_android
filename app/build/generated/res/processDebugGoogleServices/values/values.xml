@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="gcm_defaultSenderId" translatable="false">146485432836</string>
+    <string name="google_api_key" translatable="false">AIzaSyAczPrUWMfZyx9LWn2Vmsb6y4q_Jr6Si2E</string>
+    <string name="google_app_id" translatable="false">1:146485432836:android:44c1b547432054e34e9b51</string>
+    <string name="google_crash_reporting_api_key" translatable="false">AIzaSyAczPrUWMfZyx9LWn2Vmsb6y4q_Jr6Si2E</string>
+    <string name="google_storage_bucket" translatable="false">riskcarehr-a6afb.firebasestorage.app</string>
+    <string name="project_id" translatable="false">riskcarehr-a6afb</string>
+</resources>
