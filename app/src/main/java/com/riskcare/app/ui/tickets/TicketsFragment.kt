@@ -46,12 +46,19 @@ private enum class TicketTab { MINE, ASSIGNED, SUPERVISING }
 
 class TicketsFragment : Fragment() {
     private var tab = TicketTab.ASSIGNED
+    // Raising a ticket (and seeing "Raised by Me") is for people who actually
+    // have reportees — checked server-side via tasks/am-i-manager, same check
+    // used for the Task Board elsewhere in the app. A plain employee with no
+    // one reporting to them only sees "Assigned to Me" / "Supervising".
+    private var canRaise = false
     private lateinit var rv: RecyclerView
     private lateinit var progress: ProgressBar
     private lateinit var tvEmpty: TextView
     private lateinit var tabMine: TextView
     private lateinit var tabAssigned: TextView
     private lateinit var tabSupervising: TextView
+    private lateinit var raiseHeaderBtn: TextView
+    private lateinit var raiseBigBtn: MaterialButton
 
     override fun onCreateView(i: LayoutInflater, c: ViewGroup?, s: Bundle?): View {
         val ctx = requireContext(); val dp = ctx.resources.displayMetrics.density
@@ -71,8 +78,10 @@ class TicketsFragment : Fragment() {
                     setTextColor(ctx.getColor(R.color.white)); layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
                 })
                 addView(TextView(ctx).apply {
+                    raiseHeaderBtn = this
                     text = "+ RAISE"; textSize = 12f; setTypeface(null, android.graphics.Typeface.BOLD)
                     setTextColor(ctx.getColor(R.color.white))
+                    visibility = View.GONE
                     setOnClickListener { showRaiseDialog(ctx) { load() } }
                 })
             })
@@ -94,17 +103,19 @@ class TicketsFragment : Fragment() {
             layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
         }
         tabAssigned = tabBtn().apply { text = "Assigned to Me" }
-        tabMine = tabBtn().apply { text = "Raised by Me" }
+        tabMine = tabBtn().apply { text = "Raised by Me"; visibility = View.GONE }
         tabSupervising = tabBtn().apply { text = "Supervising" }
         tabRow.addView(tabAssigned); tabRow.addView(tabMine); tabRow.addView(tabSupervising)
         root.addView(tabRow)
 
-        root.addView(MaterialButton(ctx).apply {
+        raiseBigBtn = MaterialButton(ctx).apply {
             text = "+ Raise a Ticket"; setBackgroundColor(ctx.getColor(R.color.primary))
             layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
                 .also { it.setMargins((14*dp).toInt(), (10*dp).toInt(), (14*dp).toInt(), 0) }
+            visibility = View.GONE
             setOnClickListener { showRaiseDialog(ctx) { load() } }
-        })
+        }
+        root.addView(raiseBigBtn)
 
         progress = ProgressBar(ctx).apply {
             layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT)
@@ -127,10 +138,27 @@ class TicketsFragment : Fragment() {
         root.addView(tvEmpty)
 
         tabAssigned.setOnClickListener { setActive(TicketTab.ASSIGNED) }
-        tabMine.setOnClickListener { setActive(TicketTab.MINE) }
+        tabMine.setOnClickListener { if (canRaise) setActive(TicketTab.MINE) }
         tabSupervising.setOnClickListener { setActive(TicketTab.SUPERVISING) }
         setActive(TicketTab.ASSIGNED)
+        checkCanRaise()
         return root
+    }
+
+    /** Server-checked: does this person have real reportees? Reuses the same
+     * endpoint the Task Board uses, so the rule stays consistent app-wide. */
+    private fun checkCanRaise() {
+        lifecycleScope.launch {
+            try {
+                val d = RetrofitClient.instance.amIManager().body()?.data
+                canRaise = d?.isManager == true || d?.isSuperAdmin == true
+                if (canRaise) {
+                    raiseHeaderBtn.visibility = View.VISIBLE
+                    raiseBigBtn.visibility = View.VISIBLE
+                    tabMine.visibility = View.VISIBLE
+                }
+            } catch (_: Exception) { /* leave raise/mine hidden on failure */ }
+        }
     }
 
     private fun setActive(newTab: TicketTab) {
