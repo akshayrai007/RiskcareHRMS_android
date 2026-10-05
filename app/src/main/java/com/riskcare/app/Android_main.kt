@@ -107,7 +107,7 @@ object AndroidMain {
     // ══════════════════════════════════════════════════════════════════
 
     /** Base URL for ALL Retrofit API calls. Must end with /api/ */
-    const val BASE_URL = "https://riskcarehrms.onrender.com/api/"
+    const val BASE_URL = "http://113.30.144.11:8080/api/"
 
     /** OkHttp timeouts (seconds) */
     const val TIMEOUT_CONNECT_SEC = 30L
