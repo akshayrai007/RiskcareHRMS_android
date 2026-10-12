@@ -27,7 +27,11 @@ data class LoginRequest(
     @SerializedName("device_name") val deviceName: String? = null
 )
 data class LoginResponse(val success: Boolean, val message: String? = null, val data: LoginData? = null)
-data class LoginData(val token: String, val employee: Employee)
+data class LoginData(
+    val token: String,
+    val employee: Employee,
+    @SerializedName("require_password_reset") val requirePasswordReset: Boolean = false
+)
 data class TokenData(val token: String)
 data class ChangePasswordRequest(
     @SerializedName("old_password") val oldPassword: String,

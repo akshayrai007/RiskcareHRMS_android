@@ -32,6 +32,9 @@ interface ApiService {
     @POST("auth/update-photo")
     suspend fun updatePhotoMultipart(@Part photo: MultipartBody.Part): Response<ApiResponse<Employee>>
 
+    @POST("auth/first-login-reset")
+    suspend fun firstLoginReset(@Body body: Map<String, String>): Response<ApiResponse<Unit>>
+
     @POST("auth/forgot-password/verify")
     suspend fun forgotVerify(@Body request: ForgotVerifyRequest): Response<ApiResponse<ForgotVerifyData>>
 
